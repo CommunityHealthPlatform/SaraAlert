@@ -120,9 +120,10 @@ bundle exec sidekiq -q default -q mailers -q exports
 ##### Jobs
 
   The following jobs are configured to run continuously:
-  * `ConsumeAssessmentsJob`
-      - Should always be running in order to be ready to consume assessments at any time.
-      - Handles consuming assessments from the assessment container into the enrollment container.
+  * `ConsumeAssessmentsJob` // `ConsumeAssessmentsWorker`
+      - Should always be running to be ready to consume assessments at any time
+      - Handles the processing of incomming Patient assessments from the assessment container into the enrollment container.
+      - Utilizes Redis `RPOPLPUSH` pattern.
       - Run with `bin/bundle exec rake reports:receive_and_process_reports`
 
   The following jobs are configured to run periodically:
@@ -212,7 +213,7 @@ This results in a 'split architecture' where multiple instances of the SaraAlert
 A key portion of this is the use of the Nginx reverse proxy container. The configuration (located at `./nginx.conf`) will route traffic from 'untrusted' users submitting assessments to the `dt-net-assessment` application while, at the same time, enrollers and epidemiologists are routed to the enrollment database.
 
 Below is a graphic depicting the services and applications present on each network:
-![SaraAlertDockerNetworks](https://user-images.githubusercontent.com/3009651/90296500-a7fc3200-de59-11ea-873b-f690c52509bc.png)
+![SaraAlertDockerNetworks](https://user-images.githubusercontent.com/3009651/100016590-a66ece00-2da7-11eb-8908-fca7ac66b635.png)
 
 **Environment Variable Setup**
 
@@ -224,6 +225,10 @@ To set up Sara Alert in a staging configuration, generate two environment variab
 The content for these files can be based off of the `.env-prod-assessment-example` and `.env-prod-enrollment-example` files.
 
 The `SECRET_KEY_BASE` and `MYSQL_PASSWORD` variables should be changed at the very least. These variables should also not be the same between both assessment and enrollment instances of the files. It is important to note that `SARA_ALERT_REPORT_MODE` should be set to `false` for the enrollment file and `true` for the assessment file.
+
+***Redis Environment Variables***
+
+The `REDIS_URL` environment variable is utilized within `docker-compose.yml` to specify which Redis instance (bridge or enrollment) the container should connect to. This URL can also incorporate authentication information.
 
 ***Export Environment Variables***
 
