@@ -83,6 +83,14 @@ namespace :demo do
       index += 1
     end
     User.import! users
+    # Api testing
+    OauthApplication.create!(
+      name: 'demo',
+      redirect_uri: 'http://localhost:3000/redirect',
+      scopes: 'user/Patient.* user/Observation.read user/QuestionnaireResponse.read',
+      uid: 'demo-oauth-app-uid',
+      secret: 'demo-oauth-app-secret'
+    )
   end
 
   def create_user(email, role, jurisdiction)
@@ -218,7 +226,8 @@ namespace :demo do
     cache_analytics = (ENV['SKIP_ANALYTICS'] != 'true')
 
     jurisdictions = Jurisdiction.all
-    assigned_users = Hash[jurisdictions.pluck(:id).map { |id| [id, 10.times.map { |n| Faker::Number.number(digits: 6) }] }]
+    assigned_users_range = (1..9_999).to_a.freeze
+    assigned_users = Hash[jurisdictions.pluck(:id).map {|id| [id, assigned_users_range]}]
     case_ids = Hash[jurisdictions.pluck(:id).map { |id| [id, 15.times.map { |n| Faker::Number.leading_zero_number(digits: 8) }] }]
 
     counties = YAML.safe_load(File.read(Rails.root.join('lib', 'assets', 'counties.yml')))
@@ -244,6 +253,7 @@ namespace :demo do
       printf("\n")
     end
   end
+  
   desc 'Add synthetic patient/monitoree data to the database for a single day (today)'
   task update: :environment do
     raise 'This task is only for use in a development environment' unless Rails.env == 'development' || ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK']
