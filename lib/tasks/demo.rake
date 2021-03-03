@@ -85,11 +85,11 @@ namespace :demo do
     User.import! users
     # Api testing
     OauthApplication.create!(
-      name: 'demo',
+      name: 'performance-test',
       redirect_uri: 'http://localhost:3000/redirect',
       scopes: 'user/Patient.* user/Observation.read user/QuestionnaireResponse.read',
-      uid: 'demo-oauth-app-uid',
-      secret: 'demo-oauth-app-secret'
+      uid: 'performance-test-oauth-app-uid',
+      secret: 'performance-test-oauth-app-secret'
     )
   end
 
