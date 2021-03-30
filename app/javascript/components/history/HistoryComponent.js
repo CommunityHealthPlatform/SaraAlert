@@ -113,7 +113,9 @@ class HistoryComponent extends React.Component {
   handleCreatorFilterChange = inputValue => this.handleFilterChange(inputValue, 'History Creator');
 
   render() {
-    const historiesArray = this.state.pageOfHistories.map(history => <History key={history.id} history={history} />);
+    const historiesArray = this.state.pageOfHistories.map(history => (
+      <History key={history.id} history={history} authenticity_token={this.props.authenticity_token} />
+    ));
     return (
       <React.Fragment>
         <Card id="histories" className="mx-2 mt-3 mb-4 card-square">
