@@ -1,13 +1,15 @@
 import moment from 'moment-timezone';
 
 /**
-  * Formats values in the timestamp column to be human readable
-  * @param {Object} data - Data about the cell this filter is called on.
-  */
+ * Formats values in the timestamp column to be human readable
+ * @param {Object} data - Data about the cell this filter is called on.
+ */
 function formatTimestamp(data) {
+  if (data === null || data === undefined) return '';
+
   // Some components will call this with an object containing a value field containing a timestamp
   // Others will pass in a timestamp value directly
-  const timestamp = (Object.prototype.hasOwnProperty.call(data, 'value')) ? data.value : data
+  const timestamp = typeof data === 'object' && Object.prototype.hasOwnProperty.call(data, 'value') ? data.value : data;
   const ts = moment.tz(timestamp, 'UTC');
   return ts.isValid() ? ts.tz(moment.tz.guess()).format('MM/DD/YYYY HH:mm z') : '';
 }
@@ -17,9 +19,11 @@ function formatTimestamp(data) {
  * @param {Object} data - provided by CustomTable about each cell in the column this filter is called in.
  */
 function formatDate(data) {
+  if (data === null || data === undefined) return '';
+
   // Some components will call this with an object containing a value field containing a date
   // Others will pass in a date value directly
-  const date = (Object.prototype.hasOwnProperty.call(data, 'value')) ? data.value : data
+  const date = typeof data === 'object' && Object.prototype.hasOwnProperty.call(data, 'value') ? data.value : data;
   return date ? moment(date, 'YYYY-MM-DD').format('MM/DD/YYYY') : '';
 }
 
@@ -31,7 +35,7 @@ function formatDate(data) {
 function formatRelativePast(date) {
   var intervalType;
   var now = moment();
-  var then = moment(date).toDate();  
+  var then = moment(date).toDate();
   var duration = moment.duration(now.diff(then));
   var interval = duration.years();
 
@@ -68,9 +72,4 @@ function formatRelativePast(date) {
   return `${interval} ${intervalType} ago`;
 }
 
-
-export {
-  formatTimestamp,
-  formatDate,
-  formatRelativePast
-};
+export { formatTimestamp, formatDate, formatRelativePast };
