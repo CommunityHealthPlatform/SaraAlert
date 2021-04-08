@@ -1,11 +1,11 @@
 import React from 'react';
 import { PropTypes } from 'prop-types';
-import { Button, Card } from 'react-bootstrap';
+import { Button, Card, Col, Row } from 'react-bootstrap';
+import ReactTooltip from 'react-tooltip';
 import axios from 'axios';
-import moment from 'moment-timezone';
 import reportError from '../util/ReportError';
 import confirmDialog from '../util/ConfirmDialog';
-import { formatTimestamp, time_ago_in_words } from '../../utils/DateTime';
+import { formatTimestamp, formatRelativePast } from '../../utils/DateTime';
 
 class History extends React.Component {
   constructor(props) {
@@ -13,26 +13,28 @@ class History extends React.Component {
     this.state = {
       editMode: false,
       loading: false,
-      comment: '',
+      comment: props.history.comment,
     };
   }
 
-  handleEditComment = () => {
-    this.setState({ editMode: true, comment: this.props.history.comment });
-  };
-
-  handleEditCancel = () => {
-    this.setState({ editMode: false, comment: '' });
-  };
-
-  handleTextChange = event => {
+  handleChange = event => {
     this.setState({ comment: event.target.value });
   };
 
-  handleDeleteClick = async () => {
-    const confirmText = `Are you sure you would like to delete this comment?`;
+  edit = () => {
+    this.setState({ editMode: true });
+  };
+
+  handleEditCancel = () => {
+    this.setState({ editMode: false });
+  };
+
+  delete = async () => {
+    const confirmText = 'Are you sure you would like to delete this comment? This action cannot be undone.';
     const options = {
-      okLabel: 'Confirm',
+      title: 'History',
+      okLabel: 'Delete',
+      okVariant: 'danger',
       cancelLabel: 'Cancel',
     };
     if (await confirmDialog(confirmText, options)) {
@@ -70,27 +72,9 @@ class History extends React.Component {
     });
   };
 
-  renderHistoryActionButtons = () => {
+  renderEditMode() {
     return (
       <React.Fragment>
-        <Card.Body>
-          <Card.Text>{this.props.history.comment}</Card.Text>
-        </Card.Body>
-        <Card.Footer>
-          <Button id={this.props.history.id} className="mr-2 btn btn-primary btn-square float-right" onClick={this.handleDeleteClick}>
-            Delete
-          </Button>
-          <Button id={this.props.history.id} className="mr-2 btn btn-primary btn-square float-right" onClick={this.handleEditComment}>
-            Edit
-          </Button>
-        </Card.Footer>
-      </React.Fragment>
-    );
-  };
-
-  renderEditMode = () => {
-    return (
-      <Card.Body>
         <textarea
           id="comment"
           name="comment"
@@ -98,59 +82,98 @@ class History extends React.Component {
           style={{ resize: 'none' }}
           rows="3"
           value={this.state.comment}
-          onChange={this.handleTextChange}
+          onChange={this.handleChange}
         />
-        <button
-          className="mt-3 mr-2 btn btn-primary btn-square float-right"
+        <Button
+          variant="primary"
+          size="sm"
+          className="float-right mt-2"
           disabled={this.state.loading || this.state.comment === ''}
-          onClick={this.handleEditSubmit}>
-          <i className="fas fa-comment-dots"></i> Edit Comment
-        </button>
-        <button
-          className="mt-3 mr-2 btn btn-primary btn-square float-right"
-          disabled={this.state.loading || this.state.comment === ''}
-          onClick={this.handleEditCancel}>
-          <i className="fas fa-comment-dots"></i> Cancel Edit
-        </button>
-      </Card.Body>
+          onClick={this.handleEditSubmit}
+          aria-label="Submit Edit History Comment">
+          Update
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          className="float-right mt-2 mr-2"
+          disabled={this.state.loading}
+          onClick={this.handleEditCancel}
+          aria-label="Cancel Edit History Comment">
+          Cancel
+        </Button>
+      </React.Fragment>
     );
-  };
+  }
 
-  renderCommentControlButtons = () => {
-    if (this.props.history.history_type == 'Comment') {
-      if (this.state.editMode == true) {
-        return this.renderEditMode();
-      } else {
-        return this.renderHistoryActionButtons();
-      }
-    } else {
-      return (
-        <Card.Body>
-          <Card.Text>{this.props.history.comment}</Card.Text>
-        </Card.Body>
-      );
-    }
-  };
+  renderActionButtons() {
+    return (
+      <Col>
+        <div className="float-right">
+          <span data-for={`edit-history-item-${this.props.history.id}`} data-tip="">
+            <Button variant="link" className="icon-btn p-0 mr-1" onClick={this.edit} aria-label="Edit History Comment">
+              <i className="fas fa-edit"></i>
+            </Button>
+          </span>
+          <ReactTooltip
+            id={`edit-history-item-${this.props.history.id}`}
+            multiline={true}
+            place="left"
+            type="dark"
+            effect="solid"
+            className="tooltip-container">
+            You may edit comments you have added
+          </ReactTooltip>
+          <span data-for={`delete-history-item-${this.props.history.id}`} data-tip="">
+            <Button variant="link" className="icon-btn p-0" onClick={this.delete} aria-label="Delete History Comment">
+              <i className="fas fa-trash"></i>
+            </Button>
+          </span>
+          <ReactTooltip
+            id={`delete-history-item-${this.props.history.id}`}
+            multiline={true}
+            place="left"
+            type="dark"
+            effect="solid"
+            className="tooltip-container">
+            You may delete comments you have added
+          </ReactTooltip>
+        </div>
+      </Col>
+    );
+  }
 
   render() {
     return (
       <React.Fragment>
         <Card className="card-square mt-4 mx-3 shadow-sm">
           <Card.Header>
-            <b>{this.props.history.created_by}</b>, {time_ago_in_words(moment(this.props.history.created_at).toDate())} ago (
-            {formatTimestamp(this.props.history.created_at)})
+            <b>{this.props.history.created_by}</b>, {formatRelativePast(this.props.history.created_at)} ({formatTimestamp(this.props.history.created_at)})
             <span className="float-right">
               <div className="badge-padding h5">
                 <span className="badge badge-secondary">{this.props.history.history_type}</span>
               </div>
             </span>
           </Card.Header>
-          {this.renderCommentControlButtons()}
+          <Card.Body>
+            {this.state.editMode ? (
+              this.renderEditMode()
+            ) : (
+              <Row>
+                <Col>
+                  {this.props.history.comment}
+                  {this.props.history.was_edited && <i className="edit-text"> (edited)</i>}
+                </Col>
+                {this.props.history.history_type == 'Comment' && this.renderActionButtons()}
+              </Row>
+            )}
+          </Card.Body>
         </Card>
       </React.Fragment>
     );
   }
 }
+
 History.propTypes = {
   history: PropTypes.object,
   authenticity_token: PropTypes.string,

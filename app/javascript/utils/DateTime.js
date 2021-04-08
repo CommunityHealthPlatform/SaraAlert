@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 /**
   * Formats values in the timestamp column to be human readable
   * @param {Object} data - Data about the cell this filter is called on.
-*/
+  */
 function formatTimestamp(data) {
   // Some components will call this with an object containing a value field containing a timestamp
   // Others will pass in a timestamp value directly
@@ -15,7 +15,7 @@ function formatTimestamp(data) {
 /**
  * Formats a date value into consistent format.
  * @param {Object} data - provided by CustomTable about each cell in the column this filter is called in.
-*/
+ */
 function formatDate(data) {
   // Some components will call this with an object containing a value field containing a date
   // Others will pass in a date value directly
@@ -23,35 +23,38 @@ function formatDate(data) {
   return date ? moment(date, 'YYYY-MM-DD').format('MM/DD/YYYY') : '';
 }
 
-function time_ago_in_words(date) {
-  if (typeof date !== 'object') {
-    date = new Date(date);
-  }
-
-  var seconds = Math.floor((new Date() - date) / 1000);
+/**
+ * Formats a date value into text string that indicates how far in the past the date is.
+ * EX: "4 days ago" or "1 year ago"
+ * @param {Object} date - date string
+ */
+function formatRelativePast(date) {
   var intervalType;
+  var now = moment();
+  var then = moment(date).toDate();  
+  var duration = moment.duration(now.diff(then));
+  var interval = duration.years();
 
-  var interval = Math.floor(seconds / 31536000);
   if (interval >= 1) {
     intervalType = 'year';
   } else {
-    interval = Math.floor(seconds / 2592000);
+    interval = duration.months();
     if (interval >= 1) {
       intervalType = 'month';
     } else {
-      interval = Math.floor(seconds / 86400);
+      interval = duration.days();
       if (interval >= 1) {
         intervalType = 'day';
       } else {
-        interval = Math.floor(seconds / 3600);
+        interval = duration.hours();
         if (interval >= 1) {
           intervalType = 'hour';
         } else {
-          interval = Math.floor(seconds / 60);
+          interval = duration.minutes();
           if (interval >= 1) {
             intervalType = 'minute';
           } else {
-            return 'less than a minute';
+            return 'less than a minute ago';
           }
         }
       }
@@ -62,12 +65,12 @@ function time_ago_in_words(date) {
     intervalType += 's';
   }
 
-  return interval + ' ' + intervalType;
+  return `${interval} ${intervalType} ago`;
 }
 
 
 export {
   formatTimestamp,
   formatDate,
-  time_ago_in_words
+  formatRelativePast
 };

@@ -10,7 +10,7 @@ import History from './History';
 import InfoTooltip from '../util/InfoTooltip';
 import reportError from '../util/ReportError';
 
-class HistoryComponent extends React.Component {
+class HistoryList extends React.Component {
   constructor(props) {
     super(props);
 
@@ -193,11 +193,11 @@ class HistoryComponent extends React.Component {
   }
 }
 
-HistoryComponent.propTypes = {
+HistoryList.propTypes = {
   patient_id: PropTypes.number,
   histories: PropTypes.array,
   authenticity_token: PropTypes.string,
   history_types: PropTypes.object,
 };
 
-export default HistoryComponent;
+export default HistoryList;

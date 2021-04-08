@@ -19,6 +19,7 @@ class HistoriesController < ApplicationController
     history = History.find_by_id(params.permit(:id)[:id])
     redirect_to root_url && return if (history.nil? || history.history_type != 'Comment' || history.created_by != current_user.email)
     history.comment = params.permit(:comment)[:comment]
+    history.was_edited = true
     history.save!
     render :json => history
   end
