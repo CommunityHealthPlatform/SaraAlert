@@ -224,8 +224,8 @@ class History < ApplicationRecord
     create_history(patient, created_by, HISTORY_TYPES[:welcome_message_sent], comment)
   end
 
-  def self.record_automatically_closed(patient: nil, created_by: 'Sara Alert System', comment: 'Monitoree has completed monitoring.')
-    create_history(patient, created_by, HISTORY_TYPES[:record_automatically_closed], comment)
+  def self.record_automatically_closed(patient: nil, created_by: 'Sara Alert System', comment: 'Monitoree has completed monitoring.', create: true)
+    create_history(patient, created_by, HISTORY_TYPES[:record_automatically_closed], comment, create: create)
   end
 
   def self.monitoring_status(history)
@@ -378,11 +378,15 @@ class History < ApplicationRecord
     create_history(history[:patient], history[:created_by], HISTORY_TYPES[:monitoring_change], compose_message(history, field))
   end
 
-  private_class_method def self.create_history(patient, created_by, type, comment)
+  private_class_method def self.create_history(patient, created_by, type, comment, create: true)
     return if patient.nil?
 
     patient = patient.id if patient.respond_to?(:id)
-    History.create!(created_by: created_by, comment: comment, patient_id: patient, history_type: type)
+    if create
+      History.create!(created_by: created_by, comment: comment, patient_id: patient, history_type: type)
+    else
+      History.new(created_by: created_by, comment: comment, patient_id: patient, history_type: type)
+    end
   end
 
   private_class_method def self.compose_message(history, field)

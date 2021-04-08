@@ -713,6 +713,32 @@ class Patient < ApplicationRecord
       .end_of_monitoring_period
   }
 
+  # Patients are enrolled past the monitoring period OF:
+  # - `last_date_of_exposure` is NOT NULL
+  #    AND
+  # - `last_date_of_exposure` is more than `monitoring_period_days` days ago
+  scope :enrolled_past_monitoring_period, lambda {
+    where.not(last_date_of_exposure: nil)
+         .where(
+           'DATE_ADD(DATE(patients.last_date_of_exposure), INTERVAL ? DAY)'\
+           ' < DATE(patients.created_at)',
+           ADMIN_OPTIONS['monitoring_period_days']
+         )
+  }
+
+  # Patients are enrolled on the last day the monitoring period OF:
+  # - `last_date_of_exposure` is NOT NULL
+  #    AND
+  # - `last_date_of_exposure` + `monitoring_period_days` equals the `created_at` date
+  scope :enrolled_last_day_monitoring_period, lambda {
+    where.not(last_date_of_exposure: nil)
+         .where(
+           'DATE_ADD(DATE(patients.last_date_of_exposure), INTERVAL ? DAY)'\
+           ' = DATE(patients.created_at)',
+           ADMIN_OPTIONS['monitoring_period_days']
+         )
+  }
+
   # Gets the current date in the patient's timezone
   def curr_date_in_timezone
     Time.now.getlocal(address_timezone_offset)
