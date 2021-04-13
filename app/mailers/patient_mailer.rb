@@ -195,6 +195,25 @@ class PatientMailer < ApplicationMailer
     History.monitoring_complete_message_sent(patient: patient)
   end
 
+  def closed_sms(patient)
+    if patient&.primary_telephone.blank?
+      add_fail_history_blank_field(patient, 'primary phone number')
+      return
+    end
+    if patient.blocked_sms
+      add_fail_history_sms_blocked(patient)
+      return
+    end
+
+    lang = patient.select_language
+    contents = I18n.t('assessments.sms.closed.dear', locale: lang || :en)
+    contents += "#{patient&.initials_age('-')}.\n"
+    contents += I18n.t('assessments.sms.closed.thank-you', locale: lang || :en)
+
+    # Send message - this needs to be scheduled to send at a reasonable time
+    SendSmsJob.set(wait_until: patient.time_to_contact_next).perform_later(patient.id, contents)
+  end
+
   private
 
   def add_success_history(patient)

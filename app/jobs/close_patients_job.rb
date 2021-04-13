@@ -30,8 +30,14 @@ class ClosePatientsJob < ApplicationJob
         patient[:monitoring_reason] = 'Completed Monitoring (system)'
       end
 
-      # Send closed email to patient if they are a reporter
-      PatientMailer.closed_email(patient).deliver_later if patient.save! && patient.email.present? && patient.self_reporter_or_proxy?
+      # Send closed email or SMS to patient if they are a reporter
+      if patient.save! && patient.self_reporter_or_proxy?
+        if ['SMS Texted Weblink', 'SMS Text-message'].include? patient.preferred_contact_method
+          PatientMailer.closed_sms(patient)
+        elsif patient.email.present?
+          PatientMailer.closed_email(patient).deliver_later(wait_until: patient.time_to_contact_next)
+        end
+      end
 
       # History item for automatically closing the record
       History.record_automatically_closed(patient: patient)
