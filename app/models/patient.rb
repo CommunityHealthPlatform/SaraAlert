@@ -1113,6 +1113,34 @@ class Patient < ApplicationRecord
     end
   end
 
+  ##
+  # Takes the patient's preferred contact time and time zone into account to
+  # find the next Time that it would be acceptable to contact them.
+  #
+  # Examples
+  # - If currently in the contact time window, then it's ok to send now
+  # - If currently outside the contact time window, then return the next time
+  #   that the window starts
+  def time_to_contact_next
+    hour_window = case preferred_contact_time
+                  when 'Morning'
+                    8..12
+                  when 'Afternoon'
+                    12..16
+                  when 'Evening'
+                    16..19
+                  else
+                    12..16
+                  end
+    patient_local_time = Time.now.getlocal(address_timezone_offset)
+    local_time_hour = patient_local_time.hour
+    return patient_local_time if hour_window.include? local_time_hour
+
+    return patient_local_time.change(hour: hour_window.first, min: 0) if local_time_hour < hour_window.first
+
+    patient_local_time.tomorrow.change(hour: hour_window.first, min: 0)
+  end
+
   # Check last_assessment_reminder_sent for eligibility. This is chiefly intended to help cover potential race condition of
   # multiple reports being sent out for the same monitoree.
   def last_assessment_reminder_sent_eligible?

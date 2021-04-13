@@ -3105,6 +3105,85 @@ class PatientTest < ActiveSupport::TestCase
     end
     ADMIN_OPTIONS['reporting_period_minutes'] = original_reporting_period
   end
+
+  test 'time_to_contact_next method' do
+    morning_patient = create(:patient, preferred_contact_time: 'Morning')
+    afternoon_patient = create(:patient, preferred_contact_time: 'Afternoon')
+    evening_patient = create(:patient, preferred_contact_time: 'Evening')
+    unspec_patient = create(:patient, preferred_contact_time: nil)
+
+    patient_local_time = Time.now.getlocal(morning_patient.address_timezone_offset)
+
+    # Current time is before any of the time windows
+    Timecop.freeze(patient_local_time.change(hour: 5)) do
+      # Hour check
+      assert_equal morning_patient.time_to_contact_next.hour, 8
+      assert_equal afternoon_patient.time_to_contact_next.hour, 12
+      assert_equal evening_patient.time_to_contact_next.hour, 16
+      assert_equal unspec_patient.time_to_contact_next.hour, 12
+      # Day of month check
+      assert_equal morning_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal afternoon_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal evening_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal unspec_patient.time_to_contact_next.day, patient_local_time.day
+    end
+
+    # Current time is within the morning window
+    Timecop.freeze(patient_local_time.change(hour: 9)) do
+      # Hour check
+      assert_equal morning_patient.time_to_contact_next.hour, 9
+      assert_equal afternoon_patient.time_to_contact_next.hour, 12
+      assert_equal evening_patient.time_to_contact_next.hour, 16
+      assert_equal unspec_patient.time_to_contact_next.hour, 12
+      # Day of month check
+      assert_equal morning_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal afternoon_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal evening_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal unspec_patient.time_to_contact_next.day, patient_local_time.day
+    end
+
+    # Current time is within the afternoon & unspecified windows
+    Timecop.freeze(patient_local_time.change(hour: 14)) do
+      # Hour check
+      assert_equal morning_patient.time_to_contact_next.hour, 8
+      assert_equal afternoon_patient.time_to_contact_next.hour, 14
+      assert_equal evening_patient.time_to_contact_next.hour, 16
+      assert_equal unspec_patient.time_to_contact_next.hour, 14
+      # Day of month check
+      assert_equal morning_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
+      assert_equal afternoon_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal evening_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal unspec_patient.time_to_contact_next.day, patient_local_time.day
+    end
+
+    # Current time is within the evening window
+    Timecop.freeze(patient_local_time.change(hour: 18)) do
+      # Hour check
+      assert_equal morning_patient.time_to_contact_next.hour, 8
+      assert_equal afternoon_patient.time_to_contact_next.hour, 12
+      assert_equal evening_patient.time_to_contact_next.hour, 18
+      assert_equal unspec_patient.time_to_contact_next.hour, 12
+      # Day of month check
+      assert_equal morning_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
+      assert_equal afternoon_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
+      assert_equal evening_patient.time_to_contact_next.day, patient_local_time.day
+      assert_equal unspec_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
+    end
+
+    # Current time after all windows for the day
+    Timecop.freeze(patient_local_time.change(hour: 21)) do
+      # Hour check
+      assert_equal morning_patient.time_to_contact_next.hour, 8
+      assert_equal afternoon_patient.time_to_contact_next.hour, 12
+      assert_equal evening_patient.time_to_contact_next.hour, 16
+      assert_equal unspec_patient.time_to_contact_next.hour, 12
+      # Day of month check
+      assert_equal morning_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
+      assert_equal afternoon_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
+      assert_equal evening_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
+      assert_equal unspec_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
+    end
+  end
 end
 # rubocop:enable Metrics/ClassLength
 
