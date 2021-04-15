@@ -1,15 +1,15 @@
 import supportedLanguages from './supportedLanguages.json';
 
 export const advancedFilterOptions = [
-  
+
   /* BOOLEAN FILTER OPTIONS */
-  { 
+  {
     name: 'continous-exposure',
     title: 'Continuous Exposure (Boolean)',
     description: 'Monitorees who have continuous exposure enabled',
     type: 'boolean'
   },
-  { 
+  {
     name: 'hoh',
     title: 'Daily Reporters (Boolean)',
     description: 'Monitorees that are a Head of Household or self-reporter',
@@ -27,10 +27,10 @@ export const advancedFilterOptions = [
     description: 'Monitorees who are currently under active monitoring',
     type: 'boolean'
   },
-  { 
+  {
     name: 'never-responded',
     title: 'Never Reported (Boolean)',
-    description: 'Monitorees who have no reports', 
+    description: 'Monitorees who have no reports',
     type: 'boolean'
   },
   { name: 'paused',
@@ -38,7 +38,7 @@ export const advancedFilterOptions = [
     description: 'Monitorees who have paused notifications',
     type: 'boolean'
   },
-  { 
+  {
     name: 'require-interpretation',
     title: 'Requires Interpretation (Boolean)',
     description: 'Monitorees who require interpretation',
@@ -108,31 +108,31 @@ export const advancedFilterOptions = [
     description: 'Monitoree common exposure cohort name or description',
     type: 'search'
   },
-  { 
+  {
     name: 'email',
     title: 'Email (Text)',
     description: 'Monitoree email address',
     type: 'search'
   },
-  { 
+  {
     name: 'first-name',
     title: 'Name (First) (Text)',
     description: 'Monitoree first name',
     type: 'search'
   },
-  { 
+  {
     name: 'last-name',
     title: 'Name (Last) (Text)',
     description: 'Monitoree last name',
     type: 'search'
   },
-  { 
+  {
     name: 'middle-name',
     title: 'Name (Middle) (Text)',
     description: 'Monitoree middle name',
-    type: 'search' 
+    type: 'search'
   },
-  { 
+  {
     name: 'sara-id',
     title: 'Sara Alert ID (Text)',
     description: 'Monitoree Sara Alert ID',
@@ -279,18 +279,18 @@ export const advancedFilterOptions = [
         options: ['positive', 'negative', 'indeterminate', 'other']
       },
       {
-        name: 'test-type',
+        name: 'lab-type',
         title: 'test type',
         type: 'select',
         options: ['PCR', 'Antigen', 'Total Antibody', 'IgG Antibody', 'IgM Antibody', 'IgA Antibody', 'Other']
       },
       {
-        name: 'specimen-collection-date',
+        name: 'specimen-collection',
         title: 'specimen collection date',
         type: 'date'
       },
       {
-        name: 'report-date',
+        name: 'report',
         title: 'report',
         type: 'date'
       }
