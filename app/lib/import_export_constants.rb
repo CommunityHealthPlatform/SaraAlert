@@ -374,7 +374,8 @@ module ImportExportConstants # rubocop:todo Metrics/ModuleLength
     history_type: 'History Type',
     comment: 'History Comment',
     created_at: 'History Created Date',
-    updated_at: 'History Updated Date'
+    updated_at: 'History Updated Date',
+    was_edited: 'Has Been Edited'
   }.freeze
 
   ALL_FIELDS_NAMES = {

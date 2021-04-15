@@ -5,6 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import axios from 'axios';
 import reportError from '../util/ReportError';
 import confirmDialog from '../util/ConfirmDialog';
+
 import { formatTimestamp, formatRelativePast } from '../../utils/DateTime';
 
 class History extends React.Component {
@@ -122,7 +123,7 @@ class History extends React.Component {
             type="dark"
             effect="solid"
             className="tooltip-container">
-            You may edit comments you have added
+            <span>You may edit comments you have added</span>
           </ReactTooltip>
           <span data-for={`delete-history-item-${this.props.history.id}`} data-tip="">
             <Button variant="link" className="icon-btn p-0" onClick={this.delete} aria-label="Delete History Comment">
@@ -136,7 +137,7 @@ class History extends React.Component {
             type="dark"
             effect="solid"
             className="tooltip-container">
-            You may delete comments you have added
+            <span>You may delete comments you have added</span>
           </ReactTooltip>
         </div>
       </Col>

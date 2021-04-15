@@ -128,7 +128,7 @@ class HistoryList extends React.Component {
             </div>
           </Card.Header>
           <Card.Body className="py-0 px-1">
-            <Row className="mx-3 mt-3 justify-content-end">
+            <Row id="filters" className="mx-3 mt-3 justify-content-end">
               <Select
                 closeMenuOnSelect={false}
                 isMulti
