@@ -50,8 +50,7 @@ class HistoryList extends React.Component {
     this.setState({ [event.target.id]: event.target.value });
   };
 
-  onPageChange = displayedHistories => {
-    console.log('here')
+  onChangePage = displayedHistories => {
     this.setState({ displayedHistories });
   };
 
@@ -119,7 +118,7 @@ class HistoryList extends React.Component {
     const historiesArray = this.state.displayedHistories.map(history => (
       <History key={history.id} history={history} authenticity_token={this.props.authenticity_token} />
     ));
-    
+
     return (
       <React.Fragment>
         <Card id="histories" className="mx-2 mt-3 mb-4 card-square">
@@ -166,7 +165,7 @@ class HistoryList extends React.Component {
             </Row>
             {historiesArray}
             <Row className="mx-3 mt-3 justify-content-end">
-              <Pagination pageSize={5} maxPages={5} items={this.state.filteredHistories} onPageChange={this.onPageChange} />
+              <Pagination pageSize={5} maxPages={5} items={this.state.filteredHistories} onChangePage={this.onChangePage} />
             </Row>
             <Card className="mb-4 mt-4 mx-3 card-square shadow-sm">
               <Card.Header>Add Comment</Card.Header>
@@ -174,7 +173,7 @@ class HistoryList extends React.Component {
                 <textarea
                   id="comment"
                   name="comment"
-                  aria-label="Add comment"
+                  aria-label="Add comment input"
                   className="form-control"
                   style={{ resize: 'none' }}
                   rows="3"

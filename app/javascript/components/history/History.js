@@ -88,6 +88,7 @@ class History extends React.Component {
           id="comment"
           name="comment"
           className="form-control"
+          aria-label="Edit comment input"
           style={{ resize: 'none' }}
           rows="3"
           value={this.state.comment}
