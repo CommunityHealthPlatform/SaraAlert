@@ -19,15 +19,35 @@ class History extends React.Component {
   }
 
   handleChange = event => {
-    this.setState({ comment: event.target.value });
+    this.setState({ [event.target.id]: event.target.value });
   };
 
   edit = () => {
-    this.setState({ editMode: true });
+    this.setState({ loading: true }, () => {
+      axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
+      axios
+        .patch(window.BASE_PATH + '/histories/' + this.props.history.id, {
+          comment: this.state.comment,
+        })
+        .then(() => {
+          location.reload(true);
+        })
+        .catch(error => {
+          reportError(error);
+        });
+    });
   };
 
+  handleEditClick = () => {
+    this.setState({ editMode: true });
+  }
+
   handleEditCancel = () => {
-    this.setState({ editMode: false });
+    this.setState({ editMode: false, comment: this.props.history.comment });
+  };
+
+  handleEditSubmit = () => {
+    this.edit();
   };
 
   delete = async () => {
@@ -43,27 +63,15 @@ class History extends React.Component {
     }
   };
 
+  handleDeleteClick = () => {
+    this.delete();
+  }
+
   handleDeleteSubmit = () => {
     this.setState({ loading: true }, () => {
       axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
       axios
         .delete(window.BASE_PATH + '/histories/' + this.props.history.id)
-        .then(() => {
-          location.reload(true);
-        })
-        .catch(error => {
-          reportError(error);
-        });
-    });
-  };
-
-  handleEditSubmit = () => {
-    this.setState({ loading: true }, () => {
-      axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
-      axios
-        .patch(window.BASE_PATH + '/histories/' + this.props.history.id, {
-          comment: this.state.comment,
-        })
         .then(() => {
           location.reload(true);
         })
@@ -86,6 +94,7 @@ class History extends React.Component {
           onChange={this.handleChange}
         />
         <Button
+          id="update-edit-history-btn"
           variant="primary"
           size="sm"
           className="float-right mt-2"
@@ -95,6 +104,7 @@ class History extends React.Component {
           Update
         </Button>
         <Button
+          id="cancel-edit-history-btn"
           variant="primary"
           size="sm"
           className="float-right mt-2 mr-2"
@@ -110,9 +120,9 @@ class History extends React.Component {
   renderActionButtons() {
     return (
       <Col>
-        <div className="float-right">
+        <div className="float-right" style={{ width: '45px' }}>
           <span data-for={`edit-history-item-${this.props.history.id}`} data-tip="">
-            <Button variant="link" className="icon-btn p-0 mr-1" onClick={this.edit} aria-label="Edit History Comment">
+            <Button id="edit-history-btn" variant="link" className="icon-btn p-0 mr-1" onClick={this.handleEditClick} aria-label="Edit History Comment">
               <i className="fas fa-edit"></i>
             </Button>
           </span>
@@ -126,7 +136,7 @@ class History extends React.Component {
             <span>You may edit comments you have added</span>
           </ReactTooltip>
           <span data-for={`delete-history-item-${this.props.history.id}`} data-tip="">
-            <Button variant="link" className="icon-btn p-0" onClick={this.delete} aria-label="Delete History Comment">
+            <Button id="delete-history-btn" variant="link" className="icon-btn p-0" onClick={this.handleDeleteClick} aria-label="Delete History Comment">
               <i className="fas fa-trash"></i>
             </Button>
           </span>
@@ -161,7 +171,7 @@ class History extends React.Component {
               this.renderEditMode()
             ) : (
               <Row>
-                <Col>
+                <Col md="auto">
                   {this.props.history.comment}
                   {this.props.history.was_edited && <i className="edit-text"> (edited)</i>}
                 </Col>

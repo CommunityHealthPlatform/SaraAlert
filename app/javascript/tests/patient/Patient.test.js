@@ -30,10 +30,6 @@ const riskFactors = [
   { key: 'Crew on Passenger or Cargo Flight', val: null },
 ];
 
-beforeEach(() => {
-  window.BASE_PATH = ""
-})
-
 describe('Patient', () => {
   it('Properly renders all main components when not in edit mode', () => {
     const wrapper = shallow(<Patient details={mockPatient1} dependents={[ mockPatient2 ]} hideBody={true} edit_mode={false}

@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { PropTypes } from 'prop-types';
-import { Card, Row } from 'react-bootstrap';
+import { Button, Card, Row } from 'react-bootstrap';
 import Pagination from 'jw-react-pagination';
 import Select from 'react-select';
 import axios from 'axios';
@@ -19,8 +19,9 @@ class HistoryList extends React.Component {
       comment: '',
       filters: { typeFilters: [], creatorFilters: [] },
       filteredHistories: this.props.histories,
-      pageOfHistories: [],
+      displayedHistories: this.props.histories.slice(0,5),
     };
+
     this.creatorFilterData = [
       {
         label: 'History Creator',
@@ -45,12 +46,13 @@ class HistoryList extends React.Component {
     }
   }
 
-  handleTextChange = event => {
-    this.setState({ comment: event.target.value });
+  handleChange = event => {
+    this.setState({ [event.target.id]: event.target.value });
   };
 
-  onChangePage = pageOfHistories => {
-    this.setState({ pageOfHistories });
+  onPageChange = displayedHistories => {
+    console.log('here')
+    this.setState({ displayedHistories });
   };
 
   submit = () => {
@@ -84,6 +86,7 @@ class HistoryList extends React.Component {
     }
     this.setState({
       filteredHistories,
+      displayedHistories: filteredHistories.slice(0,5)
     });
   };
 
@@ -100,7 +103,7 @@ class HistoryList extends React.Component {
     }
     this.setState(
       {
-        selectedFilters,
+        filters,
       },
       () => {
         this.filterHistories();
@@ -113,17 +116,18 @@ class HistoryList extends React.Component {
   handleCreatorFilterChange = inputValue => this.handleFilterChange(inputValue, 'History Creator');
 
   render() {
-    const historiesArray = this.state.pageOfHistories.map(history => (
+    const historiesArray = this.state.displayedHistories.map(history => (
       <History key={history.id} history={history} authenticity_token={this.props.authenticity_token} />
     ));
+    
     return (
       <React.Fragment>
         <Card id="histories" className="mx-2 mt-3 mb-4 card-square">
           <Card.Header>
             <div className="d-flex flex-row align-items-center">
               <div className="float-left flex-grow-1 mb-0 h5">
-                <span>History </span>
-                <InfoTooltip tooltipTextKey="history" location="right"></InfoTooltip>
+                <span>History</span>
+                <InfoTooltip tooltipTextKey="history" location="right" className="pl-1"></InfoTooltip>
               </div>
             </div>
           </Card.Header>
@@ -162,7 +166,7 @@ class HistoryList extends React.Component {
             </Row>
             {historiesArray}
             <Row className="mx-3 mt-3 justify-content-end">
-              <Pagination pageSize={5} maxPages={5} items={this.state.filteredHistories} onChangePage={this.onChangePage} />
+              <Pagination pageSize={5} maxPages={5} items={this.state.filteredHistories} onPageChange={this.onPageChange} />
             </Row>
             <Card className="mb-4 mt-4 mx-3 card-square shadow-sm">
               <Card.Header>Add Comment</Card.Header>
@@ -176,14 +180,15 @@ class HistoryList extends React.Component {
                   rows="3"
                   placeholder="enter comment here..."
                   value={this.state.comment}
-                  onChange={this.handleTextChange}
+                  onChange={this.handleChange}
                 />
-                <button
-                  className="mt-3 btn btn-primary btn-square float-right"
+                <Button
+                  variant="primary"
+                  className="mt-3 btn btn-square float-right"
                   disabled={this.state.loading || this.state.comment === ''}
                   onClick={this.submit}>
                   <i className="fas fa-comment-dots"></i> Add Comment
-                </button>
+                </Button>
               </Card.Body>
             </Card>
           </Card.Body>
