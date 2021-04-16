@@ -1,9 +1,9 @@
-import React from 'react'
+import React from 'react';
 import { shallow } from 'enzyme';
 import { Button, Card, Col } from 'react-bootstrap';
 import _ from 'lodash';
-import History from '../../../components/patient/history/History.js'
-import { mockHistory1, mockHistory2, mockHistory3 } from '../../mocks/mockHistories'
+import History from '../../../components/patient/history/History';
+import { mockHistory1, mockHistory2, mockHistory3 } from '../../mocks/mockHistories';
 import { formatTimestamp, formatRelativePast } from '../../../utils/DateTime';
 import ReactTooltip from 'react-tooltip';
 
