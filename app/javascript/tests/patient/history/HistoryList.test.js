@@ -1,12 +1,12 @@
 import React from 'react'
 import { shallow } from 'enzyme';
 import { Button, Card } from 'react-bootstrap';
-import InfoTooltip from '../../components/util/InfoTooltip';
 import Select from 'react-select';
 import Pagination from 'jw-react-pagination';
-import HistoryList from '../../components/history/HistoryList.js'
-import History from '../../components/history/History.js'
-import { mockHistory1, mockHistory2, mockHistory3 } from '../mocks/mockHistories'
+import HistoryList from '../../../components/patient/history/HistoryList.js'
+import History from '../../../components/patient/history/History.js'
+import InfoTooltip from '../../../components/util/InfoTooltip';
+import { mockHistory1, mockHistory2, mockHistory3 } from '../../mocks/mockHistories'
 
 const authyToken = 'Q1z4yZXLdN+tZod6dBSIlMbZ3yWAUFdY44U06QWffEP76nx1WGMHIz8rYxEUZsl9sspS3ePF2ZNmSue8wFpJGg==';
 const mockHistories = [ mockHistory1, mockHistory2, mockHistory3 ];

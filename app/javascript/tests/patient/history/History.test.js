@@ -2,9 +2,9 @@ import React from 'react'
 import { shallow } from 'enzyme';
 import { Button, Card, Col } from 'react-bootstrap';
 import _ from 'lodash';
-import History from '../../components/history/History.js'
-import { mockHistory1, mockHistory2, mockHistory3 } from '../mocks/mockHistories'
-import { formatTimestamp, formatRelativePast } from '../../utils/DateTime';
+import History from '../../../components/patient/history/History.js'
+import { mockHistory1, mockHistory2, mockHistory3 } from '../../mocks/mockHistories'
+import { formatTimestamp, formatRelativePast } from '../../../utils/DateTime';
 import ReactTooltip from 'react-tooltip';
 
 const authyToken = 'Q1z4yZXLdN+tZod6dBSIlMbZ3yWAUFdY44U06QWffEP76nx1WGMHIz8rYxEUZsl9sspS3ePF2ZNmSue8wFpJGg==';

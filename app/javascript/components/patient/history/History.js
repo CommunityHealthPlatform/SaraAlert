@@ -3,10 +3,9 @@ import { PropTypes } from 'prop-types';
 import { Button, Card, Col, Row } from 'react-bootstrap';
 import ReactTooltip from 'react-tooltip';
 import axios from 'axios';
-import reportError from '../util/ReportError';
-import confirmDialog from '../util/ConfirmDialog';
-
-import { formatTimestamp, formatRelativePast } from '../../utils/DateTime';
+import reportError from '../../util/ReportError';
+import confirmDialog from '../../util/ConfirmDialog';
+import { formatTimestamp, formatRelativePast } from '../../../utils/DateTime';
 
 class History extends React.Component {
   constructor(props) {

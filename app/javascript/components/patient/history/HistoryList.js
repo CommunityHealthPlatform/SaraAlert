@@ -7,8 +7,8 @@ import Select from 'react-select';
 import axios from 'axios';
 
 import History from './History';
-import InfoTooltip from '../util/InfoTooltip';
-import reportError from '../util/ReportError';
+import InfoTooltip from '../../util/InfoTooltip';
+import reportError from '../../util/ReportError';
 
 class HistoryList extends React.Component {
   constructor(props) {
