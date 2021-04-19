@@ -206,12 +206,9 @@ class PatientMailer < ApplicationMailer
     end
 
     lang = patient.select_language
-    contents = I18n.t('assessments.sms.closed.dear', locale: lang || :en)
-    contents += "#{patient&.initials_age('-')}.\n"
-    contents += I18n.t('assessments.sms.closed.thank-you', locale: lang || :en)
+    contents = I18n.t('assessments.sms.closed.thank-you', initials_age: patient&.initials_age('-'), locale: lang)
 
-    # Send message - this needs to be scheduled to send at a reasonable time
-    SendSmsJob.set(wait_until: patient.time_to_contact_next).perform_later(patient.id, contents)
+    TwilioSender.send_sms(patient, contents)
   end
 
   private

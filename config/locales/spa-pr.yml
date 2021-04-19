@@ -125,8 +125,7 @@ spa-pr:
       weblink:
         intro: 'Complete el Informe diario de Sara Alert para'
       closed:
-        dear: 'Estimado/a'
-        thank-you: '¡Su reporte de Sara Alert está completo! Gracias por su participación.'
+        thank-you: "%{initials_age}"
     phone:
       intro: 'Hola, soy Sara, la asistente de salud pública automatizada que solicita su informe diario.'
       try-again: "Lo siento, no entendí. Intentemoslo de nuevo."

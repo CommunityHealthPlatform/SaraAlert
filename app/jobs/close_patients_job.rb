@@ -33,7 +33,7 @@ class ClosePatientsJob < ApplicationJob
       # Send closed email or SMS to patient if they are a reporter
       if patient.save! && patient.self_reporter_or_proxy?
         if ['SMS Texted Weblink', 'SMS Text-message'].include? patient.preferred_contact_method
-          PatientMailer.closed_sms(patient)
+          PatientMailer.closed_sms(patient).deliver_later(wait_until: patient.time_to_contact_next)
         elsif patient.email.present?
           PatientMailer.closed_email(patient).deliver_later(wait_until: patient.time_to_contact_next)
         end

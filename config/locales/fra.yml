@@ -125,8 +125,7 @@ fra:
       weblink:
         intro: 'Veuillez remplir le rapport quotidien de Sara Alert pour'
       closed:
-        dear: 'Cher/Chère'
-        thank-you: "Votre surveillance d’Alerte Sara est maintenant terminée ! Merci pour votre participation."
+        thank-you: "%{initials_age}"
     phone:
       intro: "Bonjour, voici Sara, l'assistante de santé publique automatisée qui demande votre rapport quotidien."
       try-again: "Je suis désolé, je n'ai pas compris. Essayons encore."
