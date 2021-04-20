@@ -185,7 +185,10 @@ class PatientMailer < ApplicationMailer
   end
 
   def closed_email(patient)
-    return if patient&.email.blank?
+    if patient&.email.blank?
+      add_fail_history_closed_blank_field(patient, 'email')
+      return
+    end
 
     @patient = patient
     @lang = patient.select_language
@@ -197,18 +200,18 @@ class PatientMailer < ApplicationMailer
 
   def closed_sms(patient)
     if patient&.primary_telephone.blank?
-      add_fail_history_blank_field(patient, 'primary phone number')
+      add_fail_history_closed_blank_field(patient, 'primary phone number')
       return
     end
     if patient.blocked_sms
-      add_fail_history_sms_blocked(patient)
+      TwilioSender.handle_twilio_error_codes(patient, TwilioSender::TWILIO_ERROR_CODES[:blocked_number][:code])
       return
     end
 
     lang = patient.select_language
     contents = I18n.t('assessments.sms.closed.thank-you', initials_age: patient&.initials_age('-'), locale: lang)
 
-    TwilioSender.send_sms(patient, contents)
+    TwilioSender.send_sms(patient, [contents])
   end
 
   private
@@ -226,5 +229,12 @@ class PatientMailer < ApplicationMailer
     History.unsuccessful_report_reminder(patient: patient,
                                          comment: "Sara Alert could not send a report reminder to this monitoree via \
                                      #{patient.preferred_contact_method}, because the monitoree #{type} was blank.")
+  end
+
+  def add_fail_history_closed_blank_field(patient, type)
+    History.record_automatically_closed(patient: patient,
+                                        comment: 'The system was unable to send a monitoring complete message to this monitoree '\
+                                                 "because their preferred contact method, #{type}, "\
+                                                 'was blank.')
   end
 end

@@ -5,11 +5,13 @@ require 'test_case'
 class ClosePatientsJobTest < ActiveSupport::TestCase
   def setup
     ADMIN_OPTIONS['job_run_email'] = 'test@test.com'
+    ENV['TWILLIO_STUDIO_FLOW'] = 'TEST'
     ActionMailer::Base.deliveries.clear
   end
 
   def teardown
     ADMIN_OPTIONS['job_run_email'] = nil
+    ENV['TWILLIO_STUDIO_FLOW'] = nil
   end
 
   test 'handles case where last date of exposure is nil' do
@@ -118,7 +120,8 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                      public_health_action: 'None',
                      latest_assessment_at: Time.now,
                      last_date_of_exposure: 20.days.ago,
-                     email: 'testpatient@example.com')
+                     email: 'testpatient@example.com',
+                     preferred_contact_method: 'E-mailed Web Link')
 
     ClosePatientsJob.perform_now
     assert_equal(ActionMailer::Base.deliveries.count, 2)
@@ -126,6 +129,65 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
     assert_includes(close_email.to_s, 'Sara Alert Reporting Complete')
     assert_equal(close_email.to[0], patient.email)
     assert_contains_history(patient, 'Monitoring Complete message was sent.')
+    assert_contains_history(patient, 'because the monitoree email was blank.')
+    assert_not_contains_history(patient, 'Monitoree has completed monitoring.')
+  end
+
+  ['Telephone call', 'Opt-out', 'Unknown', nil, ''].each do |preferred_contact_method|
+    test "no email notification for unsupported preferred contact method #{preferred_contact_method || 'nil'}" do
+      patient = create(:patient,
+                       purged: false,
+                       isolation: false,
+                       monitoring: true,
+                       symptom_onset: nil,
+                       public_health_action: 'None',
+                       latest_assessment_at: Time.now,
+                       last_date_of_exposure: 20.days.ago,
+                       email: 'testpatient@example.com',
+                       preferred_contact_method: preferred_contact_method)
+
+      ClosePatientsJob.perform_now
+      assert history_that_contains?(patient, 'because the preferred contact method is not supported')
+      assert history_that_contains?(patient, 'Monitoree has completed monitoring.')
+    end
+  end
+
+  ['SMS Texted Weblink', 'SMS Text-message', 'E-mailed Web Link'].each do |preferred_contact_method|
+    test "does not send closed notification if #{preferred_contact_method} preferred and field is blank" do
+      patient = create(:patient,
+                       purged: false,
+                       isolation: false,
+                       monitoring: true,
+                       symptom_onset: nil,
+                       public_health_action: 'None',
+                       latest_assessment_at: Time.now,
+                       last_date_of_exposure: 20.days.ago,
+                       preferred_contact_method: preferred_contact_method)
+
+      ClosePatientsJob.perform_now
+      method_text = preferred_contact_method == 'E-mailed Web Link' ? 'email' : 'primary phone number'
+      assert history_that_contains?(patient, "because their preferred contact method, #{method_text}, was blank.")
+      assert history_that_contains?(patient, 'Monitoree has completed monitoring.')
+    end
+
+    test "sends closed email if closed record is a reporter with #{preferred_contact_method} preferred" do
+      patient = create(:patient,
+                       purged: false,
+                       isolation: false,
+                       monitoring: true,
+                       symptom_onset: nil,
+                       public_health_action: 'None',
+                       latest_assessment_at: Time.now,
+                       last_date_of_exposure: 20.days.ago,
+                       email: 'testpatient@example.com',
+                       primary_telephone: '+12223334444',
+                       preferred_contact_method: preferred_contact_method)
+
+      ClosePatientsJob.perform_now
+      method_text = preferred_contact_method == 'E-mailed Web Link' ? 'email' : 'primary phone number'
+      assert_not history_that_contains?(patient, "because their preferred contact method, #{method_text}, was blank.")
+      assert history_that_contains?(patient, 'Monitoree has completed monitoring.')
+    end
   end
 
   test 'sends an admin email with all closed monitorees' do

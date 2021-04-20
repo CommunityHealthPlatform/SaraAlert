@@ -32,10 +32,18 @@ class ClosePatientsJob < ApplicationJob
 
       # Send closed email or SMS to patient if they are a reporter
       if patient.save! && patient.self_reporter_or_proxy?
-        if ['SMS Texted Weblink', 'SMS Text-message'].include? patient.preferred_contact_method
+        contact_method = patient.preferred_contact_method&.downcase
+        if ['sms texted weblink', 'sms text-message'].include? contact_method
           PatientMailer.closed_sms(patient).deliver_later(wait_until: patient.time_to_contact_next)
-        elsif patient.email.present?
+        elsif contact_method == 'e-mailed web link'
           PatientMailer.closed_email(patient).deliver_later(wait_until: patient.time_to_contact_next)
+        else
+          History.record_automatically_closed(
+            patient: patient,
+            comment: 'The system was unable to send a closed notification to this patient via '\
+                     "#{patient.preferred_contact_method}, because the preferred contact method is not supported"\
+                     'for closed notifications.'
+          )
         end
       end
 
