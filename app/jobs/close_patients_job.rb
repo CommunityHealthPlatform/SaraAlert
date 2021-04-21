@@ -38,11 +38,11 @@ class ClosePatientsJob < ApplicationJob
         elsif contact_method == 'e-mailed web link'
           PatientMailer.closed_email(patient).deliver_later(wait_until: patient.time_to_contact_next)
         else
+          history_friendly_method = patient.preferred_contact_method.blank? ? patient.preferred_contact_method : 'Unknown'
           History.record_automatically_closed(
             patient: patient,
-            comment: 'The system was unable to send a closed notification to this patient via '\
-                     "#{patient.preferred_contact_method}, because the preferred contact method is not supported"\
-                     'for closed notifications.'
+            comment: 'The system was unable to send a monitoring complete message to this monitoree because their'\
+                     "preferred contact method, #{history_friendly_method}, is not supported for this message type."
           )
         end
       end

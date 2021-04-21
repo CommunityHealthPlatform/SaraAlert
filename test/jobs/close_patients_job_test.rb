@@ -147,7 +147,8 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                        preferred_contact_method: preferred_contact_method)
 
       ClosePatientsJob.perform_now
-      assert history_that_contains?(patient, 'because the preferred contact method is not supported')
+      history_friendly_method = patient.preferred_contact_method.blank? ? patient.preferred_contact_method : 'Unknown'
+      assert history_that_contains?(patient, "#{history_friendly_method}, is not supported for this message type.")
       assert history_that_contains?(patient, 'Monitoree has completed monitoring.')
     end
   end
