@@ -106,6 +106,37 @@ class CloseContact extends React.Component {
     }
   };
 
+  delete = async () => {
+    const confirmText = 'Are you sure you would like to delete this close contact? This action cannot be undone.';
+    const options = {
+      title: 'Close Contact',
+      okLabel: 'Delete',
+      okVariant: 'danger',
+      cancelLabel: 'Cancel',
+    };
+    if (await confirmDialog(confirmText, options)) {
+      this.handleDeleteSubmit();
+    }
+  };
+
+  handleDeleteClick = () => {
+    this.delete();
+  };
+
+  handleDeleteSubmit = () => {
+    this.setState({ loading: true }, () => {
+      axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
+      axios
+        .delete(window.BASE_PATH + '/close_contacts/' + this.props.close_contact.id)
+        .then(() => {
+          location.reload(true);
+        })
+        .catch(error => {
+          reportError(error);
+        });
+    });
+  };
+
   submit = () => {
     schema
       .validate({ ...this.state }, { abortEarly: false })
@@ -304,6 +335,10 @@ class CloseContact extends React.Component {
               <div className="pl-2"></div>
               <Button variant="link" onClick={this.contactAttempt} className="btn btn-link py-0" size="sm">
                 <i className="fas fa-phone fa-flip-horizontal"></i> Contact Attempt
+              </Button>
+              <div className="pl-2"></div>
+              <Button variant="link" onClick={this.handleDeleteClick} className="btn btn-link py-0" size="sm">
+                <i className="fas fa-trash"></i> Delete
               </Button>
             </React.Fragment>
           </div>

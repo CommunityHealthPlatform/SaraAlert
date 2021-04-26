@@ -54,4 +54,11 @@ class CloseContactsController < ApplicationController
                                created_by: current_user.email,
                                comment: "User edited a close contact (ID: #{cc.id}).")
   end
+
+  # Delete an existing close contact record
+  def destroy
+    redirect_to root_url unless current_user.can_create_patient_close_contacts?
+    cc = CloseContact.find_by(id: params.permit(:id)[:id])
+    cc.destroy
+  end
 end
