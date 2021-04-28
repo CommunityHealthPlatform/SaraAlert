@@ -127,7 +127,11 @@ class CloseContact extends React.Component {
     this.setState({ loading: true }, () => {
       axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
       axios
-        .delete(window.BASE_PATH + '/close_contacts/' + this.props.close_contact.id)
+        .delete(window.BASE_PATH + '/close_contacts/' + this.props.close_contact.id, {
+          data: {
+            patient_id: this.props.patient.id,
+          },
+        })
         .then(() => {
           location.reload(true);
         })

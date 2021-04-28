@@ -58,7 +58,6 @@ class CloseContactsController < ApplicationController
   # Delete an existing close contact record
   def destroy
     redirect_to root_url unless current_user.can_create_patient_close_contacts?
-    cc = CloseContact.find_by(id: params.permit(:id)[:id])
-    cc.destroy
+    cc = current_user.get_patient(params.permit(:patient_id)[:patient_id])&.close_contacts.find_by(id: params.permit(:id)[:id])&.destroy
   end
 end
