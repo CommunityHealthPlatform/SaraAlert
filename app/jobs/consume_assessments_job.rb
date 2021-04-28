@@ -7,7 +7,7 @@ require 'redis-queue'
 class ConsumeAssessmentsJob < ApplicationJob
   queue_as :default
 
-  def perform
+  def perform(msg)
     queue = Redis::Queue.new('q_bridge', 'bp_q_bridge', redis: Rails.application.config.redis)
 
     while (msg = queue.pop)
