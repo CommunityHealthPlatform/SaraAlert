@@ -17,14 +17,7 @@ class Exposure extends React.Component {
     super(props);
     this.state = {
       ...this.props,
-      current: {
-        ...this.props.currentState,
-        patient: {
-          ...this.props.currentState.patient,
-          no_reported_symptoms:
-            this.props.edit_mode && this.props.patient.isolation && !this.props.patient.symptom_onset && !this.props.symptomatic_assessments_exist,
-        },
-      },
+      current: this.props.currentState,
       errors: {},
       modified: {},
       sorted_jurisdiction_paths: _.values(this.props.jurisdiction_paths).sort((a, b) => a.localeCompare(b)),
@@ -181,7 +174,7 @@ class Exposure extends React.Component {
       this.updateSOandNRSValidations({
         ...this.props.currentState.patient,
         no_reported_symptoms:
-          this.props.edit_mode && this.props.patient.isolation && !this.props.patient.symptom_onset && !this.props.symptomatic_assessments_exist,
+          this.props.edit_mode && this.props.patient.isolation && !this.props.patient.symptom_onset && !this.props.symptomaticAssessmentsExist,
       });
     } else {
       this.updateLDEandCEValidations(this.props.patient);
@@ -253,52 +246,7 @@ class Exposure extends React.Component {
   };
 
   updateSOandNRSValidations = patient => {
-    if (!patient.symptom_onset && !patient.no_reported_symptoms) {
-      schema = yup.object().shape({
-        ...staticValidations,
-        symptom_onset: yup
-          .date('Date must correspond to the "mm/dd/yyyy" format.')
-          .max(
-            moment()
-              .add(30, 'days')
-              .toDate(),
-            'Date can not be more than 30 days in the future.'
-          )
-          .required('Please enter a Symptom Onset Date OR select No Reported Symptoms and enter a first positive lab result')
-          .nullable(),
-        no_reported_symptoms: yup.bool().nullable(),
-      });
-    } else if (!patient.symptom_onset && patient.no_reported_symptoms) {
-      schema = yup.object().shape({
-        ...staticValidations,
-        symptom_onset: yup
-          .date('Date must correspond to the "mm/dd/yyyy" format.')
-          .oneOf([null, undefined])
-          .nullable(),
-        no_reported_symptoms: yup
-          .bool()
-          .oneOf([true])
-          .nullable(),
-      });
-    } else if (patient.symptom_onset && !patient.no_reported_symptoms) {
-      schema = yup.object().shape({
-        ...staticValidations,
-        symptom_onset: yup
-          .date('Date must correspond to the "mm/dd/yyyy" format.')
-          .max(
-            moment()
-              .add(30, 'days')
-              .toDate(),
-            'Date can not be more than 30 days in the future.'
-          )
-          .required('Please enter a Symptom Onset Date')
-          .nullable(),
-        no_reported_symptoms: yup
-          .bool()
-          .oneOf([null, undefined, false])
-          .nullable(),
-      });
-    } else {
+    if (patient.symptom_onset && patient.no_reported_symptoms) {
       schema = yup.object().shape({
         ...staticValidations,
         symptom_onset: yup
@@ -306,6 +254,20 @@ class Exposure extends React.Component {
           .oneOf([null, undefined], 'Please enter a Symptom Onset Date OR select No Reported Symptoms, but not both.')
           .nullable(),
         continuous_exposure: yup.bool().nullable(),
+      });
+    } else {
+      schema = yup.object().shape({
+        ...staticValidations,
+        symptom_onset: yup
+          .date('Date must correspond to the "mm/dd/yyyy" format.')
+          .max(
+            moment()
+              .add(30, 'days')
+              .toDate(),
+            'Date can not be more than 30 days in the future.'
+          )
+          .nullable(),
+        no_reported_symptoms: yup.bool().nullable(),
       });
     }
     this.setState(state => {
@@ -383,7 +345,7 @@ class Exposure extends React.Component {
               isInvalid={!!this.state.errors['symptom_onset']}
               customClass="form-control-lg"
               ariaLabel="Symptom Onset Date Input"
-              isClearable={!this.props.symptomatic_assessments_exist}
+              isClearable={!this.props.symptomaticAssessmentsExist}
             />
             <Form.Control.Feedback className="d-block" type="invalid">
               {this.state.errors['symptom_onset']}
@@ -422,9 +384,9 @@ class Exposure extends React.Component {
               className="ml-1 d-inline"
               checked={!!this.state.current.patient.no_reported_symptoms}
               onChange={this.handleChange}
-              disabled={this.props.symptomatic_assessments_exist}
+              disabled={this.props.symptomaticAssessmentsExist}
             />
-            <InfoTooltip tooltipTextKey={this.props.symptomatic_assessments_exist ? 'noReportedSymptomsDisabled' : 'noReportedSymptoms'} location="right" />
+            <InfoTooltip tooltipTextKey={this.props.symptomaticAssessmentsExist ? 'noReportedSymptomsDisabled' : 'noReportedSymptoms'} location="right" />
           </Form.Group>
           <Form.Group
             as={Col}
@@ -1046,7 +1008,7 @@ Exposure.propTypes = {
   assigned_users: PropTypes.array,
   selected_jurisdiction: PropTypes.object,
   first_positive_lab: PropTypes.object,
-  symptomatic_assessments_exist: PropTypes.bool,
+  symptomaticAssessmentsExist: PropTypes.bool,
   edit_mode: PropTypes.bool,
   authenticity_token: PropTypes.string,
 };

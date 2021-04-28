@@ -718,6 +718,7 @@ class PatientsController < ApplicationController
       :jurisdiction_id,
       :assigned_user,
       :symptom_onset,
+      :no_reported_symptoms,
       :extended_isolation,
       :case_status,
       :continuous_exposure,

@@ -53,6 +53,7 @@ module PatientHelper
       isolation
       pause_notifications
       symptom_onset
+      no_reported_symptoms
       case_status
       assigned_user
       last_date_of_exposure
