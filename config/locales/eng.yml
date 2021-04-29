@@ -125,7 +125,7 @@ eng:
       weblink:
         intro: 'Please complete the Sara Alert Daily Report for'
       closed:
-        thank-you: "Sara Alert monitoring for %{initials_age} is now complete! Thank you for your participation."
+        thank-you: "Sara Alert monitoring for %{initials_age} completed on %{completed_date}! Thank you for your participation."
     phone:
       intro: 'Hello, this is Sara, the automated public health assistant calling for your daily report.'
       try-again: "I'm sorry, I didn't quite get that. Let's try again."

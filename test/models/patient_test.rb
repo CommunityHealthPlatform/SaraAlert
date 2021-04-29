@@ -3184,6 +3184,85 @@ class PatientTest < ActiveSupport::TestCase
       assert_equal unspec_patient.time_to_contact_next.day, patient_local_time.tomorrow.day
     end
   end
+
+  test 'time_to_notify_closed method' do
+    morning_patient = create(:patient, preferred_contact_time: 'Morning')
+    afternoon_patient = create(:patient, preferred_contact_time: 'Afternoon')
+    evening_patient = create(:patient, preferred_contact_time: 'Evening')
+    unspec_patient = create(:patient, preferred_contact_time: nil)
+
+    patient_local_time = Time.now.getlocal(morning_patient.address_timezone_offset)
+
+    # Current time is before 8am
+    Timecop.freeze(patient_local_time.change(hour: 5)) do
+      # Hour check
+      assert_equal morning_patient.time_to_notify_closed.hour, 8
+      assert_equal afternoon_patient.time_to_notify_closed.hour, 8
+      assert_equal evening_patient.time_to_notify_closed.hour, 8
+      assert_equal unspec_patient.time_to_notify_closed.hour, 8
+      # Day of month check
+      assert_equal morning_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal afternoon_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal evening_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal unspec_patient.time_to_notify_closed.day, patient_local_time.day
+    end
+
+    # Current time is within 8am - 8pm
+    Timecop.freeze(patient_local_time.change(hour: 8)) do
+      # Hour check
+      assert_equal morning_patient.time_to_notify_closed.hour, 8
+      assert_equal afternoon_patient.time_to_notify_closed.hour, 8
+      assert_equal evening_patient.time_to_notify_closed.hour, 8
+      assert_equal unspec_patient.time_to_notify_closed.hour, 8
+      # Day of month check
+      assert_equal morning_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal afternoon_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal evening_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal unspec_patient.time_to_notify_closed.day, patient_local_time.day
+    end
+
+    # Current time is within 8am - 8pm
+    Timecop.freeze(patient_local_time.change(hour: 13)) do
+      # Hour check
+      assert_equal morning_patient.time_to_notify_closed.hour, 13
+      assert_equal afternoon_patient.time_to_notify_closed.hour, 13
+      assert_equal evening_patient.time_to_notify_closed.hour, 13
+      assert_equal unspec_patient.time_to_notify_closed.hour, 13
+      # Day of month check
+      assert_equal morning_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal afternoon_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal evening_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal unspec_patient.time_to_notify_closed.day, patient_local_time.day
+    end
+
+    # Current time is within 8am - 8pm
+    Timecop.freeze(patient_local_time.change(hour: 19)) do
+      # Hour check
+      assert_equal morning_patient.time_to_notify_closed.hour, 19
+      assert_equal afternoon_patient.time_to_notify_closed.hour, 19
+      assert_equal evening_patient.time_to_notify_closed.hour, 19
+      assert_equal unspec_patient.time_to_notify_closed.hour, 19
+      # Day of month check
+      assert_equal morning_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal afternoon_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal evening_patient.time_to_notify_closed.day, patient_local_time.day
+      assert_equal unspec_patient.time_to_notify_closed.day, patient_local_time.day
+    end
+
+    # Current time after all windows for the day
+    Timecop.freeze(patient_local_time.change(hour: 20)) do
+      # Hour check
+      assert_equal morning_patient.time_to_notify_closed.hour, 8
+      assert_equal afternoon_patient.time_to_notify_closed.hour, 8
+      assert_equal evening_patient.time_to_notify_closed.hour, 8
+      assert_equal unspec_patient.time_to_notify_closed.hour, 8
+      # Day of month check
+      assert_equal morning_patient.time_to_notify_closed.day, patient_local_time.tomorrow.day
+      assert_equal afternoon_patient.time_to_notify_closed.day, patient_local_time.tomorrow.day
+      assert_equal evening_patient.time_to_notify_closed.day, patient_local_time.tomorrow.day
+      assert_equal unspec_patient.time_to_notify_closed.day, patient_local_time.tomorrow.day
+    end
+  end
 end
 # rubocop:enable Metrics/ClassLength
 

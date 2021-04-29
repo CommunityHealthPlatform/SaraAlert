@@ -1141,6 +1141,19 @@ class Patient < ApplicationRecord
     patient_local_time.tomorrow.change(hour: hour_window.first, min: 0)
   end
 
+  ##
+  # Takes the patient's local time, determines if the local time is between 8am and 8pm.
+  # If during that time, then the patient can be notified immediately.
+  # Otherwise, return 8am local time the next day.
+  def time_to_notify_closed
+    patient_local_time = Time.now.getlocal(address_timezone_offset)
+    return patient_local_time if (8..19).include? patient_local_time.hour
+
+    return patient_local_time.change(hour: 8, min: 0) if patient_local_time.hour < 8
+
+    (patient_local_time + 1.day).change(hour: 8, min: 0)
+  end
+
   # Check last_assessment_reminder_sent for eligibility. This is chiefly intended to help cover potential race condition of
   # multiple reports being sent out for the same monitoree.
   def last_assessment_reminder_sent_eligible?

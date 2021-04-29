@@ -39,9 +39,9 @@ class ClosePatientsJob < ApplicationJob
       if patient.save! && patient.self_reporter_or_proxy? && send_close
         contact_method = patient.preferred_contact_method&.downcase
         if ['sms texted weblink', 'sms text-message'].include? contact_method
-          PatientMailer.closed_sms(patient).deliver_later(wait_until: patient.time_to_contact_next)
+          PatientMailer.closed_sms(patient).deliver_later(wait_until: patient.time_to_notify_closed)
         elsif contact_method == 'e-mailed web link'
-          PatientMailer.closed_email(patient).deliver_later(wait_until: patient.time_to_contact_next)
+          PatientMailer.closed_email(patient).deliver_later(wait_until: patient.time_to_notify_closed)
         else
           history_friendly_method = patient.preferred_contact_method.blank? ? patient.preferred_contact_method : 'Unknown'
           History.record_automatically_closed(

@@ -209,7 +209,12 @@ class PatientMailer < ApplicationMailer
     end
 
     lang = patient.select_language
-    contents = I18n.t('assessments.sms.closed.thank-you', initials_age: patient&.initials_age('-'), locale: lang)
+    contents = I18n.t(
+      'assessments.sms.closed.thank-you',
+      initials_age: patient&.initials_age('-'),
+      completed_date: patient.closed_at.strftime('%m-%d-%Y'),
+      locale: lang
+    )
 
     TwilioSender.send_sms(patient, [contents])
   end
