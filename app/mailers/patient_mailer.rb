@@ -194,7 +194,7 @@ class PatientMailer < ApplicationMailer
     @contents = I18n.t(
       'assessments.sms.closed.thank-you',
       initials_age: patient&.initials_age('-'),
-      completed_date: patient.closed_at.strftime('%m-%d-%Y'),
+      completed_date: patient.closed_at&.strftime('%m-%d-%Y'),
       locale: @lang
     )
     mail(to: patient.email&.strip, subject: I18n.t('assessments.email.closed.subject', locale: @lang)) do |format|
@@ -217,7 +217,7 @@ class PatientMailer < ApplicationMailer
     contents = I18n.t(
       'assessments.sms.closed.thank-you',
       initials_age: patient&.initials_age('-'),
-      completed_date: patient.closed_at.strftime('%m-%d-%Y'),
+      completed_date: patient.closed_at&.strftime('%m-%d-%Y'),
       locale: lang
     )
 
