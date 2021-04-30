@@ -119,7 +119,10 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
   end
 
   test 'sends closed email if closed record is a reporter' do
+    Patient.destroy_all
     patient = create(:patient,
+                     first_name: 'Jon',
+                     last_name: 'Doe',
                      purged: false,
                      isolation: false,
                      monitoring: true,
@@ -133,7 +136,11 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
     ClosePatientsJob.perform_now
     assert_equal(ActionMailer::Base.deliveries.count, 2)
     close_email = ActionMailer::Base.deliveries[-2]
-    assert_includes(close_email.to_s, 'Sara Alert Reporting Complete')
+    assert_equal(close_email.header['subject'].value, 'Sara Alert Reporting Complete')
+    assert_includes(
+      close_email.text_part.body.to_s.gsub("\r", ' ').gsub("\n", ' '),
+      "Sara Alert monitoring for #{patient.initials_age('-')} completed on #{DateTime.now.strftime('%m-%d-%Y')}! Thank you for your participation."
+    )
     assert_equal(close_email.to[0], patient.email)
     assert_contains_history(patient, 'Monitoring Complete message was sent.')
     assert_contains_history(patient, 'because the monitoree email was blank.')

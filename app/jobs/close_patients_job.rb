@@ -34,7 +34,6 @@ class ClosePatientsJob < ApplicationJob
       # Determine if the patient's jurisdiction allows automated closed notifications
       jurisdiction_send_close[patient.jurisdiction_id] = patient.jurisdiction.send_close unless jurisdiction_send_close.key? patient.jurisdiction_id
       send_close = jurisdiction_send_close[patient.jurisdiction_id]
-
       # Send closed email or SMS to patient if they are a reporter
       if patient.save! && patient.self_reporter_or_proxy? && send_close
         contact_method = patient.preferred_contact_method&.downcase
