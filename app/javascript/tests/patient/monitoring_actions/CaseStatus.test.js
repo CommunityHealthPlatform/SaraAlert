@@ -7,6 +7,7 @@ import CustomTable from '../../../components/layout/CustomTable';
 import InfoTooltip from '../../../components/util/InfoTooltip';
 import { mockUser1 } from '../../mocks/mockUsers';
 import { mockJurisdictionPaths } from '../../mocks/mockJurisdiction';
+import { mockMonitoringReasons } from '../../mocks/mockMonitoringReasons';
 import { blankMockPatient, mockPatient1, mockPatient2, mockPatient3, mockPatient4, mockPatient5 } from '../../mocks/mockPatients';
 
 const authyToken = 'Q1z4yZXLdN+tZod6dBSIlMbZ3yWAUFdY44U06QWffEP76nx1WGMHIz8rYxEUZsl9sspS3ePF2ZNmSue8wFpJGg==';
@@ -15,7 +16,7 @@ const monitoringOptionValues = [ '', 'End Monitoring', 'Continue Monitoring in I
 
 function getWrapper(patient) {
     return shallow(<CaseStatus patient={patient} current_user={mockUser1} household_members={[]}
-      jurisdiction_paths={mockJurisdictionPaths} authenticity_token={authyToken} />);
+      jurisdiction_paths={mockJurisdictionPaths} authenticity_token={authyToken} monitoring_reasons={mockMonitoringReasons}/>);
 }
 
 describe('CaseStatus', () => {
