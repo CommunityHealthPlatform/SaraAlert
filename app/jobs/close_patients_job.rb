@@ -10,6 +10,7 @@ class ClosePatientsJob < ApplicationJob
 
     closed = []
     not_closed = []
+    jurisdiction_send_close = {} # { jurisdiction_id: send_close, ... }
 
     # Close patients who are past the monitoring period (and are actually closable from above logic)
     eligible.each do |patient|
@@ -30,8 +31,25 @@ class ClosePatientsJob < ApplicationJob
         patient[:monitoring_reason] = 'Completed Monitoring (system)'
       end
 
-      # Send closed email to patient if they are a reporter
-      PatientMailer.closed_email(patient).deliver_later if patient.save! && patient.email.present? && patient.self_reporter_or_proxy?
+      # Determine if the patient's jurisdiction allows automated closed notifications
+      jurisdiction_send_close[patient.jurisdiction_id] = patient.jurisdiction.send_close unless jurisdiction_send_close.key? patient.jurisdiction_id
+      send_close = jurisdiction_send_close[patient.jurisdiction_id]
+      # Send closed email or SMS to patient if they are a reporter
+      if patient.save! && patient.self_reporter_or_proxy? && send_close
+        contact_method = patient.preferred_contact_method&.downcase
+        if ['sms texted weblink', 'sms text-message'].include? contact_method
+          PatientMailer.closed_sms(patient).deliver_later(wait_until: patient.time_to_notify_closed)
+        elsif contact_method == 'e-mailed web link'
+          PatientMailer.closed_email(patient).deliver_later(wait_until: patient.time_to_notify_closed)
+        else
+          history_friendly_method = patient.preferred_contact_method.blank? ? patient.preferred_contact_method : 'Unknown'
+          History.record_automatically_closed(
+            patient: patient,
+            comment: 'The system was unable to send a monitoring complete message to this monitoree because their'\
+                     "preferred contact method, #{history_friendly_method}, is not supported for this message type."
+          )
+        end
+      end
 
       # History item for automatically closing the record
       History.record_automatically_closed(patient: patient)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_28_063356) do
+ActiveRecord::Schema.define(version: 2021_04_29_164836) do
 
   create_table "analytics", charset: "utf8", force: :cascade do |t|
     t.integer "jurisdiction_id"
@@ -152,6 +152,7 @@ ActiveRecord::Schema.define(version: 2021_04_28_063356) do
     t.string "webpage"
     t.string "message"
     t.boolean "send_digest", default: false
+    t.boolean "send_close", default: false
     t.index ["ancestry"], name: "index_jurisdictions_on_ancestry"
   end
 
