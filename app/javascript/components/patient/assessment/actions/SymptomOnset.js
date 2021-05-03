@@ -15,9 +15,9 @@ class SymptomOnset extends React.Component {
     super(props);
     this.state = {
       symptom_onset: this.props.patient.symptom_onset,
-      no_reported_symptoms: this.props.patient.no_reported_symptoms,
+      asymptomatic: this.props.patient.asymptomatic,
       showSymptomOnsetModal: false,
-      showNoReportedSymptomsModal: false,
+      showAsymptomaticModal: false,
       loading: false,
     };
     this.origState = Object.assign({}, this.state);
@@ -44,29 +44,29 @@ class SymptomOnset extends React.Component {
       this.setState({
         showSymptomOnsetModal: true,
         symptom_onset: date,
-        no_reported_symptoms: date === null,
+        asymptomatic: date === null,
       });
     }
   };
 
-  openNoReportedSymptomsModal = () => {
+  openAsymptomaticModal = () => {
     this.setState({
-      showNoReportedSymptomsModal: true,
+      showAsymptomaticModal: true,
       symptom_onset: null,
-      no_reported_symptoms: !this.props.patient.no_reported_symptoms,
+      asymptomatic: !this.props.patient.asymptomatic,
     });
   };
 
   submit = () => {
     let diffState = Object.keys(this.state).filter(k => _.get(this.state, k) !== _.get(this.origState, k));
-    diffState.push('no_reported_symptoms'); // Since symptom onset date updates change NRS, always make sure this gets changed
+    diffState.push('asymptomatic'); // Since symptom onset date updates change NRS, always make sure this gets changed
     this.setState({ loading: true }, () => {
       axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
       axios
         .post(window.BASE_PATH + '/patients/' + this.props.patient.id + '/status', {
           symptom_onset: this.state.symptom_onset,
           user_defined_symptom_onset: true,
-          no_reported_symptoms: this.state.no_reported_symptoms,
+          asymptomatic: this.state.asymptomatic,
           diffState: diffState,
         })
         .then(() => {
@@ -81,9 +81,9 @@ class SymptomOnset extends React.Component {
   closeModal = () => {
     this.setState({
       symptom_onset: this.props.patient.symptom_onset,
-      no_reported_symptoms: !!this.props.patient.no_reported_symptoms,
+      asymptomatic: !!this.props.patient.asymptomatic,
       showSymptomOnsetModal: false,
-      showNoReportedSymptomsModal: false,
+      showAsymptomaticModal: false,
     });
   };
 
@@ -95,7 +95,7 @@ class SymptomOnset extends React.Component {
         </Modal.Header>
         <Modal.Body>
           <p>{message}</p>
-          {!!this.props.patient.no_reported_symptoms && !this.state.no_reported_symptoms && (
+          {!!this.props.patient.asymptomatic && !this.state.asymptomatic && (
             <div className="mt-2">
               <Form.Label className="nav-input-label">Update Symptom Onset to:</Form.Label>
               <DateInput
@@ -116,10 +116,7 @@ class SymptomOnset extends React.Component {
           <Button variant="secondary btn-square" onClick={close}>
             Cancel
           </Button>
-          <Button
-            variant="primary btn-square"
-            onClick={submit}
-            disabled={this.state.loading || (!this.state.symptom_onset && !this.state.no_reported_symptoms)}>
+          <Button variant="primary btn-square" onClick={submit} disabled={this.state.loading || (!this.state.symptom_onset && !this.state.asymptomatic)}>
             {this.state.loading && (
               <React.Fragment>
                 <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>&nbsp;
@@ -143,23 +140,23 @@ class SymptomOnset extends React.Component {
             this.state.symptom_onset && this.props.patient.user_defined_symptom_onset
               ? `Are you sure you want to manually update the Symptom Onset date to ${moment(this.state.symptom_onset).format(
                   'MM/DD/YYYY'
-                )}? No Reported Symptoms will be ${this.state.no_reported_symptoms ? 'checked' : 'unchecked'}`
+                )}? Asymptomatic will be ${this.state.asymptomatic ? 'checked' : 'unchecked'}`
               : this.state.symptom_onset && !this.props.patient.user_defined_symptom_onset
               ? `Are you sure you want to manually update the symptom onset date to ${moment(this.state.symptom_onset).format(
                   'MM/DD/YYYY'
-                )}? Doing so will result in the symptom onset date no longer being auto-populated by the system and No Reported Symptoms will be ${
-                  this.state.no_reported_symptoms ? 'checked' : 'unchecked'
+                )}? Doing so will result in the symptom onset date no longer being auto-populated by the system and Asymptomatic will be ${
+                  this.state.asymptomatic ? 'checked' : 'unchecked'
                 }`
               : 'Are you sure you want to clear the symptom onset date? Doing so will result in the symptom onset date being auto-populated by the system.',
             this.closeModal,
             this.submit
           )}
-        {this.state.showNoReportedSymptomsModal &&
+        {this.state.showAsymptomaticModal &&
           this.createModal(
-            'No Reported Symptoms',
-            `Are you sure you want to ${this.state.no_reported_symptoms ? 'check' : 'uncheck'} No Reported Symptoms? Symptom Onset will ${
-              this.state.no_reported_symptoms ? 'be cleared' : 'need to be populated'
-            } and No Reported Symptoms will be ${this.state.no_reported_symptoms ? 'checked' : 'unchecked'} for the selected record.`,
+            'Asymptomatic',
+            `Are you sure you want to ${this.state.asymptomatic ? 'check' : 'uncheck'} Asymptomatic? Symptom Onset will ${
+              this.state.asymptomatic ? 'be cleared' : 'need to be populated'
+            } and Asymptomatic will be ${this.state.asymptomatic ? 'checked' : 'unchecked'} for the selected record.`,
             this.closeModal,
             this.submit
           )}
@@ -201,22 +198,22 @@ class SymptomOnset extends React.Component {
             placement="bottom"
             overlay={
               <Tooltip id="tooltip-nrs" style={this.props.symptomaticAssessmentsExist ? {} : { display: 'none' }}>
-                {`"No Reported Symptoms" cannot be checked if monitoree has symptomatic reports. If you'd like symptom onset date cleared and this status checked to designate this monitoree as an asymptomatic case, you must review all reports`}
+                {`"Asymptomatic" cannot be checked if monitoree has symptomatic reports. If you'd like symptom onset date cleared and this status checked to designate this monitoree as an asymptomatic case, you must review all reports`}
               </Tooltip>
             }>
             <span className="d-inline-block">
               <Form.Check
                 size="lg"
-                label="NO REPORTED SYMPTOMS"
-                id="no_reported_symptoms"
+                label="ASYMPTOMATIC"
+                id="asymptomatic"
                 className="mt-2"
                 disabled={this.props.symptomaticAssessmentsExist}
-                checked={this.state.no_reported_symptoms}
-                onChange={this.openNoReportedSymptomsModal}
+                checked={this.state.asymptomatic}
+                onChange={this.openAsymptomaticModal}
               />
             </span>
           </OverlayTrigger>
-          <InfoTooltip tooltipTextKey="noReportedSymptoms" location="right"></InfoTooltip>
+          <InfoTooltip tooltipTextKey="asymptomatic" location="right"></InfoTooltip>
         </Form.Group>
       </React.Fragment>
     );

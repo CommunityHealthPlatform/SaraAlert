@@ -81,7 +81,7 @@ class Exposure extends React.Component {
         modified = { patient: { last_date_of_exposure: lde } };
       }
       this.updateLDEandCEValidations({ ...current.patient, [event.target.id]: value });
-    } else if (event?.target?.id && event.target.id === 'no_reported_symptoms') {
+    } else if (event?.target?.id && event.target.id === 'asymptomatic') {
       // clear out SO if NRS is turned on and populate it with previous SO if NRS is turned off
       const so = value ? null : this.props.patient.symptom_onset;
       current.patient.symptom_onset = so;
@@ -116,8 +116,8 @@ class Exposure extends React.Component {
     } else if (field === 'symptom_onset') {
       // turn off NRS if SO is populated
       if (date) {
-        current.patient.no_reported_symptoms = false;
-        modified = { patient: { ...modified.patient, no_reported_symptoms: false } };
+        current.patient.asymptomatic = false;
+        modified = { patient: { ...modified.patient, asymptomatic: false } };
         // only clear out first positive lab if it isn't saved already
         if (!this.props.first_positive_lab) {
           current.first_positive_lab = null;
@@ -173,8 +173,7 @@ class Exposure extends React.Component {
     if (isolation) {
       this.updateSOandNRSValidations({
         ...this.props.currentState.patient,
-        no_reported_symptoms:
-          this.props.edit_mode && this.props.patient.isolation && !this.props.patient.symptom_onset && !this.props.symptomaticAssessmentsExist,
+        asymptomatic: this.props.edit_mode && this.props.patient.isolation && !this.props.patient.symptom_onset && !this.props.symptomaticAssessmentsExist,
       });
     } else {
       this.updateLDEandCEValidations(this.props.patient);
@@ -246,12 +245,12 @@ class Exposure extends React.Component {
   };
 
   updateSOandNRSValidations = patient => {
-    if (patient.symptom_onset && patient.no_reported_symptoms) {
+    if (patient.symptom_onset && patient.asymptomatic) {
       schema = yup.object().shape({
         ...staticValidations,
         symptom_onset: yup
           .date('Date must correspond to the "mm/dd/yyyy" format.')
-          .oneOf([null, undefined], 'Please enter a Symptom Onset Date OR select No Reported Symptoms, but not both.')
+          .oneOf([null, undefined], 'Please enter a Symptom Onset Date OR select Asymptomatic, but not both.')
           .nullable(),
         continuous_exposure: yup.bool().nullable(),
       });
@@ -267,13 +266,13 @@ class Exposure extends React.Component {
             'Date can not be more than 30 days in the future.'
           )
           .nullable(),
-        no_reported_symptoms: yup.bool().nullable(),
+        asymptomatic: yup.bool().nullable(),
       });
     }
     this.setState(state => {
       const errors = state.errors;
       delete errors.symptom_onset;
-      delete errors.no_reported_symptoms;
+      delete errors.asymptomatic;
       return { errors };
     });
   };
@@ -283,7 +282,7 @@ class Exposure extends React.Component {
     schema
       .validate(this.state.current.patient, { abortEarly: false })
       .then(() => {
-        if (self.state.current.patient.no_reported_symptoms && !self.state.current.first_positive_lab) {
+        if (self.state.current.patient.asymptomatic && !self.state.current.first_positive_lab) {
           self.setState({ errors: { first_positive_lab: 'Please enter a lab result' } });
           return;
         }
@@ -370,23 +369,17 @@ class Exposure extends React.Component {
             </Form.Control.Feedback>
           </Form.Group>
           <Form.Group as={Col} lg={{ span: 8, order: 3 }} className="mb-0"></Form.Group>
-          <Form.Group
-            as={Col}
-            lg={{ span: 8, order: 4 }}
-            md={{ span: 12, order: 3 }}
-            xs={{ span: 24, order: 2 }}
-            controlId="no_reported_symptoms"
-            className="mb-2">
+          <Form.Group as={Col} lg={{ span: 8, order: 4 }} md={{ span: 12, order: 3 }} xs={{ span: 24, order: 2 }} controlId="asymptomatic" className="mb-2">
             <Form.Check
               size="lg"
-              label={`NO REPORTED SYMPTOMS${schema?.fields?.no_reported_symptoms?._whitelist?.list?.has(true) ? ' *' : ''}`}
-              id="no_reported_symptoms"
+              label={`ASYMPTOMATIC${schema?.fields?.asymptomatic?._whitelist?.list?.has(true) ? ' *' : ''}`}
+              id="asymptomatic"
               className="ml-1 d-inline"
-              checked={!!this.state.current.patient.no_reported_symptoms}
+              checked={!!this.state.current.patient.asymptomatic}
               onChange={this.handleChange}
               disabled={this.props.symptomaticAssessmentsExist}
             />
-            <InfoTooltip tooltipTextKey={this.props.symptomaticAssessmentsExist ? 'noReportedSymptomsDisabled' : 'noReportedSymptoms'} location="right" />
+            <InfoTooltip tooltipTextKey={this.props.symptomaticAssessmentsExist ? 'asymptomaticDisabled' : 'asymptomatic'} location="right" />
           </Form.Group>
           <Form.Group
             as={Col}
@@ -396,7 +389,7 @@ class Exposure extends React.Component {
             controlId="first_positive_lab"
             className="mb-2">
             {this.state.current.first_positive_lab && (
-              <div className={`mb-2 {this.state.current.patient.no_reported_symptoms ? '' : 'first-positive-lab-disabled'}`}>
+              <div className={`mb-2 {this.state.current.patient.asymptomatic ? '' : 'first-positive-lab-disabled'}`}>
                 <div className="first-positive-lab-result-header">
                   <div className="first-positive-lab-result-title">FIRST POSITIVE LAB RESULT</div>
                   <div className="edit-link">
@@ -404,7 +397,7 @@ class Exposure extends React.Component {
                       variant="link"
                       id="edit-first_positive_lab"
                       className="py-0"
-                      disabled={!this.state.current.patient.no_reported_symptoms}
+                      disabled={!this.state.current.patient.asymptomatic}
                       onClick={() => this.setState({ showLabModal: true })}>
                       Edit
                     </Button>
@@ -436,7 +429,7 @@ class Exposure extends React.Component {
                 </div>
               </div>
             )}
-            {!this.state.current.first_positive_lab && this.state.current.patient.no_reported_symptoms && (
+            {!this.state.current.first_positive_lab && this.state.current.patient.asymptomatic && (
               <div>
                 <div className="pb-2">
                   <span>
@@ -447,7 +440,7 @@ class Exposure extends React.Component {
                   variant="primary"
                   size="md"
                   className="mb-2"
-                  disabled={!this.state.current.patient.no_reported_symptoms}
+                  disabled={!this.state.current.patient.asymptomatic}
                   onClick={() => this.setState({ showLabModal: true })}>
                   <i className="fas fa-plus-square mr-1"></i>
                   Enter Lab Result
