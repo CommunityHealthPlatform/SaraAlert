@@ -526,7 +526,7 @@ namespace :demo do
     end
   end
 
-  def demo_populate_patients(today, num_patients_today, days_ago, jurisdictions, assigned_users, counties)
+  def demo_populate_patients(beginning_of_day, num_patients_today, days_ago, jurisdictions, assigned_users, case_ids, counties, available_lang_codes)
     territory_names = ['American Samoa', 'District of Columbia', 'Federated States of Micronesia', 'Guam', 'Marshall Islands', 'Northern Mariana Islands',
                        'Palau', 'Puerto Rico', 'Virgin Islands'].freeze
 
