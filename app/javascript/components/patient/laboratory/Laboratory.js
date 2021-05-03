@@ -65,6 +65,7 @@ class Laboratory extends React.Component {
             cancel={() => this.setState({ showModal: false, loading: false })}
             editMode={!!this.props.lab.id}
             loading={this.state.loading}
+            asympWarning={this.props.asympWarning}
           />
         )}
       </React.Fragment>
@@ -76,6 +77,7 @@ Laboratory.propTypes = {
   lab: PropTypes.object,
   patient: PropTypes.object,
   authenticity_token: PropTypes.string,
+  asympWarning: PropTypes.bool,
 };
 
 export default Laboratory;

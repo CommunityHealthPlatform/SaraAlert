@@ -259,7 +259,7 @@ class Enrollment extends React.Component {
               jurisdiction_paths={this.props.jurisdiction_paths}
               assigned_users={this.props.assigned_users}
               first_positive_lab={this.props.first_positive_lab}
-              symptomatic_assessments_exist={this.props.symptomatic_assessments_exist}
+              symptomaticAssessmentsExist={this.props.symptomaticAssessmentsExist}
               edit_mode={this.props.edit_mode}
               authenticity_token={this.props.authenticity_token}
             />
@@ -298,7 +298,7 @@ Enrollment.propTypes = {
   has_dependents: PropTypes.bool,
   blocked_sms: PropTypes.bool,
   first_positive_lab: PropTypes.object,
-  symptomatic_assessments_exist: PropTypes.bool,
+  symptomaticAssessmentsExist: PropTypes.bool,
 };
 
 export default Enrollment;
