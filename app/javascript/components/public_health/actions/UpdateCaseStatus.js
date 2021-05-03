@@ -74,6 +74,8 @@ class UpdateCaseStatus extends React.Component {
             monitoring_reason: 'Meets Case Definition',
           });
         }
+      } else if (event.target.id === 'monitoring_reason') {
+        this.setState({ monitoring_reason: event.target.value });
       } else if (event.target.value === 'Suspect' || event.target.value === 'Unknown' || event.target.value === 'Not a Case' || event.target.value === '') {
         this.setState({ monitoring: true, isolation: false });
       }
@@ -164,7 +166,20 @@ class UpdateCaseStatus extends React.Component {
                     <p>The selected monitorees will remain in the isolation workflow.</p>
                   )}
                   {this.state.follow_up === 'End Monitoring' && (
-                    <p>The selected monitorees will be moved into the &quot;Closed&quot; line list, and will no longer be monitored.</p>
+                    <div>
+                      <p>The selected monitorees will be moved into the &quot;Closed&quot; line list, and will no longer be monitored.</p>
+                      <Form.Group controlId="monitoring_reason">
+                        <Form.Label>Please select reason for status change:</Form.Label>
+                        <Form.Control as="select" size="lg" className="form-square" onChange={this.handleChange} defaultValue={'Meets Case Definition'}>
+                          <option></option>
+                          {this.props.monitoring_reasons.map((option, index) => (
+                            <option key={`option-${index}`} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </Form.Control>
+                      </Form.Group>
+                    </div>
                   )}
                 </React.Fragment>
               ) : (
@@ -223,6 +238,7 @@ UpdateCaseStatus.propTypes = {
   authenticity_token: PropTypes.string,
   patients: PropTypes.array,
   close: PropTypes.func,
+  monitoring_reasons: PropTypes.array,
 };
 
 export default UpdateCaseStatus;
