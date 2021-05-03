@@ -382,7 +382,7 @@ namespace :demo do
           patient[:symptom_onset] = beginning_of_day - rand(10).days
           patient[:user_defined_symptom_onset] = true
         else
-          patient[:no_reported_symptoms] = true
+          patient[:asymptomatic] = true
         end
       else
         patient[:continuous_exposure] = rand < 0.3
@@ -444,7 +444,7 @@ namespace :demo do
     }
     Patient.update(new_children.map { |p| p[:id] }, new_children_updates)
 
-    # Create first positive lab for patients with no reported symptoms
+    # Create first positive lab for patients who are asymptomatic
     laboratories = []
     asymptomatic_cases = new_patients.where(isolation: true, symptom_onset: nil)
     user_emails = Hash[User.where(id: asymptomatic_cases.distinct.pluck(:creator_id)).pluck(:id, :email)]

@@ -58,7 +58,7 @@ describe('AssessmentTable', () => {
     expect(wrapper.find(Button).exists()).toBeTruthy();
     expect(wrapper.find(Button).find('i').hasClass('fa-plus')).toBeTruthy();
     expect(wrapper.find(Button).find('span').text()).toEqual('Add New Report');
-    expect(wrapper.find(ClearAssessments).exists()).toBeFalsy();
+    expect(wrapper.find(ClearAssessments).exists()).toBeTruthy();
     expect(wrapper.find(PauseNotifications).exists()).toBeTruthy();
     expect(wrapper.find(ContactAttempt).exists()).toBeTruthy();
   });
