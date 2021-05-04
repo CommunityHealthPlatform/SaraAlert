@@ -329,6 +329,7 @@ module FhirHelper # rubocop:todo Metrics/ModuleLength
         )
       ],
       code: FHIR::CodeableConcept.new(
+        text: laboratory.lab_type,
         coding: [
           FHIR::Coding.new(
             system: coded_lab_type[:system],
@@ -339,6 +340,7 @@ module FhirHelper # rubocop:todo Metrics/ModuleLength
       subject: FHIR::Reference.new(reference: "Patient/#{laboratory.patient_id}"),
       effectiveDateTime: laboratory.specimen_collection&.strftime('%FT%T%:z'),
       valueCodeableConcept: coded_result.nil? ? nil : FHIR::CodeableConcept.new(
+        text: laboratory.result,
         coding: [
           FHIR::Coding.new(
             system: coded_result[:system],
