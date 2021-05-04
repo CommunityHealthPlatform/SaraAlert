@@ -16,6 +16,7 @@ import DateInput from '../../util/DateInput';
 import InfoTooltip from '../../util/InfoTooltip';
 import PhoneInput from '../../util/PhoneInput';
 import reportError from '../../util/ReportError';
+import DeleteDialog from '../../util/DeleteDialog';
 
 const MAX_NOTES_LENGTH = 2000;
 
@@ -24,6 +25,7 @@ class CloseContact extends React.Component {
     super(props);
     this.state = {
       showModal: false,
+      showDeleteModal: false,
       disableCreate:
         (!this.props.close_contact.first_name && !this.props.close_contact.last_name) ||
         (!this.props.close_contact.primary_telephone && !this.props.close_contact.email),
@@ -106,21 +108,13 @@ class CloseContact extends React.Component {
     }
   };
 
-  delete = async () => {
-    const confirmText = 'Are you sure you would like to delete this close contact? This action cannot be undone.';
-    const options = {
-      title: 'Close Contact',
-      okLabel: 'Delete',
-      okVariant: 'danger',
-      cancelLabel: 'Cancel',
-    };
-    if (await confirmDialog(confirmText, options)) {
-      this.handleDeleteSubmit();
-    }
-  };
-
-  handleDeleteClick = () => {
-    this.delete();
+  toggleDeleteModal = () => {
+    let current = this.state.showDeleteModal;
+    this.setState({
+      showDeleteModal: !current,
+      delete_reason: null,
+      delete_reason_text: null,
+    });
   };
 
   handleDeleteSubmit = () => {
@@ -341,7 +335,7 @@ class CloseContact extends React.Component {
                 <i className="fas fa-phone fa-flip-horizontal"></i> Contact Attempt
               </Button>
               <div className="pl-2"></div>
-              <Button variant="link" onClick={this.handleDeleteClick} className="btn btn-link py-0" size="sm">
+              <Button variant="link" onClick={this.toggleDeleteModal} className="btn btn-link py-0" size="sm">
                 <i className="fas fa-trash"></i> Delete
               </Button>
             </React.Fragment>
@@ -374,6 +368,15 @@ class CloseContact extends React.Component {
           </div>
         )}
         {this.state.showModal && this.createModal('Close Contact', this.toggleModal, this.submit)}
+        {this.state.showDeleteModal && (
+          <DeleteDialog
+            type={'Close Contact'}
+            delete={this.handleDeleteSubmit}
+            toggle={this.toggleDeleteModal}
+            onChange={this.handleChange}
+            show_text_input={true}
+          />
+        )}
       </React.Fragment>
     );
   }

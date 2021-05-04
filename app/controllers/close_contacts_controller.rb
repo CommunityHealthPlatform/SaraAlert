@@ -22,8 +22,9 @@ class CloseContactsController < ApplicationController
                           assigned_user: params.permit(:assigned_user)[:assigned_user],
                           notes: params.permit(:notes)[:notes],
                           enrolled_id: nil,
-                          contact_attempts: 0)
-    cc.patient_id = patient_id
+                          contact_attempts: 0,
+                          archived: false)
+    cc.patient_id = params.permit(:patient_id)[:patient_id]
     cc.save
     History.close_contact(patient: params.permit(:patient_id)[:patient_id],
                           created_by: current_user.email,
@@ -57,7 +58,12 @@ class CloseContactsController < ApplicationController
 
   # Delete an existing close contact record
   def destroy
-    redirect_to root_url unless current_user.can_create_patient_close_contacts?
-    cc = current_user.get_patient(params.permit(:patient_id)[:patient_id])&.close_contacts.find_by(id: params.permit(:id)[:id])&.destroy
+    redirect_to root_url && return unless current_user.can_create_patient_close_contacts?
+    cc = current_user.get_patient(params.permit(:patient_id)[:patient_id])&.close_contacts&.find_by(id: params.permit(:id)[:id])
+    redirect_to root_url && return if cc.nil?
+    cc.destroy
+    History.close_contact_edit(patient: params.permit(:patient_id)[:patient_id],
+                               created_by: current_user.email,
+                               comment: "User deleted a close contact (ID: #{params.permit(:id)[:id]}).")
   end
 end
