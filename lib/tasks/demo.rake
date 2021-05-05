@@ -36,6 +36,7 @@ namespace :demo do
   desc 'Generate N many more monitorees based on existing data'
   task create_bulk_data: :environment do
     raise 'This task is only for use in a development environment' unless Rails.env == 'development' || ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK']
+    raise 'This task requires patients to be present in the DB!' unless Patient.count > 0
 
     num_patients = (ENV['COUNT'] || 100000).to_i
     num_threads = (ENV['FORKS'] || 8).to_i
@@ -63,11 +64,7 @@ namespace :demo do
         ]
       )
       .limit(num_patients)
-      .order('RAND()')
 
-    pids = []
-
-    ####
     max_ids = {
       patients: Patient.maximum(:id),
       assessments: Assessment.maximum(:id),
@@ -79,18 +76,21 @@ namespace :demo do
       close_contacts: CloseContact.maximum(:id),
       contact_attempts: ContactAttempt.maximum(:id)
     }
+    # NEED TO INVESTIGATE IF THIS IS NECESSARY TO IMPORT EVERY X PATIENTS TO CONSERVE MEMORY
+    # num_patient_import_threshold = 50_000
     results = blank_results
     t1 = Time.now
     num_to_create = num_patients
-    StackProf.run(mode: :wall, out: 'tmp/demorakepop.dump', interval: 1000, raw: true) do
-      while results[:patients_created] < num_to_create do
-        patients.find_in_batches do |group|
-          group.each do |patient|
-            break if results[:patients_created] >= num_to_create
+    # Patients per second appears to be mainly bottlenecked by the time it
+    # takes to fetch all of the patient and related data from MySQL.
+    while results[:patients_created] < num_to_create do
+      break if results[:patients_created] >= num_to_create
 
-            deep_duplicate_patient(max_ids, results, patient)
-            print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} p/s | #{results[:patients_created]} patients"
-          end
+      patients.find_in_batches(batch_size: 100) do |group|
+        group.each do |patient|
+          break if results[:patients_created] >= num_to_create
+          deep_duplicate_patient(max_ids, results, patient)
+          print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} p/s | #{results[:patients_created]} patients"
         end
       end
     end
@@ -100,39 +100,6 @@ namespace :demo do
 
     elapsed = Time.now - t1
     puts "\n\nCreated #{results[:patients_created]} patients in #{elapsed} seconds. (#{(results[:patients_created] / elapsed).truncate(2)} patients / sec)"
-    exit
-    ####
-
-
-
-
-    ::ActiveRecord::Base.clear_all_connections!
-    fork_num = 1
-    patient_ids.each_slice(patient_ids.size / num_threads).each do |slice_ids|
-      pids << fork do
-        t1 = Time.now
-        ::ActiveRecord::Base.establish_connection
-
-        num_to_create = num_patients / num_threads
-        num_created = 0
-
-        while num_created < num_to_create do
-          # deep_duplicate returns exactly how many patients were created (including duplicated dependents)
-          num_created += deep_duplicate_patient(Patient.find(slice_ids.sample))
-          print "\r#{(num_created / (Time.now - t1)).truncate(2)} p/s"
-        end
-
-        elapsed = Time.now - t1
-        puts "\n\nFork #{fork_num} has created #{num_created} patients in #{elapsed} seconds. (#{(num_created / elapsed).truncate(2)} patients / sec)"
-      ensure
-        ::ActiveRecord::Base.clear_all_connections!
-        Process.exit! true
-      end
-      fork_num += 1
-    end
-
-    pids.each { |pid| Process.waitpid(pid, 0)  }
-    puts "\nDone!"
   end
 
   desc 'Configure the database for demo use'
@@ -1296,8 +1263,8 @@ namespace :demo do
     new_patient.id = new_patient_id
     new_patient.responder_id = responder_id || new_patient
     # new_patient.last_name = "#{new_patient.last_name}#{last_name_num}"
-    new_patient.submission_token = new_patient.new_submission_token
-    # new_patient.submission_token = SecureRandom.urlsafe_base64[0, 10]
+    # new_patient.submission_token = new_patient.new_submission_token
+    new_patient.submission_token = SecureRandom.urlsafe_base64[0, 10]
     duplicate_timestamps(patient, new_patient)
     results[:patients] << new_patient
     # new_patient.update(responder_id: new_patient.id) if responder_id.nil?
