@@ -56,12 +56,14 @@ class PatientsTable extends React.Component {
           { field: 'symptom_onset', label: 'Symptom Onset', isSortable: true, tooltip: null, filter: this.formatSymptomOnset },
           { field: 'risk_level', label: 'Risk Level', isSortable: true, tooltip: null },
           { field: 'monitoring_plan', label: 'Monitoring Plan', isSortable: true, tooltip: null },
+          { field: 'reporter', label: 'Reporter ID', isSortable: true, tooltip: null },
           { field: 'public_health_action', label: 'Latest Public Health Action', isSortable: true, tooltip: null },
           { field: 'expected_purge_date', label: 'Eligible for Purge After', isSortable: true, tooltip: 'purgeDate', filter: formatTimestamp },
           { field: 'reason_for_closure', label: 'Reason for Closure', isSortable: true, tooltip: null },
           { field: 'closed_at', label: 'Closed At', isSortable: true, tooltip: null, filter: formatTimestamp },
           { field: 'transferred_at', label: 'Transferred At', isSortable: true, tooltip: null, filter: formatTimestamp },
           { field: 'latest_report', label: 'Latest Report', isSortable: true, tooltip: null, filter: this.formatLatestReport },
+          { field: 'workflow', label: 'Workflow', isSortable: true, tooltip: null },
           { field: 'status', label: 'Status', isSortable: false, tooltip: null },
           { field: 'report_eligibility', label: '', isSortable: false, tooltip: null, filter: this.createEligibilityTooltip, icon: 'far fa-comment' },
         ],
@@ -738,7 +740,7 @@ class PatientsTable extends React.Component {
 PatientsTable.propTypes = {
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
-  workflow: PropTypes.oneOf(['exposure', 'isolation']),
+  workflow: PropTypes.oneOf(['global', 'exposure', 'isolation']),
   jurisdiction: PropTypes.exact({
     id: PropTypes.number,
     path: PropTypes.string,

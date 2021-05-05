@@ -208,7 +208,12 @@ class CustomExport extends React.Component {
                   {this.state.selected_records === 'current' && (
                     <div className="px-1 pb-1">
                       <Badge variant="secondary" className="mr-1">
-                        {this.props.patient_query.workflow === 'isolation' ? 'Isolation' : 'Exposure'} - {this.props.tabs[this.props.patient_query.tab]?.label}
+                        {this.props.patient_query.workflow === 'isolation'
+                          ? 'Isolation '
+                          : this.props.patient_query.workflow === 'exposure'
+                          ? 'Exposure '
+                          : 'Global '}
+                        - {this.props.tabs[this.props.patient_query.tab]?.label}
                       </Badge>
                       {this.props.patient_query.jurisdiction !== this.props.jurisdiction.id && (
                         <Badge variant="secondary" className="mr-1">
