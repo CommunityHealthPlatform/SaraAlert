@@ -21,6 +21,7 @@ const requiredStrings = [
 describe('Contact', () => {
   it('Properly renders all main components', () => {
     const wrapper = mount(<Contact goto={() => {}} next={() => {}} setEnrollmentState={() => {}} currentState={newEnrollmentState} />);
+    // other render stuff
     requiredStrings.forEach(requiredString => {
       expect(wrapper.text().includes(requiredString)).toBe(true);
     })
@@ -37,6 +38,8 @@ describe('Contact', () => {
       })
     })
   })
+
+  // preferred contact time
 
   it('Properly allows changing of the primary_telephone', () => {
     const wrapper = mount(<Contact goto={() => {}} next={() => {}} setEnrollmentState={() => {}} currentState={newEnrollmentState} />);
@@ -92,5 +95,7 @@ describe('Contact', () => {
       expect(wrapper.find('#email').instance().value).toEqual(mockPatient2.email)
     })
   })
+  // confirm email
 
+  // clicking next and previous
 });

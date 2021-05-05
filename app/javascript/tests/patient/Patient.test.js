@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { Button, Col, Collapse, Row } from 'react-bootstrap';
+import { Button, Col, Collapse, Form, Row } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import _ from 'lodash';
 import Patient from '../../components/patient/Patient';
@@ -81,6 +81,23 @@ describe('Patient', () => {
     contactFields.forEach(function(field, index) {
       expect(section.find('b').at(index).text()).toEqual(field + ':');
     });
+  });
+
+  it('Properly renders contact information section if SMS is blocked', () => {
+    const wrapper = shallow(<Patient details={{ ...mockPatient2, blocked_sms: true }} collapse={true} edit_mode={false}
+      jurisdiction_path='USA, State 1, County 2' />);
+    const section = wrapper.find('#contact-information');
+    const phone = section.find('.item-group').find('div').at(1);
+    const preferredContactMethod = section.find('.item-group').find('div').at(5);
+    expect(phone.find('b').text()).toEqual('Phone:');
+    expect(phone.find('span').at(0).text()).toEqual(mockPatient2.primary_telephone);
+    expect(phone.find('span').at(1).text().includes('SMS Blocked')).toBeTruthy();
+    expect(phone.find(InfoTooltip).exists()).toBeTruthy();
+    expect(phone.find(InfoTooltip).prop('tooltipTextKey')).toEqual('blockedSMS');
+    expect(preferredContactMethod.find('b').text()).toEqual('Preferred Reporting Method:');
+    expect(preferredContactMethod.find('span').text().includes('SMS Texted Weblink')).toBeTruthy();
+    expect(preferredContactMethod.find(InfoTooltip).exists()).toBeTruthy();
+    expect(preferredContactMethod.find(InfoTooltip).prop('tooltipTextKey')).toEqual('blockedSMSContactMethod');
   });
 
   it('Properly renders show/hide divider when props.collapse is true', () => {
