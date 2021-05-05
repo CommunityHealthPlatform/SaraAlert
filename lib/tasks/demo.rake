@@ -43,7 +43,27 @@ namespace :demo do
     # Found that forks were consistently performing drastically differently when id's were not shuffled
     # i.e. fork 1 was always the slowest between 5 to 10 p/s and fork 8 was always the fastest between 20 to 25 p/s
     # After shuffling, all forks end up at a much more similar 9 to 10 p/s
-    patient_ids = Patient.where('patients.responder_id = patients.id').limit(num_patients).pluck(:id).shuffle
+    patients = Patient.where('patients.responder_id = patients.id')
+      .includes(
+        :histories,
+        :transfers,
+        :laboratories,
+        :vaccines,
+        :close_contacts,
+        :contact_attempts,
+        assessments: { reported_condition: :symptoms },
+        dependents: [
+          :histories,
+          :transfers,
+          :laboratories,
+          :vaccines,
+          :close_contacts,
+          :contact_attempts,
+          { assessments: { reported_condition: :symptoms } }
+        ]
+      )
+      .limit(num_patients)
+      .order('RAND()')
 
     pids = []
 
@@ -64,11 +84,13 @@ namespace :demo do
     num_to_create = num_patients
     StackProf.run(mode: :wall, out: 'tmp/demorakepop.dump', interval: 1000, raw: true) do
       while results[:patients_created] < num_to_create do
-        patient_ids.each do |id|
-          break if results[:patients_created] >= num_to_create
+        patients.find_in_batches do |group|
+          group.each do |patient|
+            break if results[:patients_created] >= num_to_create
 
-          deep_duplicate_patient(max_ids, results, Patient.find(id))
-          print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} p/s | #{results[:patients_created]} patients"
+            deep_duplicate_patient(max_ids, results, patient)
+            print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} p/s | #{results[:patients_created]} patients"
+          end
         end
       end
     end
@@ -1361,23 +1383,14 @@ namespace :demo do
 
   def import_deep_duplicate(results)
     Patient.import results[:patients], validate: false
-    puts '1'
     Assessment.import results[:assessments], validate: false
-    puts '2'
     ReportedCondition.import results[:reported_conditions], validate: false
-    puts '3'
     Symptom.import results[:symptoms], validate: false
-    puts '4'
     History.import results[:histories], validate: false
-    puts '5'
     Transfer.import results[:transfers], validate: false
-    puts '6'
     Laboratory.import results[:laboratories], validate: false
-    puts '7'
     CloseContact.import results[:close_contacts], validate: false
-    puts '8'
     ContactAttempt.import results[:contact_attempts], validate: false
-    puts '9'
 
     results[:patients] = []
     results[:assessments] = []
