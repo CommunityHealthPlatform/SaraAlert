@@ -47,6 +47,43 @@ namespace :demo do
 
     pids = []
 
+    ####
+    max_ids = {
+      patients: Patient.maximum(:id),
+      assessments: Assessment.maximum(:id),
+      reported_conditions: ReportedCondition.maximum(:id),
+      symptoms: Symptom.maximum(:id),
+      histories: History.maximum(:id),
+      transfers: Transfer.maximum(:id),
+      laboratories: Laboratory.maximum(:id),
+      close_contacts: CloseContact.maximum(:id),
+      contact_attempts: ContactAttempt.maximum(:id)
+    }
+    results = blank_results
+    t1 = Time.now
+    num_to_create = num_patients
+    StackProf.run(mode: :wall, out: 'tmp/demorakepop.dump', interval: 1000, raw: true) do
+      while results[:patients_created] < num_to_create do
+        patient_ids.each do |id|
+          break if results[:patients_created] >= num_to_create
+
+          deep_duplicate_patient(max_ids, results, Patient.find(id))
+          print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} p/s | #{results[:patients_created]} patients"
+        end
+      end
+    end
+
+    puts 'Importing all patients...'
+    import_deep_duplicate(results)
+
+    elapsed = Time.now - t1
+    puts "\n\nCreated #{results[:patients_created]} patients in #{elapsed} seconds. (#{(results[:patients_created] / elapsed).truncate(2)} patients / sec)"
+    exit
+    ####
+
+
+
+
     ::ActiveRecord::Base.clear_all_connections!
     fork_num = 1
     patient_ids.each_slice(patient_ids.size / num_threads).each do |slice_ids|
@@ -74,102 +111,6 @@ namespace :demo do
 
     pids.each { |pid| Process.waitpid(pid, 0)  }
     puts "\nDone!"
-  end
-
-  desc 'Configure the users in the database for performance testing'
-  task setup_performance_test_users: :environment do
-    raise 'This task is only for use in a development environment' unless Rails.env == 'development' || ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK']
-
-    num_jurisdictions = Jurisdiction.count
-    if !(num_jurisdictions > 50)
-      puts ' Jurisdictions were not found! Make sure to run `PERFORMANCE=true bundle exec rake admin:import_or_update_jurisdictions`'
-      exit(1)
-    end
-
-    num_users = User.count
-    unless num_users.zero?
-      puts 'This task should only be run when no users exist!'
-      puts "There are currently #{num_users} users."
-      exit(1)
-    end
-    users = []
-
-    # Super User at the USA level
-    usa = Jurisdiction.find_by_name('USA')
-    usa_user = User.create!(
-      email: "#{usa.unique_identifier}_super_user@example.com",
-      password: '1234567ab!',
-      role: Roles::SUPER_USER,
-      jurisdiction_id: usa.id,
-      force_password_change: false,
-      authy_enabled: false,
-      authy_enforced: false
-    )
-
-    prototype_user = {
-      email: usa_user[:email],
-      encrypted_password: usa_user[:encrypted_password],
-      sign_in_count: usa_user[:sign_in_count],
-      current_sign_in_at: usa_user[:current_sign_in_at],
-      last_sign_in_at: usa_user[:last_sign_in_at],
-      current_sign_in_ip: usa_user[:current_sign_in_ip],
-      last_sign_in_ip: usa_user[:last_sign_in_ip],
-      failed_attempts: usa_user[:failed_attempts],
-      locked_at: usa_user[:locked_at],
-      force_password_change: usa_user[:force_password_change],
-      jurisdiction_id: usa_user[:jurisdiction_id],
-      password_changed_at: usa_user[:password_changed_at],
-      created_at: usa_user[:created_at],
-      updated_at: usa_user[:updated_at],
-      authy_id: usa_user[:authy_id],
-      last_sign_in_with_authy: usa_user[:last_sign_in_with_authy],
-      authy_enabled: usa_user[:authy_enabled],
-      authy_enforced: usa_user[:authy_enforced],
-      api_enabled: usa_user[:api_enabled],
-      role: usa_user[:role],
-      is_api_proxy: usa_user[:is_api_proxy]
-    }
-
-    index = 0
-    puts "Need to create users for #{num_jurisdictions} jurisdictions\n"
-    Jurisdiction.all.pluck(:id, :unique_identifier).each do |id, unique_identifier|
-      # Create one enroller, admin, public_health, contact_tracer per jurisdiction. Users with these roles are not a large percentage.
-      users << create_user(prototype_user, "#{unique_identifier}_enroller@example.com", Roles::ENROLLER, id)
-      users << create_user(prototype_user, "#{unique_identifier}_admin@example.com", Roles::ADMIN, id)
-      users << create_user(prototype_user, "#{unique_identifier}_epi@example.com", Roles::PUBLIC_HEALTH, id)
-      users << create_user(prototype_user, "#{unique_identifier}_contact_tracer@example.com", Roles::CONTACT_TRACER, id)
-
-      # Very few analysts
-      users << create_user(prototype_user, "#{unique_identifier}_analyst@example.com", Roles::ANALYST, id) if index % 1 == 10
-
-      # Create 35-times that many public-health enrollers (based on production data)
-      35.times do |phe_number|
-        users << create_user(prototype_user, "#{unique_identifier}_#{phe_number}_epi_enroller@example.com", Roles::PUBLIC_HEALTH_ENROLLER, id)
-      end
-
-      index += 1
-      print("\r#{index}")
-    end
-
-    # Import all users
-    User.import users, validate: false
-
-    # Api testing
-    OauthApplication.create!(
-      name: 'performance-test',
-      redirect_uri: 'http://localhost:3000/redirect',
-      scopes: 'user/Patient.* user/Observation.read user/QuestionnaireResponse.read',
-      uid: 'performance-test-oauth-app-uid',
-      secret: 'performance-test-oauth-app-secret'
-    ) if OauthApplication.find_by_uid('performance-test-oauth-app-uid').nil?
-  end
-
-  def create_user(prototype_user, email, role, jurisdiction_id)
-    prototype_user.merge({
-      email: email,
-      role: role,
-      jurisdiction_id: jurisdiction_id
-    })
   end
 
   desc 'Configure the database for demo use'
@@ -305,6 +246,19 @@ namespace :demo do
     beginning_of_today = DateTime.now.beginning_of_day
     created_patients = 0
 
+    # Get symptoms for each jurisdiction
+    # Used in demo_populate_assessments
+    print 'Fetching threshold_conditions for all jurisdictions... '
+    threshold_conditions = {}
+    jurisdictions.each do |jurisdiction|
+      threshold_condition = jurisdiction.hierarchical_condition_unpopulated_symptoms
+      threshold_conditions[jurisdiction[:id]] = {
+        hash: threshold_condition[:threshold_condition_hash],
+        symptoms: threshold_condition.symptoms
+      }
+    end
+    puts 'done.'
+
     days.times do |day|
       if limit - created_patients <= 0
         puts "Patient limit of #{limit} has been reached!"
@@ -319,7 +273,7 @@ namespace :demo do
       printf("Simulating day #{day + 1} (#{beginning_of_day.to_date}):\n")
 
       # Populate patients, assessments, laboratories, transfers, histories, analytics
-      demo_populate_day(beginning_of_day, num_patients_today, days_ago, jurisdictions, assigned_users, case_ids, cache_analytics, counties, available_lang_codes)
+      demo_populate_day(beginning_of_day, num_patients_today, days_ago, jurisdictions, assigned_users, case_ids, cache_analytics, counties, available_lang_codes, threshold_conditions)
       created_patients += num_patients_today
 
       # Cases increase 10-20% every day
@@ -347,10 +301,23 @@ namespace :demo do
 
     printf("Simulating today\n")
 
-    demo_populate_day(DateTime.now.beginning_of_day, num_patients_today, 0, jurisdictions, assigned_users, case_ids, cache_analytics, counties, available_lang_codes)
+    # Get symptoms for each jurisdiction
+    # Used in demo_populate_assessments
+    print 'Fetching threshold_conditions for all jurisdictions... '
+    threshold_conditions = {}
+    jurisdictions.each do |jurisdiction|
+      threshold_condition = jurisdiction.hierarchical_condition_unpopulated_symptoms
+      threshold_conditions[jurisdiction[:id]] = {
+        hash: threshold_condition[:threshold_condition_hash],
+        symptoms: threshold_condition.symptoms
+      }
+    end
+    puts 'done.'
+
+    demo_populate_day(DateTime.now.beginning_of_day, num_patients_today, 0, jurisdictions, assigned_users, case_ids, cache_analytics, counties, available_lang_codes, threshold_conditions)
   end
 
-  def demo_populate_day(beginning_of_day, num_patients_today, days_ago, jurisdictions, assigned_users, case_ids, cache_analytics, counties, available_lang_codes)
+  def demo_populate_day(beginning_of_day, num_patients_today, days_ago, jurisdictions, assigned_users, case_ids, cache_analytics, counties, available_lang_codes, threshold_conditions)
     # Transactions speeds things up a bit
     ActiveRecord::Base.transaction do
       # Patients created before today
@@ -360,7 +327,7 @@ namespace :demo do
       demo_populate_patients(beginning_of_day, num_patients_today, days_ago, jurisdictions, assigned_users, case_ids, counties, available_lang_codes)
 
       # Create assessments
-      demo_populate_assessments(beginning_of_day, days_ago, existing_patients, jurisdictions)
+      demo_populate_assessments(beginning_of_day, days_ago, existing_patients, threshold_conditions)
 
       # Create laboratories
       demo_populate_laboratories(beginning_of_day, days_ago, existing_patients)
@@ -801,7 +768,7 @@ namespace :demo do
     printf(" done.\n")
   end
 
-  def demo_populate_assessments(beginning_of_day, days_ago, existing_patients, jurisdictions)
+  def demo_populate_assessments(beginning_of_day, days_ago, existing_patients, threshold_conditions)
     printf("Generating assessments...")
     assessments = []
     assessment_receipts = []
@@ -847,14 +814,14 @@ namespace :demo do
     printf(" done.\n")
 
     # Get symptoms for each jurisdiction
-    threshold_conditions = {}
-    jurisdictions.each do |jurisdiction|
-      threshold_condition = jurisdiction.hierarchical_condition_unpopulated_symptoms
-      threshold_conditions[jurisdiction[:id]] = {
-        hash: threshold_condition[:threshold_condition_hash],
-        symptoms: threshold_condition.symptoms
-      }
-    end
+    # threshold_conditions = {}
+    # jurisdictions.each do |jurisdiction|
+    #   threshold_condition = jurisdiction.hierarchical_condition_unpopulated_symptoms
+    #   threshold_conditions[jurisdiction[:id]] = {
+    #     hash: threshold_condition[:threshold_condition_hash],
+    #     symptoms: threshold_condition.symptoms
+    #   }
+    # end
 
     printf("Generating condition for assessments...")
     reported_conditions = []
@@ -1285,66 +1252,141 @@ namespace :demo do
     to.updated_at = from.updated_at
   end
 
-  def duplicate_collection(collection, old_pat, new_pat)
-    new_collection = []
+  def duplicate_collection(collection, new_pat, max_ids, results, hash_key)
     collection.each do |resource|
+        max_ids[hash_key] += 1
         new_resource = resource.dup
+        new_resource.id = max_ids[hash_key]
         duplicate_timestamps(resource, new_resource)
         new_resource.patient_id = new_pat.id
-        new_collection << new_resource
+        results[hash_key] << new_resource
     end
-    return new_collection
   end
 
   # Duplicate patient and all nested relations and change last name
-  def deep_duplicate_patient(patient, responder: nil)
-    patients_created = 1
+  def deep_duplicate_patient(max_ids, results, patient, responder_id: nil)
+    max_ids[:patients] += 1
+
+    results[:patients_created] += 1
+    new_patient_id = max_ids[:patients]
+
     new_patient = patient.dup
-    new_patient.responder = responder || new_patient
+    new_patient.id = new_patient_id
+    new_patient.responder_id = responder_id || new_patient
     # new_patient.last_name = "#{new_patient.last_name}#{last_name_num}"
     new_patient.submission_token = new_patient.new_submission_token
     # new_patient.submission_token = SecureRandom.urlsafe_base64[0, 10]
     duplicate_timestamps(patient, new_patient)
-    new_patient.save(validate: false)
+    results[:patients] << new_patient
     # new_patient.update(responder_id: new_patient.id) if responder_id.nil?
     patient.dependents.each do |p|
       if p.id != p.responder_id
-         deep_duplicate_patient(p, responder: new_patient)
-         patients_created += 1
+         deep_duplicate_patient(max_ids, results, p, responder_id: new_patient_id)
       end
     end
     patient.assessments.each do |assessment| 
         # Assessment
+        max_ids[:assessments] += 1
         new_assessment = assessment.dup
+        new_assessment.id = max_ids[:assessments]
         new_assessment.patient_id = new_patient.id
         duplicate_timestamps(assessment, new_assessment)
-        new_assessment.save(validate: false)
+        results[:assessments] << new_assessment
 
         # Reported Condition
+        max_ids[:reported_conditions] += 1
         rep_condition = assessment.reported_condition
         new_reported_condition = rep_condition.dup
+        new_reported_condition.id = max_ids[:reported_conditions]
         new_reported_condition.assessment_id = new_assessment.id
         duplicate_timestamps(rep_condition, new_reported_condition)
-        new_reported_condition.save(validate: false)
+        results[:reported_conditions] << new_reported_condition
 
         # Symptoms
-        symptoms = []
         assessment.reported_condition.symptoms.each do |s|
-            news = s.dup
-            duplicate_timestamps(s, news)
-            news.condition_id = new_reported_condition.id
-            symptoms << news
+          max_ids[:symptoms] += 1
+          news = s.dup
+          duplicate_timestamps(s, news)
+          news.condition_id = new_reported_condition.id
+          news.id = max_ids[:symptoms]
+          results[:symptoms] << news
         end
-        Symptom.import symptoms, validate: false
     end
 
     # Just changing the ID and timestamps on these collections, so no need to validate
-    History.import duplicate_collection(patient.histories, patient, new_patient), validate: false
-    Transfer.import duplicate_collection(patient.transfers, patient, new_patient), validate: false
-    Laboratory.import duplicate_collection(patient.laboratories, patient, new_patient), validate: false
-    CloseContact.import duplicate_collection(patient.close_contacts, patient, new_patient), validate: false
-    ContactAttempt.import duplicate_collection(patient.contact_attempts, patient, new_patient), validate: false
-    patients_created
+    # History.import duplicate_collection(patient.histories, patient, new_patient), validate: false
+    # Transfer.import duplicate_collection(patient.transfers, patient, new_patient), validate: false
+    # Laboratory.import duplicate_collection(patient.laboratories, patient, new_patient), validate: false
+    # CloseContact.import duplicate_collection(patient.close_contacts, patient, new_patient), validate: false
+    # ContactAttempt.import duplicate_collection(patient.contact_attempts, patient, new_patient), validate: false
+    
+    duplicate_collection(patient.histories, new_patient, max_ids, results, :histories)
+    duplicate_collection(patient.transfers, new_patient, max_ids, results, :transfers)
+    duplicate_collection(patient.laboratories, new_patient, max_ids, results, :laboratories)
+    duplicate_collection(patient.close_contacts, new_patient, max_ids, results, :close_contacts)
+    duplicate_collection(patient.contact_attempts, new_patient, max_ids, results, :contact_attempts)
+
+    results
   end
 
+  def blank_results
+    {
+      patients_created: 0,
+      patients: [],
+      assessments: [],
+      reported_conditions: [],
+      symptoms:[],
+      histories: [],
+      transfers: [],
+      laboratories: [],
+      close_contacts: [],
+      contact_attempts: []
+    }
+  end
+
+  def merge_deep_duplicate(results_1, results_2)
+    {
+      patients_created: results_1[:patients_created] + results_2[:patients_created],
+      patients: results_1[:patients] + results_2[:patients],
+      assessments: results_1[:assessments] + results_2[:assessments],
+      reported_conditions: results_1[:reported_conditions] + results_2[:reported_conditions],
+      symptoms: results_1[:symptoms] + results_2[:symptoms],
+      histories: results_1[:histories] + results_2[:histories],
+      transfers: results_1[:transfers] + results_2[:transfers],
+      laboratories: results_1[:laboratories] + results_2[:laboratories],
+      close_contacts: results_1[:close_contacts] + results_2[:close_contacts],
+      contact_attempts: results_1[:contact_attempts] + results_2[:contact_attempts]
+    }
+  end
+
+  def import_deep_duplicate(results)
+    Patient.import results[:patients], validate: false
+    puts '1'
+    Assessment.import results[:assessments], validate: false
+    puts '2'
+    ReportedCondition.import results[:reported_conditions], validate: false
+    puts '3'
+    Symptom.import results[:symptoms], validate: false
+    puts '4'
+    History.import results[:histories], validate: false
+    puts '5'
+    Transfer.import results[:transfers], validate: false
+    puts '6'
+    Laboratory.import results[:laboratories], validate: false
+    puts '7'
+    CloseContact.import results[:close_contacts], validate: false
+    puts '8'
+    ContactAttempt.import results[:contact_attempts], validate: false
+    puts '9'
+
+    results[:patients] = []
+    results[:assessments] = []
+    results[:reported_conditions] = []
+    results[:symptoms] = []
+    results[:histories] = []
+    results[:transfers] = []
+    results[:laboratories] = []
+    results[:close_contacts] = []
+    results[:contact_attempts] = []
+  end
 end
