@@ -19,7 +19,7 @@ namespace :perf do
   desc 'Configure the users in the database for performance testing'
   task populate_and_simulate_patients: :environment do
     # Configurable variables
-    target_patients = (ENV['PATIENT_COUNT']|| 5_000).to_i
+    target_patients = (ENV['PATIENT_COUNT']|| 50_000).to_i
     days = (ENV['DAYS'] || 14).to_i
 
     # Calculated variables
@@ -28,7 +28,7 @@ namespace :perf do
     ENV['LIMIT'] = num_prototype_patients.to_s
     # Reduce num_prototype_patients here since demo:populate grows new patient count with each day
     ENV['COUNT'] = (ENV['COUNT'] || (num_prototype_patients * 0.85) / days).to_i.to_s
-    Rake::Task["demo:populate"].invoke
+    # Rake::Task["demo:populate"].invoke
 
     ENV['COUNT'] = (target_patients - num_prototype_patients).to_s
     Rake::Task["demo:create_bulk_data"].invoke

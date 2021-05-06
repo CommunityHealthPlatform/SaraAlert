@@ -44,26 +44,28 @@ namespace :demo do
     # Found that forks were consistently performing drastically differently when id's were not shuffled
     # i.e. fork 1 was always the slowest between 5 to 10 p/s and fork 8 was always the fastest between 20 to 25 p/s
     # After shuffling, all forks end up at a much more similar 9 to 10 p/s
-    patients = Patient.where('patients.responder_id = patients.id')
-      .includes(
-        :histories,
-        :transfers,
-        :laboratories,
-        :vaccines,
-        :close_contacts,
-        :contact_attempts,
-        assessments: { reported_condition: :symptoms },
-        dependents: [
+    patients = Patient.uncached { 
+      Patient.where('patients.responder_id = patients.id')
+        .preload(
           :histories,
           :transfers,
           :laboratories,
           :vaccines,
           :close_contacts,
           :contact_attempts,
-          { assessments: { reported_condition: :symptoms } }
-        ]
-      )
-      .limit(num_patients)
+          assessments: { reported_condition: :symptoms },
+          dependents: [
+            :histories,
+            :transfers,
+            :laboratories,
+            :vaccines,
+            :close_contacts,
+            :contact_attempts,
+            { assessments: { reported_condition: :symptoms } }
+          ]
+        )
+        .limit(num_patients)
+    }
 
     max_ids = {
       patients: Patient.maximum(:id),
@@ -77,7 +79,10 @@ namespace :demo do
       contact_attempts: ContactAttempt.maximum(:id)
     }
     # NEED TO INVESTIGATE IF THIS IS NECESSARY TO IMPORT EVERY X PATIENTS TO CONSERVE MEMORY
-    # num_patient_import_threshold = 50_000
+    # 6 GB usage @ 30k patients
+    # 5 GB usage @ 25k patients
+    # 3 GB usage @ 15k patients
+    num_patient_import_threshold = 10_000
     results = blank_results
     t1 = Time.now
     num_to_create = num_patients
@@ -86,16 +91,23 @@ namespace :demo do
     while results[:patients_created] < num_to_create do
       break if results[:patients_created] >= num_to_create
 
-      patients.find_in_batches(batch_size: 100) do |group|
+      patients.find_in_batches(batch_size: 1000) do |group|
         group.each do |patient|
           break if results[:patients_created] >= num_to_create
           deep_duplicate_patient(max_ids, results, patient)
-          print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} p/s | #{results[:patients_created]} patients"
+          print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} patients/sec | #{results[:patients_created]} patients           "
         end
+      end
+
+      if results[:patients_created] > num_patient_import_threshold
+        import_deep_duplicate(results)
+        num_patient_import_threshold += results[:patients_created]
+        total_created = results[:patients_created]
+        results = blank_results
+        results[:patients_created] = total_created
       end
     end
 
-    puts 'Importing all patients...'
     import_deep_duplicate(results)
 
     elapsed = Time.now - t1
@@ -1272,7 +1284,7 @@ namespace :demo do
       if p.id != p.responder_id
          deep_duplicate_patient(max_ids, results, p, responder_id: new_patient_id)
       end
-    end
+    end if patient.head_of_household
     patient.assessments.each do |assessment| 
         # Assessment
         max_ids[:assessments] += 1
@@ -1333,22 +1345,23 @@ namespace :demo do
     }
   end
 
-  def merge_deep_duplicate(results_1, results_2)
-    {
-      patients_created: results_1[:patients_created] + results_2[:patients_created],
-      patients: results_1[:patients] + results_2[:patients],
-      assessments: results_1[:assessments] + results_2[:assessments],
-      reported_conditions: results_1[:reported_conditions] + results_2[:reported_conditions],
-      symptoms: results_1[:symptoms] + results_2[:symptoms],
-      histories: results_1[:histories] + results_2[:histories],
-      transfers: results_1[:transfers] + results_2[:transfers],
-      laboratories: results_1[:laboratories] + results_2[:laboratories],
-      close_contacts: results_1[:close_contacts] + results_2[:close_contacts],
-      contact_attempts: results_1[:contact_attempts] + results_2[:contact_attempts]
-    }
-  end
+  # def merge_deep_duplicate(results_1, results_2)
+  #   {
+  #     patients_created: results_1[:patients_created] + results_2[:patients_created],
+  #     patients: results_1[:patients] + results_2[:patients],
+  #     assessments: results_1[:assessments] + results_2[:assessments],
+  #     reported_conditions: results_1[:reported_conditions] + results_2[:reported_conditions],
+  #     symptoms: results_1[:symptoms] + results_2[:symptoms],
+  #     histories: results_1[:histories] + results_2[:histories],
+  #     transfers: results_1[:transfers] + results_2[:transfers],
+  #     laboratories: results_1[:laboratories] + results_2[:laboratories],
+  #     close_contacts: results_1[:close_contacts] + results_2[:close_contacts],
+  #     contact_attempts: results_1[:contact_attempts] + results_2[:contact_attempts]
+  #   }
+  # end
 
   def import_deep_duplicate(results)
+    puts "\rImporting all patients...                                                                                  "
     Patient.import results[:patients], validate: false
     Assessment.import results[:assessments], validate: false
     ReportedCondition.import results[:reported_conditions], validate: false
