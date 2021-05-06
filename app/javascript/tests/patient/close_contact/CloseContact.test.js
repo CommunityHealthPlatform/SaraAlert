@@ -50,8 +50,8 @@ describe('CloseContact', () => {
     expect(alreadyExistingCCWrapper.find('Button').length).toEqual(4)
     expect(alreadyExistingCCWrapper.find('Button').at(0).text()).toContain('Edit');
     expect(alreadyExistingCCWrapper.find('Button').at(1).text()).toContain('Contact Attempt');
-    expect(alreadyExistingCCWrapper.find('Button').at(2).text()).toContain('View Record');
-    expect(alreadyExistingCCWrapper.find('Button').at(3).text()).toContain('Delete')
+    expect(alreadyExistingCCWrapper.find('Button').at(2).text()).toContain('Delete')
+    expect(alreadyExistingCCWrapper.find('Button').at(3).text()).toContain('View Record');
 
     expect(alreadyExistingCCWrapper.state('showCloseContactModal')).toBeFalsy();
     expect(alreadyExistingCCWrapper.state('first_name')).toEqual(mockCloseContact2.first_name || '')
@@ -69,8 +69,8 @@ describe('CloseContact', () => {
     expect(alreadyExistingCCWrapper.find('Button').length).toEqual(4)
     expect(alreadyExistingCCWrapper.find('Button').at(0).text()).toContain('Edit');
     expect(alreadyExistingCCWrapper.find('Button').at(1).text()).toContain('Contact Attempt');
-    expect(alreadyExistingCCWrapper.find('Button').at(2).text()).toContain('Enroll');
-    expect(alreadyExistingCCWrapper.find('Button').at(3).text()).toContain('Delete')
+    expect(alreadyExistingCCWrapper.find('Button').at(2).text()).toContain('Delete')
+    expect(alreadyExistingCCWrapper.find('Button').at(3).text()).toContain('Enroll');
 
 
     expect(alreadyExistingCCWrapper.state('showCloseContactModal')).toBeFalsy();
@@ -231,7 +231,7 @@ describe('CloseContact', () => {
     value = testInputValues.find(x => x.field === 'notes').value
     existingCCWrapper.find(Modal.Body).find('Row').at(3).find(Form.Control).simulate('change', { target: { id: 'notes', value: value } })
 
-    existingCCWrapper.find(Button).at(3).simulate('click');
+    existingCCWrapper.find(Button).at(4).simulate('click');
     // Once the modal is closed, the values should default back to their nulled out original values
     expect(existingCCWrapper.state('showCloseContactModal')).toBeFalsy();
     expect(existingCCWrapper.state('first_name')).toEqual(mockCloseContact2.first_name || '')
@@ -243,14 +243,14 @@ describe('CloseContact', () => {
     expect(existingCCWrapper.state('notes')).toEqual(mockCloseContact2.notes || '')
   });
 
-  it('Properly calls submit when the button is clicked', () => {
+  it('Properly calls handleCloseContactSubmit when the button is clicked', () => {
     const emptyCCWrapper = getShallowWrapper(mockCloseContact1);
-    const submitSpy = jest.spyOn(emptyCCWrapper.instance(), 'submit');
-    expect(emptyCCWrapper.find(Button).at(0).text()).toContain('Add New Close Contact');
+    const handleCloseContactSubmitSpy = jest.spyOn(emptyCCWrapper.instance(), 'handleCloseContactSubmit');
+    expect(emptyCCWrapper.find('Button').at(0).text()).toContain('Add New Close Contact');
     emptyCCWrapper.find(Button).at(0).simulate('click');
-    expect(emptyCCWrapper.find(Button).at(2).text()).toContain('Create');
-    emptyCCWrapper.find(Button).at(2).simulate('click') //click submit
-    expect(submitSpy).toHaveBeenCalledTimes(1)
+    expect(emptyCCWrapper.find('Button').at(2).text()).toContain('Create');
+    emptyCCWrapper.find(Button).at(2).simulate('click') //click handleCloseContactSubmit
+    expect(handleCloseContactSubmitSpy).toHaveBeenCalledTimes(1)
   });
 
   it('Properly renders accurate count of characters remaining for notes field', () => {
