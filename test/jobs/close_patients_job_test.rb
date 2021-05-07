@@ -14,13 +14,6 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
     ENV['TWILLIO_STUDIO_FLOW'] = nil
   end
 
-  def history_that_contains?(patient, history_comment_substring)
-    patient.histories.each do |history|
-      return true if history.comment.include? history_comment_substring
-    end
-    false
-  end
-
   test 'handles case where last date of exposure is nil' do
     patient = create(:patient,
                      purged: false,
@@ -145,6 +138,8 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
     assert_contains_history(patient, 'Monitoring Complete message was sent.')
     assert_contains_history(patient, 'because the monitoree email was blank.')
     assert_not_contains_history(patient, 'Monitoree has completed monitoring.')
+    assert_not_contains_history(patient, 'because the monitoree email was blank.')
+    assert_contains_history(patient, 'Monitoree has completed monitoring.')
   end
 
   test 'does not send closed notification if jurisdiction send_close is false' do
@@ -161,7 +156,7 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
     patient.jurisdiction.update(send_close: false)
     ClosePatientsJob.perform_now
     assert_equal(ActionMailer::Base.deliveries.count, 1)
-    assert history_that_contains?(patient, 'Monitoree has completed monitoring.')
+    assert_contains_history(patient, 'Monitoree has completed monitoring.')
   end
 
   ['Telephone call', 'Opt-out', 'Unknown', nil, ''].each do |preferred_contact_method|
@@ -179,8 +174,8 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
 
       ClosePatientsJob.perform_now
       history_friendly_method = patient.preferred_contact_method.blank? ? patient.preferred_contact_method : 'Unknown'
-      assert history_that_contains?(patient, "#{history_friendly_method}, is not supported for this message type.")
-      assert history_that_contains?(patient, 'Monitoree has completed monitoring.')
+      assert_contains_history(patient, "#{history_friendly_method}, is not supported for this message type.")
+      assert_contains_history(patient, 'Monitoree has completed monitoring.')
     end
   end
 
@@ -198,8 +193,8 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
 
       ClosePatientsJob.perform_now
       method_text = preferred_contact_method == 'E-mailed Web Link' ? 'email' : 'primary phone number'
-      assert history_that_contains?(patient, "because their preferred contact method, #{method_text}, was blank.")
-      assert history_that_contains?(patient, 'Monitoree has completed monitoring.')
+      assert_contains_history(patient, "because their preferred contact method, #{method_text}, was blank.")
+      assert_contains_history(patient, 'Monitoree has completed monitoring.')
     end
 
     test "sends closed email if closed record is a reporter with #{preferred_contact_method} preferred" do
@@ -217,8 +212,8 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
 
       ClosePatientsJob.perform_now
       method_text = preferred_contact_method == 'E-mailed Web Link' ? 'email' : 'primary phone number'
-      assert_not history_that_contains?(patient, "because their preferred contact method, #{method_text}, was blank.")
-      assert history_that_contains?(patient, 'Monitoree has completed monitoring.')
+      assert_not_contains_history(patient, "because their preferred contact method, #{method_text}, was blank.")
+      assert_contains_history(patient, 'Monitoree has completed monitoring.')
     end
   end
 
