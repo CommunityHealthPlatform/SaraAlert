@@ -244,8 +244,6 @@ ActiveRecord::Schema.define(version: 2021_05_01_025934) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "status", default: "Missing"
-    t.integer "exposure_to_isolation"
-    t.integer "isolation_to_exposure"
     t.index ["analytic_id"], name: "index_monitoree_snapshots_on_analytic_id"
   end
 
