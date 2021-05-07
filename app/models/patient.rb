@@ -295,28 +295,26 @@ class Patient < ApplicationRecord
 
   scope :within_preferred_contact_time, lambda {
     where(
-      # If preferred contact time is X,
-      # then valid contact hours in patient's timezone are Y.
-      # 'Morning'   => 0800 - 1200
-      # 'Afternoon' => 1200 - 1600
-      # 'Evening'   => 1600 - 1900
-      #  default    => 1200 - 1600
       '(patients.preferred_contact_time = "Morning"'\
-      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) >= 8'\
-      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) <= 12) '\
+      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) >= ?'\
+      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) <= ?) '\
       'OR (patients.preferred_contact_time = "Afternoon"'\
-      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) >= 12'\
-      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) <= 16) '\
+      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) >= ?'\
+      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) <= ?) '\
       'OR (patients.preferred_contact_time = "Evening"'\
-      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) >= 16'\
-      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) <= 19) '\
+      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) >= ?'\
+      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) <= ?) '\
       'OR (patients.preferred_contact_time IS NULL'\
-      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) >= 12'\
-      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) <= 16)',
-      Time.now.getlocal('-00:00'), Time.now.getlocal('-00:00'),
-      Time.now.getlocal('-00:00'), Time.now.getlocal('-00:00'),
-      Time.now.getlocal('-00:00'), Time.now.getlocal('-00:00'),
-      Time.now.getlocal('-00:00'), Time.now.getlocal('-00:00')
+      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) >= ?'\
+      ' && HOUR(CONVERT_TZ(?, "UTC", patients.time_zone)) <= ?)',
+      Time.now.getlocal('-00:00'), PatientDetailsHelper::MORNING_CONTACT_WINDOW.first,
+      Time.now.getlocal('-00:00'), PatientDetailsHelper::MORNING_CONTACT_WINDOW.last,
+      Time.now.getlocal('-00:00'), PatientDetailsHelper::AFTERNOON_CONTACT_WINDOW.first,
+      Time.now.getlocal('-00:00'), PatientDetailsHelper::AFTERNOON_CONTACT_WINDOW.last,
+      Time.now.getlocal('-00:00'), PatientDetailsHelper::EVENING_CONTACT_WINDOW.first,
+      Time.now.getlocal('-00:00'), PatientDetailsHelper::EVENING_CONTACT_WINDOW.last,
+      Time.now.getlocal('-00:00'), PatientDetailsHelper::UNSPECIFIED_CONTACT_WINDOW.first,
+      Time.now.getlocal('-00:00'), PatientDetailsHelper::UNSPECIFIED_CONTACT_WINDOW.last
     )
   }
 
@@ -1124,13 +1122,13 @@ class Patient < ApplicationRecord
   def time_to_contact_next
     hour_window = case preferred_contact_time
                   when 'Morning'
-                    8..12
+                    PatientDetailsHelper::MORNING_CONTACT_WINDOW
                   when 'Afternoon'
-                    12..16
+                    PatientDetailsHelper::AFTERNOON_CONTACT_WINDOW
                   when 'Evening'
-                    16..19
+                    PatientDetailsHelper::EVENING_CONTACT_WINDOW
                   else
-                    12..16
+                    PatientDetailsHelper::UNSPECIFIED_CONTACT_WINDOW
                   end
     patient_local_time = Time.now.getlocal(address_timezone_offset)
     local_time_hour = patient_local_time.hour
