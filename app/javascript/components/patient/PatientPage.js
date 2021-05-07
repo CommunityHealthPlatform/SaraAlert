@@ -5,6 +5,7 @@ import Patient from './Patient';
 import Dependent from './household/Dependent';
 import HeadOfHousehold from './household/HeadOfHousehold';
 import Individual from './household/Individual';
+import FollowUpFlag from './FollowUpFlag';
 
 class PatientPage extends React.Component {
   render() {
@@ -13,6 +14,14 @@ class PatientPage extends React.Component {
         <Card id="patient-page" className="mx-2 card-square">
           <Card.Header className="h5" id="patient-info-header">
             Monitoree Details {this.props.patient.user_defined_id ? `(ID: ${this.props.patient.user_defined_id})` : ''}{' '}
+            <FollowUpFlag
+              patient={this.props.patient}
+              current_user={this.props.current_user}
+              jurisdiction_paths={this.props.jurisdiction_paths}
+              authenticity_token={this.props.authenticity_token}
+              follow_up_reasons={this.props.follow_up_reasons}
+              other_household_members={this.props.other_household_members}
+            />
           </Card.Header>
           <Card.Body>
             <Patient
@@ -50,13 +59,16 @@ class PatientPage extends React.Component {
 }
 
 PatientPage.propTypes = {
+  current_user: PropTypes.object,
   can_add_group: PropTypes.bool,
   can_modify_subject_status: PropTypes.bool,
   patient: PropTypes.object,
   other_household_members: PropTypes.array,
   authenticity_token: PropTypes.string,
   jurisdiction_path: PropTypes.string,
+  jurisdiction_paths: PropTypes.object,
   blocked_sms: PropTypes.bool,
+  follow_up_reasons: PropTypes.array,
 };
 
 export default PatientPage;
