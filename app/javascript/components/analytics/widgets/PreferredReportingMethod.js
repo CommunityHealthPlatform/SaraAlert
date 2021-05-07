@@ -2,7 +2,6 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import _ from 'lodash';
 import { Card } from 'react-bootstrap';
-import { formatPercentage } from '../../../utils/Analytics';
 
 const WORKFLOWS = ['Exposure', 'Isolation'];
 
@@ -73,7 +72,7 @@ class PreferredReportingMethod extends React.Component {
               return {
                 contactMethod,
                 value,
-                percentageOfTotal: formatPercentage(value, cumulativeSum),
+                percentageOfTotal: value ? ((value / cumulativeSum) * 100).toFixed(1).toString() + '%' : 'None',
               };
             }),
           };
