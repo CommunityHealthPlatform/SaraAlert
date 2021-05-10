@@ -41,77 +41,83 @@ namespace :demo do
     num_patients = (ENV['COUNT'] || 100000).to_i
     num_threads = (ENV['FORKS'] || 8).to_i
 
-    # Found that forks were consistently performing drastically differently when id's were not shuffled
-    # i.e. fork 1 was always the slowest between 5 to 10 p/s and fork 8 was always the fastest between 20 to 25 p/s
-    # After shuffling, all forks end up at a much more similar 9 to 10 p/s
-    patients = Patient.uncached { 
-      Patient.where('patients.responder_id = patients.id')
-        .preload(
-          :histories,
-          :transfers,
-          :laboratories,
-          :vaccines,
-          :close_contacts,
-          :contact_attempts,
-          assessments: { reported_condition: :symptoms },
-          dependents: [
+    Patient.uncached do
+      # Found that forks were consistently performing drastically differently when id's were not shuffled
+      # i.e. fork 1 was always the slowest between 5 to 10 p/s and fork 8 was always the fastest between 20 to 25 p/s
+      # After shuffling, all forks end up at a much more similar 9 to 10 p/s
+      patients = Patient.where('patients.responder_id = patients.id')
+          .includes(
             :histories,
             :transfers,
             :laboratories,
             :vaccines,
             :close_contacts,
             :contact_attempts,
-            { assessments: { reported_condition: :symptoms } }
-          ]
-        )
-        .limit(num_patients)
-    }
+            assessments: { reported_condition: :symptoms },
+            dependents: [
+              :histories,
+              :transfers,
+              :laboratories,
+              :vaccines,
+              :close_contacts,
+              :contact_attempts,
+              { assessments: { reported_condition: :symptoms } }
+            ]
+          )
+          .limit(num_patients)
 
-    max_ids = {
-      patients: Patient.maximum(:id),
-      assessments: Assessment.maximum(:id),
-      reported_conditions: ReportedCondition.maximum(:id),
-      symptoms: Symptom.maximum(:id),
-      histories: History.maximum(:id),
-      transfers: Transfer.maximum(:id),
-      laboratories: Laboratory.maximum(:id),
-      close_contacts: CloseContact.maximum(:id),
-      contact_attempts: ContactAttempt.maximum(:id)
-    }
-    # NEED TO INVESTIGATE IF THIS IS NECESSARY TO IMPORT EVERY X PATIENTS TO CONSERVE MEMORY
-    # 6 GB usage @ 30k patients
-    # 5 GB usage @ 25k patients
-    # 3 GB usage @ 15k patients
-    num_patient_import_threshold = 10_000
-    results = blank_results
-    t1 = Time.now
-    num_to_create = num_patients
-    # Patients per second appears to be mainly bottlenecked by the time it
-    # takes to fetch all of the patient and related data from MySQL.
-    while results[:patients_created] < num_to_create do
-      break if results[:patients_created] >= num_to_create
+      max_ids = {
+        patients: Patient.maximum(:id),
+        assessments: Assessment.maximum(:id),
+        reported_conditions: ReportedCondition.maximum(:id),
+        symptoms: Symptom.maximum(:id),
+        histories: History.maximum(:id),
+        transfers: Transfer.maximum(:id),
+        laboratories: Laboratory.maximum(:id),
+        close_contacts: CloseContact.maximum(:id),
+        contact_attempts: ContactAttempt.maximum(:id)
+      }
+      # NEED TO INVESTIGATE IF THIS IS NECESSARY TO IMPORT EVERY X PATIENTS TO CONSERVE MEMORY
+      # 6 GB usage @ 30k patients
+      # 5 GB usage @ 25k patients
+      # 3 GB usage @ 15k patients
+      std_num_patient_import_threshold = 1000
+      num_patient_import_threshold = std_num_patient_import_threshold
+      results = blank_results
+      t1 = Time.now
+      num_to_create = num_patients
+      # Patients per second appears to be mainly bottlenecked by the time it
+      # takes to fetch all of the patient and related data from MySQL.
+      # report = MemoryProfiler.report do
+      while results[:patients_created] < num_to_create do
+        break if results[:patients_created] >= num_to_create
 
-      patients.find_in_batches(batch_size: 1000) do |group|
-        group.each do |patient|
+        patients.find_in_batches(batch_size: 100) do |group|
           break if results[:patients_created] >= num_to_create
-          deep_duplicate_patient(max_ids, results, patient)
-          print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} patients/sec | #{results[:patients_created]} patients           "
+          group.each do |patient|
+            break if results[:patients_created] >= num_to_create
+            deep_duplicate_patient(max_ids, results, patient)
+            print "\r#{(results[:patients_created] / (Time.now - t1)).truncate(2)} patients/sec | #{results[:patients_created]}/#{num_to_create} patients           "
+
+            # Import in batches
+            if results[:patients_created] > num_patient_import_threshold
+              import_deep_duplicate(results)
+              num_patient_import_threshold = results[:patients_created] + std_num_patient_import_threshold
+              total_created = results[:patients_created]
+              results = blank_results
+              results[:patients_created] = total_created
+            end
+          end
         end
       end
+      # end
+      # report.pretty_print(scale_bytes: true)
 
-      if results[:patients_created] > num_patient_import_threshold
-        import_deep_duplicate(results)
-        num_patient_import_threshold += results[:patients_created]
-        total_created = results[:patients_created]
-        results = blank_results
-        results[:patients_created] = total_created
-      end
-    end
+      import_deep_duplicate(results)
 
-    import_deep_duplicate(results)
-
-    elapsed = Time.now - t1
+      elapsed = Time.now - t1
     puts "\n\nCreated #{results[:patients_created]} patients in #{elapsed} seconds. (#{(results[:patients_created] / elapsed).truncate(2)} patients / sec)"
+    end
   end
 
   desc 'Configure the database for demo use'
@@ -899,6 +905,7 @@ namespace :demo do
     printf("Generating laboratories...")
     laboratories = []
     histories = []
+    public_health_emails = User.where(role: 'public_health').pluck(:email)
     isolation_patients = existing_patients.where(isolation: true)
     if days_ago > 10
       patient_ids_lab = isolation_patients.limit(isolation_patients.count * rand(90..95) / 100).order('RAND()').pluck(:id)
@@ -926,7 +933,7 @@ namespace :demo do
       )
       histories << History.new(
         patient_id: patient_id,
-        created_by: User.where(role: 'public_health').pluck(:email).sample,
+        created_by: public_health_emails.sample,
         comment: "User added a new lab result.",
         history_type: 'Lab Result',
         created_at: lab_ts,
@@ -1361,7 +1368,7 @@ namespace :demo do
   # end
 
   def import_deep_duplicate(results)
-    puts "\rImporting all patients...                                                                                  "
+    puts "\rImporting #{results[:patients].size} patients...                                                                                  "
     Patient.import results[:patients], validate: false
     Assessment.import results[:assessments], validate: false
     ReportedCondition.import results[:reported_conditions], validate: false

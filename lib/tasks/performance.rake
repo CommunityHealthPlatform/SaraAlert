@@ -5,13 +5,26 @@ namespace :perf do
   desc 'Completely populate the performance database'
   task populate: :environment do
     unless Rails.env == 'development' || ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK']
-      puts 'bundle exec rails db:drop db:create db:schema:load admin:import_or_update_jurisdictions perf:populate'
+      puts 'bundle exec rails perf:populate'
       raise 'This task is only for use in a development environment' 
     end
 
-    raise 'This task is meant to run ONLY on a new database' if Patient.count > 0 || User.count > 0
+    puts 'This task will run the following rake tasks:'
+    puts '    db:drop'
+    puts '    db:create'
+    puts '    db:schema:load'
+    puts '    admin:import_or_update_jurisdictions'
+    puts '    perf:setup_performance_test_users'
+    puts '    perf:populate_and_simulate_patients'
+    puts"\nDo you wish to continue? (y/N)"
+    res =  ENV['APP_IN_CI'].nil? ? STDIN.getc : 'y'
+    exit unless res.downcase == 'y'
 
     ENV['PERFORMANCE'] = 'true'
+    Rake::Task["db:drop"].invoke
+    Rake::Task["db:create"].invoke
+    Rake::Task["db:schema:load"].invoke
+    Rake::Task["admin:import_or_update_jurisdictions"].invoke
     Rake::Task["perf:setup_performance_test_users"].invoke
     Rake::Task["perf:populate_and_simulate_patients"].invoke
   end
@@ -19,7 +32,7 @@ namespace :perf do
   desc 'Configure the users in the database for performance testing'
   task populate_and_simulate_patients: :environment do
     # Configurable variables
-    target_patients = (ENV['PATIENT_COUNT']|| 50_000).to_i
+    target_patients = (ENV['PATIENT_COUNT']|| 500_000).to_i
     days = (ENV['DAYS'] || 14).to_i
 
     # Calculated variables
@@ -28,7 +41,7 @@ namespace :perf do
     ENV['LIMIT'] = num_prototype_patients.to_s
     # Reduce num_prototype_patients here since demo:populate grows new patient count with each day
     ENV['COUNT'] = (ENV['COUNT'] || (num_prototype_patients * 0.85) / days).to_i.to_s
-    # Rake::Task["demo:populate"].invoke
+    Rake::Task["demo:populate"].invoke
 
     ENV['COUNT'] = (target_patients - num_prototype_patients).to_s
     Rake::Task["demo:create_bulk_data"].invoke
@@ -42,7 +55,7 @@ namespace :perf do
     puts "Creating users for #{num_jurisdictions} jurisdictions\n"
 
     if !(num_jurisdictions > 50)
-      puts ' Jurisdictions were not found! Make sure to run `PERFORMANCE=true bundle exec rake admin:import_or_update_jurisdictions`'
+      puts ' Jurisdictions were not found! Make sure to run `PERFORMANCE=true bundle exec rake admin:import_or_update_jurisdictions` or `bundle exec rails perf:populate`'
       exit(1)
     end
 
