@@ -2,6 +2,82 @@
 # frozen_string_literal: true
 
 namespace :perf do
+  desc 'Trim database down to a specific number of patients'
+  task trim: :environment do
+    unless Rails.env == 'development' || ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK']
+      puts 'bundle exec rails perf:populate'
+      raise 'This task is only for use in a development environment' 
+    end
+
+    if ENV['COUNT'].nil? || ENV['COUNT'].to_i <= 0
+      puts "\nMust provide COUNT environment variable to indicate how many patients should be in the DB"
+      puts 'export COUNT=500000'
+      exit 1
+    end
+
+    desired_patient_count = ENV['COUNT'].to_i
+    current_patient_count = Patient.count
+
+    puts "Currently at #{current_patient_count} patients"
+    puts "Script will delete patients until it reaches #{desired_patient_count}\n"
+
+    Patient.uncached do
+      patients = Patient.where('patients.responder_id = patients.id')
+          .includes(
+            :histories,
+            :transfers,
+            :laboratories,
+            :vaccines,
+            :close_contacts,
+            :contact_attempts,
+            assessments: { reported_condition: :symptoms },
+            dependents: [
+              :histories,
+              :transfers,
+              :laboratories,
+              :vaccines,
+              :close_contacts,
+              :contact_attempts,
+              { assessments: { reported_condition: :symptoms } }
+            ]
+          )
+
+      while current_patient_count > desired_patient_count
+        patients.find_in_batches(batch_size: 100) do |group|
+          break unless current_patient_count > desired_patient_count
+          group.each do |patient|
+            break unless current_patient_count > desired_patient_count
+            current_patient_count -= remove_patient(patient)
+            print "\rPatient Count: #{current_patient_count}                   "
+          end
+        end
+      end
+    end
+    puts 'Done!'
+  end
+
+  def remove_patient(patient)
+    removed_patients = 1
+    ActiveRecord::Base.transaction do
+      patient.histories.delete_all
+      patient.transfers.delete_all
+      patient.laboratories.delete_all
+      patient.vaccines.delete_all
+      patient.close_contacts.delete_all
+      patient.contact_attempts.delete_all
+      patient.assessments.each do |assessment|
+        assessment.reported_condition&.symptoms&.delete_all
+        assessment.reported_condition&.delete
+      end
+      dependents = patient.dependents.filter { |d| d.id != d.responder_id}
+      dependents.each do |dependent|
+        removed_patients += remove_patient(dependent)
+      end
+      patient.delete
+    end
+    return removed_patients
+  end
+
   desc 'Completely populate the performance database'
   task populate: :environment do
     unless Rails.env == 'development' || ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK']
@@ -21,6 +97,7 @@ namespace :perf do
     exit unless res.downcase == 'y'
 
     ENV['PERFORMANCE'] = 'true'
+    ENV['ACCEPT_JURISDICTONS'] = 'y'
     Rake::Task["db:drop"].invoke
     Rake::Task["db:create"].invoke
     Rake::Task["db:schema:load"].invoke

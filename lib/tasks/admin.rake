@@ -45,7 +45,7 @@ namespace :admin do
       puts "\e[41mCompare the following hash as output by this task when run on the enrollment and assessment servers and make sure that the hashes are EXACTLY EQUAL\e[0m"
       puts "\e[41m>>>>>>>>>>#{final_hash}<<<<<<<<<<\e[0m"
       puts "Do the hashes on the enrollment and assessment servers match? (y/N)"
-      res = STDIN.getc
+      res = ENV['ACCEPT_JURISDICTONS'].nil? ? STDIN.getc : 'y'
       exit unless res.downcase == 'y'
     end
   end
