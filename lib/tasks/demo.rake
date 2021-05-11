@@ -1280,7 +1280,7 @@ namespace :demo do
 
     new_patient = patient.dup
     new_patient.id = new_patient_id
-    new_patient.responder_id = responder_id || new_patient
+    new_patient.responder_id = responder_id || new_patient_id
     # new_patient.last_name = "#{new_patient.last_name}#{last_name_num}"
     # new_patient.submission_token = new_patient.new_submission_token
     new_patient.submission_token = SecureRandom.urlsafe_base64[0, 10]
