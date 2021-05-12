@@ -98,11 +98,17 @@ namespace :perf do
 
     ENV['PERFORMANCE'] = 'true'
     ENV['ACCEPT_JURISDICTONS'] = 'y'
+    puts "\n\nExecuting Task: db:drop"
     Rake::Task["db:drop"].invoke
+    puts "\n\nExecuting Task: db:create"
     Rake::Task["db:create"].invoke
+    puts "\n\nExecuting Task: db:schema:load"
     Rake::Task["db:schema:load"].invoke
+    puts "\n\nExecuting Task: admin:import_or_update_jurisdictions"
     Rake::Task["admin:import_or_update_jurisdictions"].invoke
+    puts "\n\nExecuting Task: perf:setup_performance_test_users"
     Rake::Task["perf:setup_performance_test_users"].invoke
+    puts "\n\nExecuting Task: perf:populate_and_simulate_patients"
     Rake::Task["perf:populate_and_simulate_patients"].invoke
   end
 
