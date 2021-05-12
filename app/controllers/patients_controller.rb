@@ -450,9 +450,15 @@ class PatientsController < ApplicationController
     end
     patients = current_user.get_patients(patient_ids)
 
-    patients.each do |patient|
-      update_monitoring_fields(patient, params, non_dependent_patient_ids.include?(patient[:id]) ? :patient : :dependent,
-                               params[:apply_to_household] ? :group : :none)
+    if params.permit(:bulk_edit_type)[:bulk_edit_type] == 'follow-up'
+      patients.each do |patient|
+        update_follow_up_flag_fields(patient, params)
+      end
+    else
+      patients.each do |patient|
+        update_monitoring_fields(patient, params, non_dependent_patient_ids.include?(patient[:id]) ? :patient : :dependent,
+                                 params[:apply_to_household] ? :group : :none)
+      end
     end
   end
 
@@ -548,6 +554,10 @@ class PatientsController < ApplicationController
     patient = current_user.get_patient(params.permit(:id)[:id])
     redirect_to(root_url) && return if patient.nil?
 
+    update_follow_up_flag_fields(patient, params)
+  end
+
+  def update_follow_up_flag_fields(patient, params)
     clear_flag = params.permit(:clear_flag)[:clear_flag]
     history_data = {}
     if clear_flag
