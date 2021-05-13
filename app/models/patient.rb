@@ -98,7 +98,7 @@ class Patient < ApplicationRecord
 
   validates_with PrimaryContactValidator, on: %i[api import]
   validates_with RaceValidator, on: %i[api import]
-  validates_with IsolationSymptomOnsetValidator, on: %i[api]
+  validates_with IsolationSymptomOnsetValidator, on: %i[api_create]
 
   # NOTE: Commented out until additional testing
   # validates_with PatientDateValidator
