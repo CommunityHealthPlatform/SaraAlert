@@ -120,7 +120,7 @@ class LaboratoryModal extends React.Component {
                 </Form.Control>
               </Form.Group>
             </Row>
-            {this.props.asympWarning && this.state.result !== 'positive' && (
+            {this.props.onlyPosLab && this.state.result !== 'positive' && (
               <Alert variant="warning">
                 Warning: This record does not have a Symptom Onset Date. Changing this lab result may result in the record not ever being eligible to appear on
                 the Records Requiring Review line list.
@@ -136,7 +136,7 @@ class LaboratoryModal extends React.Component {
             variant="primary btn-square"
             disabled={this.props.loading || this.state.reportInvalid || (this.props.specimenCollectionRequired && !this.state.specimen_collection)}
             onClick={this.submit}>
-            {this.props.edit_mode ? 'Update' : 'Create'}
+            {this.props.editMode ? 'Update' : 'Create'}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -150,9 +150,9 @@ LaboratoryModal.propTypes = {
   onlyPositiveResult: PropTypes.bool,
   submit: PropTypes.func,
   cancel: PropTypes.func,
-  edit_mode: PropTypes.bool,
+  editMode: PropTypes.bool,
   loading: PropTypes.bool,
-  asympWarning: PropTypes.bool,
+  onlyPosLab: PropTypes.bool,
 };
 
 export default LaboratoryModal;
