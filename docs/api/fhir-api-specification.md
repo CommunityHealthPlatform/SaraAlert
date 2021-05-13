@@ -564,7 +564,7 @@ Get a monitoree lab result via an id, e.g.:
   "subject": {
     "reference": "Patient/1"
   },
-  "effectiveDateTime": "2021-05-06T00:00:00+00:00",
+  "effectiveDateTime": "2021-05-06",
   "valueCodeableConcept": {
     "coding": [
       {
@@ -2728,7 +2728,7 @@ GET `[base]/Observation?subject=Patient/[:id]`
   "total": 1,
   "entry": [
     {
-      "fullUrl": "http://localhost:3000/fhir/r4/Observation/1",
+      "fullUrl": "http://localhost:3000/fhir/r4/Observation/11",
       "resource": {
         "id": 11,
         "meta": {
@@ -2763,7 +2763,7 @@ GET `[base]/Observation?subject=Patient/[:id]`
         "subject": {
           "reference": "Patient/1"
         },
-        "effectiveDateTime": "2021-05-06T00:00:00+00:00",
+        "effectiveDateTime": "2021-05-06",
         "valueCodeableConcept": {
           "coding": [
             {
@@ -3604,7 +3604,7 @@ See the FHIR [transaction](https://www.hl7.org/fhir/http.html#transaction) docum
         "subject": {
           "reference": "Patient/30"
         },
-        "effectiveDateTime": "2021-05-06T00:00:00+00:00",
+        "effectiveDateTime": "2021-05-06",
         "valueCodeableConcept": {
           "coding": [
             {
