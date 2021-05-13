@@ -85,7 +85,7 @@ class Fhir::R4::ApiController < ApplicationApiController
 
       # Parse in the FHIR
       request_body = request.body.read
-      contents = FHIR.from_contents(request_body) if !request_body.blank?
+      contents = FHIR.from_contents(request_body) unless request_body.blank?
       errors = contents&.validate
       status_bad_request(format_fhir_validation_errors(errors)) && return if contents.nil? || !errors.empty?
     end
@@ -292,7 +292,7 @@ class Fhir::R4::ApiController < ApplicationApiController
 
     # Parse in the FHIR
     request_body = request.body.read
-    contents = FHIR.from_contents(request_body) if !request_body.blank?
+    contents = FHIR.from_contents(request_body) unless request_body.blank?
     errors = contents&.validate
     status_bad_request(format_fhir_validation_errors(errors)) && return if contents.nil? || !errors.empty?
 
@@ -377,7 +377,7 @@ class Fhir::R4::ApiController < ApplicationApiController
 
     # Parse in the FHIR
     request_body = request.body.read
-    contents = FHIR.from_contents(request_body) if !request_body.blank?
+    contents = FHIR.from_contents(request_body) unless request_body.blank?
     errors = contents&.validate
     status_bad_request(format_fhir_validation_errors(errors)) && return if contents.nil? || !errors.empty?
 
@@ -402,6 +402,7 @@ class Fhir::R4::ApiController < ApplicationApiController
 
       # If there are Observations, ensure user is authorized to write them
       return if !authorized && doorkeeper_authorize!(*OBSERVATION_WRITE_SCOPES)
+
       authorized = true
 
       # We require that each Observation references a Patient in the same Bundle

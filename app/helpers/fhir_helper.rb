@@ -346,6 +346,7 @@ module FhirHelper # rubocop:todo Metrics/ModuleLength
       ),
       subject: FHIR::Reference.new(reference: "Patient/#{laboratory.patient_id}"),
       effectiveDateTime: laboratory.specimen_collection,
+      issued: laboratory.report&.strftime('%FT%T%:z'),
       valueCodeableConcept: coded_result.nil? ? nil : FHIR::CodeableConcept.new(
         text: laboratory.result,
         coding: [
@@ -354,10 +355,7 @@ module FhirHelper # rubocop:todo Metrics/ModuleLength
             code: coded_result[:code]
           )
         ]
-      ),
-      extension: [
-        to_date_extension(laboratory.report, 'report-date')
-      ]
+      )
     )
   end
 
@@ -388,7 +386,7 @@ module FhirHelper # rubocop:todo Metrics/ModuleLength
       patient_id: { value: observation&.subject&.reference&.match(%r{^Patient/(\d+)$}).to_a[1], path: 'Observation.subject.reference' },
       lab_type: { value: lab_type, path: 'Observation.code.coding[0]', errors: lab_type_errors },
       specimen_collection: { value: observation&.effectiveDateTime, path: 'Observation.effectiveDateTime' },
-      report: from_date_extension(observation, 'Observation', ['report-date']),
+      report: { value: observation&.issued, path: 'Observation.issued' },
       result: { value: result, path: 'Observation.valueCodeableConcept.coding[0]', errors: result_errors }
     }
   end
