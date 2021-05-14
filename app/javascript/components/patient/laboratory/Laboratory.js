@@ -66,6 +66,7 @@ class Laboratory extends React.Component {
             editMode={!!this.props.lab.id}
             loading={this.state.loading}
             onlyPosLab={this.props.onlyPosLab}
+            isolation={this.props.patient.isolation}
           />
         )}
       </React.Fragment>
