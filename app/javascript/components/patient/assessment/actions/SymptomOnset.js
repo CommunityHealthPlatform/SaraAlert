@@ -146,8 +146,8 @@ class SymptomOnset extends React.Component {
   };
 
   render() {
-    const symptom_onset_invalid = !this.state.symptom_onset && !this.state.asymptomatic;
-    const asymptomatic_invalid = !this.state.symptom_onset && this.state.asymptomatic && this.props.numPosLabs === 0;
+    const symptom_onset_invalid = this.props.patient.isolation && !this.state.symptom_onset && !this.state.asymptomatic;
+    const asymptomatic_invalid = this.props.patient.isolation && !this.state.symptom_onset && this.state.asymptomatic && this.props.numPosLabs === 0;
     return (
       <React.Fragment>
         {this.state.showSymptomOnsetModal &&
@@ -214,37 +214,41 @@ class SymptomOnset extends React.Component {
             customClass="form-control-lg"
             ariaLabel="Symptom Onset Date Input"
           />
-          {symptom_onset_invalid && (
-            <Form.Control.Feedback className="d-block" type="invalid">
-              {`Please enter a Symptom Onset Date OR select Asymptomatic${this.props.numPosLabs == 0 ? ' and enter a positive lab result' : ''}`}
-            </Form.Control.Feedback>
-          )}
-          <OverlayTrigger
-            key="tooltip-ot-nrs"
-            placement="bottom"
-            overlay={
-              <Tooltip id="tooltip-nrs" style={this.props.symptomaticAssessmentsExist ? {} : { display: 'none' }}>
-                {`"Asymptomatic" cannot be checked if monitoree has symptomatic reports. If you'd like Symptom Onset Date cleared and this status checked to designate this monitoree as an asymptomatic case, you must review all reports.`}
-              </Tooltip>
-            }>
-            <span className="d-inline-block">
-              <Form.Check
-                size="lg"
-                label="ASYMPTOMATIC"
-                id="asymptomatic"
-                className="mt-2"
-                disabled={this.props.symptomaticAssessmentsExist}
-                isInvalid={asymptomatic_invalid}
-                checked={this.state.asymptomatic}
-                onChange={this.openAsymptomaticModal}
-              />
-            </span>
-          </OverlayTrigger>
-          <InfoTooltip tooltipTextKey="asymptomatic" location="right"></InfoTooltip>
-          {asymptomatic_invalid && (
-            <Form.Control.Feedback className="d-block" type="invalid">
-              Please enter a positive lab result with a specimen collection date if this record is asymptomatic or provide a Symptom Onset Date.
-            </Form.Control.Feedback>
+          {this.props.patient.isolation && (
+            <React.Fragment>
+              {symptom_onset_invalid && (
+                <Form.Control.Feedback className="d-block" type="invalid">
+                  {`Please enter a Symptom Onset Date OR select Asymptomatic${this.props.numPosLabs == 0 ? ' and enter a positive lab result' : ''}`}
+                </Form.Control.Feedback>
+              )}
+              <OverlayTrigger
+                key="tooltip-ot-nrs"
+                placement="bottom"
+                overlay={
+                  <Tooltip id="tooltip-nrs" style={this.props.symptomaticAssessmentsExist ? {} : { display: 'none' }}>
+                    {`"Asymptomatic" cannot be checked if monitoree has symptomatic reports. If you'd like Symptom Onset Date cleared and this status checked to designate this monitoree as an asymptomatic case, you must review all reports.`}
+                  </Tooltip>
+                }>
+                <span className="d-inline-block">
+                  <Form.Check
+                    size="lg"
+                    label="ASYMPTOMATIC"
+                    id="asymptomatic"
+                    className="mt-2"
+                    disabled={this.props.symptomaticAssessmentsExist}
+                    isInvalid={asymptomatic_invalid}
+                    checked={this.state.asymptomatic}
+                    onChange={this.openAsymptomaticModal}
+                  />
+                </span>
+              </OverlayTrigger>
+              <InfoTooltip tooltipTextKey="asymptomatic" location="right"></InfoTooltip>
+              {asymptomatic_invalid && (
+                <Form.Control.Feedback className="d-block" type="invalid">
+                  Please enter a positive lab result with a specimen collection date if this record is asymptomatic or provide a Symptom Onset Date.
+                </Form.Control.Feedback>
+              )}
+            </React.Fragment>
           )}
         </Form.Group>
       </React.Fragment>
