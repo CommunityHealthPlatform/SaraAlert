@@ -103,6 +103,7 @@ class Patient < ApplicationRecord
 
   validates_with PrimaryContactValidator, on: %i[api import]
   validates_with RaceValidator, on: %i[api import]
+  validates_with TimeZoneValidator
 
   # NOTE: Commented out until additional testing
   # validates_with PatientDateValidator
