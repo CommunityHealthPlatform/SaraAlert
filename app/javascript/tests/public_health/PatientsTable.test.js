@@ -8,25 +8,27 @@ import AssignedUserFilter from '../../components/public_health/query/AssignedUse
 import AdvancedFilter from '../../components/public_health/query/AdvancedFilter';
 import CustomTable from '../../components/layout/CustomTable';
 import CloseRecords from '../../components/public_health/actions/CloseRecords';
+import FollowUpFlag from '../../components/patient/FollowUpFlag';
 import UpdateCaseStatus from '../../components/public_health/actions/UpdateCaseStatus';
 import UpdateAssignedUser from '../../components/public_health/actions/UpdateAssignedUser';
 import { mockJurisdiction1, mockJurisdictionPaths } from '../mocks/mockJurisdiction';
 import { mockExposureTabs, mockIsolationTabs } from '../mocks/mockTabs';
 import { mockMonitoringReasons } from '../mocks/mockMonitoringReasons';
+import { mockFollowUpReasons } from '../mocks/mockFollowUpReasons';
 
 const authyToken = "Q1z4yZXLdN+tZod6dBSIlMbZ3yWAUFdY44U06QWffEP76nx1WGMHIz8rYxEUZsl9sspS3ePF2ZNmSue8wFpJGg==";
 const setQueryMock = jest.fn();
 const setMonitoreeCountMock = jest.fn();
-const dropdownOptions = [ 'Close Records', 'Update Case Status', 'Update Assigned User' ];
+const dropdownOptions = [ 'Close Records', 'Update Case Status', 'Update Assigned User', 'Flag for Follow-up' ];
 
 function getExposureWrapper() {
   return shallow(<PatientsTable authenticity_token={authyToken} jurisdiction_paths={mockJurisdictionPaths} workflow={'exposure'} jurisdiction={mockJurisdiction1}
-    tabs={mockExposureTabs} monitoring_reasons={mockMonitoringReasons} setQuery={setQueryMock} setFilteredMonitoreesCount={setMonitoreeCountMock}/>);
+    tabs={mockExposureTabs} monitoring_reasons={mockMonitoringReasons} follow_up_reasons={mockFollowUpReasons} setQuery={setQueryMock} setFilteredMonitoreesCount={setMonitoreeCountMock}/>);
 }
 
 function getIsolationWrapper() {
   return shallow(<PatientsTable authenticity_token={authyToken} jurisdiction_paths={mockJurisdictionPaths} workflow={'isolation'} jurisdiction={mockJurisdiction1}
-    tabs={mockIsolationTabs} monitoring_reasons={mockMonitoringReasons} setQuery={setQueryMock} setFilteredMonitoreesCount={setMonitoreeCountMock}/>);
+    tabs={mockIsolationTabs} monitoring_reasons={mockMonitoringReasons} follow_up_reasons={mockFollowUpReasons} setQuery={setQueryMock} setFilteredMonitoreesCount={setMonitoreeCountMock}/>);
 }
 
 afterEach(() => {
@@ -44,9 +46,9 @@ describe('PatientsTable', () => {
     expect(wrapper.containsMatchingElement(AdvancedFilter)).toBeTruthy();
     expect(wrapper.containsMatchingElement(CustomTable)).toBeTruthy();
     expect(wrapper.containsMatchingElement(DropdownButton)).toBeTruthy();
-    expect(wrapper.find(Dropdown.Item).length).toEqual(3);
+    expect(wrapper.find(Dropdown.Item).length).toEqual(4);
 
-    const defaultTab = Object.keys(mockExposureTabs)[0]
+    const defaultTab = Object.keys(mockExposureTabs)[0];
     expect(wrapper.find('#tab-description').text())
         .toEqual(mockExposureTabs[defaultTab]['description'] + ' You are currently in the exposure workflow.');
   });
@@ -61,9 +63,9 @@ describe('PatientsTable', () => {
     expect(wrapper.containsMatchingElement(AdvancedFilter)).toBeTruthy();
     expect(wrapper.containsMatchingElement(CustomTable)).toBeTruthy();
     expect(wrapper.containsMatchingElement(DropdownButton)).toBeTruthy();
-    expect(wrapper.find(Dropdown.Item).length).toEqual(3);
+    expect(wrapper.find(Dropdown.Item).length).toEqual(4);
 
-    const defaultTab = Object.keys(mockIsolationTabs)[0]
+    const defaultTab = Object.keys(mockIsolationTabs)[0];
     expect(wrapper.find('#tab-description').text())
         .toEqual(mockIsolationTabs[defaultTab]['description'] + ' You are currently in the isolation workflow.');
   });
@@ -74,7 +76,7 @@ describe('PatientsTable', () => {
     // componentDidMount is called when mounted and that calls an async method (updateTable),
     // as a result, we added a timeout to give it time to resolve.
     setTimeout (() => {
-      expect(_.size(wrapper.state('table').colData)).toEqual(20);
+      expect(_.size(wrapper.state('table').colData)).toEqual(21);
       expect(_.size(wrapper.state('table').displayedColData)).toEqual(0);
       expect(_.size(wrapper.state('table').rowData)).toEqual(0);
       expect(wrapper.state('table').totalRows).toEqual(0);
@@ -93,7 +95,7 @@ describe('PatientsTable', () => {
       expect(wrapper.state('query').page).toEqual(0);
       expect(wrapper.state('query').entries).toEqual(25);
       expect(_.size(wrapper.state('entryOptions'))).toEqual(5);
-    }, 500)
+    }, 500);
 
   });
 
@@ -136,6 +138,14 @@ describe('PatientsTable', () => {
     expect(wrapper.find(Dropdown.Item).at(2).text().includes(dropdownOptions[2])).toBeTruthy();
     wrapper.find(Dropdown.Item).at(2).simulate('click');
     expect(wrapper.find(UpdateAssignedUser).exists()).toBeTruthy();
+  });
+
+  it ('Clicking "Flag for Follow-up" option displays Flag for Follow-up modal', () => {
+    const wrapper = getExposureWrapper();
+    expect(wrapper.find(FollowUpFlag).exists()).toBeFalsy();
+    expect(wrapper.find(Dropdown.Item).at(3).text().includes(dropdownOptions[3])).toBeTruthy();
+    wrapper.find(Dropdown.Item).at(3).simulate('click');
+    expect(wrapper.find(FollowUpFlag).exists()).toBeTruthy();
   });
 
   it('Calls updateAssignedUsers and updateTable methods when component mounts', () => {
