@@ -24,6 +24,7 @@ class PatientPage extends React.Component {
               edit_mode={false}
               follow_up_reasons={this.props.follow_up_reasons}
               other_household_members={this.props.other_household_members}
+              display_follow_up_flag={this.props.current_user.role != 'enroller'}
               authenticity_token={this.props.authenticity_token}
             />
             <div className="household-info">
