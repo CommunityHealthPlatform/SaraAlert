@@ -36,13 +36,16 @@ module PatientQueryHelper # rubocop:todo Metrics/ModuleLength
 
     # Validate workflow
     workflow = query[:workflow]&.to_sym || :all
-    raise InvalidQueryError.new(:workflow, workflow) unless %i[exposure isolation all].include?(workflow)
+    raise InvalidQueryError.new(:workflow, workflow) unless %i[global exposure isolation all].include?(workflow)
 
     # Validate tab (linelist)
     tab = query[:tab]&.to_sym || :all
-    if workflow == :exposure
+    case workflow
+    when :global
+      raise InvalidQueryError.new(:tab, tab) unless %i[all active priority_review non_reporting closed].include?(tab)
+    when :exposure
       raise InvalidQueryError.new(:tab, tab) unless %i[all symptomatic non_reporting asymptomatic pui closed transferred_in transferred_out].include?(tab)
-    elsif workflow == :isolation
+    when :isolation
       raise InvalidQueryError.new(:tab, tab) unless %i[all requiring_review non_reporting reporting closed transferred_in transferred_out].include?(tab)
     else
       raise InvalidQueryError.new(:tab, tab) unless %i[all closed transferred_in transferred_out].include?(tab)
@@ -129,6 +132,13 @@ module PatientQueryHelper # rubocop:todo Metrics/ModuleLength
 
   def patients_by_linelist(current_user, workflow, tab, jurisdiction)
     case workflow
+    when :global
+      return current_user.patients&.monitoring_active(true) if tab == :active
+      return current_user.patients&.exposure_symptomatic&.merge(current_user.patients&.isolation_requiring_review) if tab == :priority_review
+      return current_user.patients&.exposure_non_reporting&.merge(current_user.patients&.isolation_non_reporting) if tab == :non_reporting
+      return current_user.patients&.monitoring_closed_without_purged if tab == :closed
+
+      current_user.patients&.where(purged: false)
     when :exposure
       return current_user.patients&.exposure_symptomatic if tab == :symptomatic
       return current_user.patients&.exposure_non_reporting if tab == :non_reporting
@@ -685,6 +695,8 @@ module PatientQueryHelper # rubocop:todo Metrics/ModuleLength
       details[:status] = patient.status.to_s.gsub('_', ' ').sub('exposure ', '')&.sub('isolation ', '') if fields.include?(:status)
       details[:report_eligibility] = patient.report_eligibility if fields.include?(:report_eligibility)
       details[:is_hoh] = patient.head_of_household?
+      details[:workflow] = patient[:isolation] ? 'isolation' : 'exposure' if fields.include?(:workflow)
+      details[:reporter] = patient[:responder_id] if fields.include?(:reporter)
 
       linelist << details
     end
@@ -693,24 +705,27 @@ module PatientQueryHelper # rubocop:todo Metrics/ModuleLength
   end
 
   def linelist_specific_fields(workflow, tab)
-    return %i[jurisdiction assigned_user expected_purge_date reason_for_closure closed_at] if tab == :closed
+    case workflow
+    when :global
+      %i[jurisdiction assigned_user end_of_monitoring monitoring_plan reporter latest_report workflow status report_eligibility]
+    when :exposure
+      return %i[jurisdiction assigned_user end_of_monitoring risk_level monitoring_plan latest_report status report_eligibility] if tab == :all
+      return %i[jurisdiction assigned_user end_of_monitoring risk_level public_health_action latest_report report_eligibility] if tab == :pui
+      return %i[transferred_from end_of_monitoring risk_level monitoring_plan transferred_at] if tab == :transferred_in
+      return %i[transferred_to end_of_monitoring risk_level monitoring_plan transferred_at] if tab == :transferred_out
+      return %i[jurisdiction assigned_user expected_purge_date reason_for_closure closed_at] if tab == :closed
 
-    if workflow == :isolation
+      %i[jurisdiction assigned_user end_of_monitoring risk_level monitoring_plan latest_report report_eligibility]
+    when :isolation
       if tab == :all
         return %i[jurisdiction assigned_user extended_isolation first_positive_lab_at symptom_onset monitoring_plan latest_report status report_eligibility]
       end
       return %i[transferred_from monitoring_plan transferred_at] if tab == :transferred_in
       return %i[transferred_to monitoring_plan transferred_at] if tab == :transferred_out
+      return %i[jurisdiction assigned_user expected_purge_date reason_for_closure closed_at] if tab == :closed
 
-      return %i[jurisdiction assigned_user extended_isolation first_positive_lab_at symptom_onset monitoring_plan latest_report report_eligibility]
+      %i[jurisdiction assigned_user extended_isolation first_positive_lab_at symptom_onset monitoring_plan latest_report report_eligibility]
     end
-
-    return %i[jurisdiction assigned_user end_of_monitoring risk_level monitoring_plan latest_report status report_eligibility] if tab == :all
-    return %i[jurisdiction assigned_user end_of_monitoring risk_level public_health_action latest_report report_eligibility] if tab == :pui
-    return %i[transferred_from end_of_monitoring risk_level monitoring_plan transferred_at] if tab == :transferred_in
-    return %i[transferred_to end_of_monitoring risk_level monitoring_plan transferred_at] if tab == :transferred_out
-
-    %i[jurisdiction assigned_user end_of_monitoring risk_level monitoring_plan latest_report report_eligibility]
   end
 end
 

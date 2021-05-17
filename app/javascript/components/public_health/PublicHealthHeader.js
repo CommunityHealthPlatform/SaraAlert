@@ -152,7 +152,7 @@ class PublicHealthHeader extends React.Component {
               variant="primary"
               className="ml-2 mb-4"
               href={`${window.BASE_PATH}/patients/new${this.props.workflow === 'exposure' ? '' : '?isolation=true'}`}>
-              {this.props.workflow === 'exposure' && (
+              {(this.props.workflow === 'exposure' || this.props.workflow === 'global') && (
                 <span>
                   <i className="fas fa-user-plus"></i> Enroll New Monitoree
                 </span>
@@ -196,6 +196,10 @@ class PublicHealthHeader extends React.Component {
         </ButtonGroup>
 
         <ButtonGroup className="float-right mb-4 mr-2">
+          <Button variant={this.props.workflow === 'global' ? 'primary' : 'outline-primary'} href={`${window.BASE_PATH}/public_health/global`}>
+            <i className="fas fa-globe"></i> Global Dashboard{' '}
+            {this.state.counts.exposure !== undefined && <span id="globalCount">({this.state.counts.global})</span>}
+          </Button>
           <Button variant={this.props.workflow === 'exposure' ? 'primary' : 'outline-primary'} href={`${window.BASE_PATH}/public_health`}>
             <i className="fas fa-people-arrows"></i> Exposure Monitoring{' '}
             {this.state.counts.exposure !== undefined && <span id="exposureCount">({this.state.counts.exposure})</span>}
@@ -216,7 +220,7 @@ class PublicHealthHeader extends React.Component {
 PublicHealthHeader.propTypes = {
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
-  workflow: PropTypes.oneOf(['exposure', 'isolation']),
+  workflow: PropTypes.oneOf(['global', 'exposure', 'isolation']),
   jurisdiction: PropTypes.object,
   tabs: PropTypes.object,
   abilities: PropTypes.exact({

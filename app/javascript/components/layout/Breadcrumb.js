@@ -62,6 +62,9 @@ class Breadcrumb extends React.Component {
                           } else if (this.renderWorkflowName(crumb['value']).includes('Exposure')) {
                             // Public Health "Return to Exposure Dashboard"
                             location.assign(`${window.BASE_PATH}/public_health`);
+                          } else if (this.renderWorkflowName(crumb['value']).includes('Global')) {
+                            // Public Health "Return to Global Dashboard"
+                            location.assign(`${window.BASE_PATH}/public_health/global`);
                           } else if (this.renderWorkflowName(crumb['value']).includes('Dashboard')) {
                             // Enroller "Return to Dashboard"
                             location.assign(`${window.BASE_PATH}/patients`);
