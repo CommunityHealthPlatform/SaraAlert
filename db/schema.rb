@@ -182,6 +182,7 @@ ActiveRecord::Schema.define(version: 2021_05_11_185511) do
     t.string "webpage"
     t.string "message"
     t.boolean "send_digest", default: false
+    t.boolean "send_close", default: false
     t.index ["ancestry"], name: "index_jurisdictions_on_ancestry"
   end
 

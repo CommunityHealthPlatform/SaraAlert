@@ -124,6 +124,8 @@ fra:
         thanks: "Merci d'avoir rempli votre rapport quotidien!"
       weblink:
         intro: 'Veuillez remplir le rapport quotidien de Sara Alert pour'
+      closed:
+        thank-you: "%{initials_age} %{completed_date}"
     phone:
       intro: "Bonjour, voici Sara, l'assistante de santé publique automatisée qui demande votre rapport quotidien."
       try-again: "Je suis désolé, je n'ai pas compris. Essayons encore."
