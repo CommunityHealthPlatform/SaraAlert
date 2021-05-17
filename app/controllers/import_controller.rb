@@ -38,16 +38,24 @@ class ImportController < ApplicationController
 
     # Load and parse patient import excel
     begin
-      xlsx = Roo::Excelx.new(params[:file].tempfile.path, file_warning: :ignore)
-      validate_headers(format, xlsx.sheet(0).row(1))
-      raise ValidationError.new('File must contain at least one monitoree to import', 2) if xlsx.sheet(0).last_row < 2
-      raise ValidationError.new('Please limit each import to 1000 monitorees.', 1000) if xlsx.sheet(0).last_row > 1001
+      if format == :epix
+        csv = CSV.parse(File.read(params[:file].tempfile.path), headers: true)
+        validate_headers(format, csv.headers)
+      else
+        xlsx = Roo::Excelx.new(params[:file].tempfile.path, file_warning: :ignore)
+        validate_headers(format, xlsx.sheet(0).row(1))
+      end
+
+      num_rows = format == :epix ? csv.length : xlsx.sheet(0).last_row
+      raise ValidationError.new('File must contain at least one monitoree to import', 2) if num_rows < 2
+      raise ValidationError.new('Please limit each import to 1000 monitorees.', 1000) if num_rows > 1001
 
       # define patients for duplicate detection here to avoid duplicate queries
       patients_for_duplicate_detection = current_user.viewable_patients
 
-      xlsx.sheet(0).each_with_index do |row, row_ind|
-        next if row_ind.zero? # Skip headers
+      records = format == :sara_alert_format ? xlsx.sheet(0) : csv
+      records.each_with_index do |row, row_ind|
+        next if row_ind.zero? && format == :sara_alert_format # Skip headers for excel file
 
         fields = format == :epix ? EPI_X_FIELDS : SARA_ALERT_FORMAT_FIELDS
         patient = { isolation: workflow == :isolation }
@@ -56,35 +64,37 @@ class ImportController < ApplicationController
 
           begin
             if format == :sara_alert_format
-              if col_num == 95
+              if field == :jurisdiction_path
                 patient[:jurisdiction_id], patient[:jurisdiction_path] = validate_jurisdiction(row[95], row_ind, valid_jurisdiction_ids)
-              elsif col_num == 96
+              elsif field == :assigned_user
                 patient[:assigned_user] = import_assigned_user(row[96])
-              elsif col_num == 85 && workflow == :isolation
+              elsif field == :symptom_onset && workflow == :isolation
                 patient[:user_defined_symptom_onset] = row[85].present?
                 patient[field] = import_field(field, row[col_num], row_ind)
               # TODO: when workflow specific case status validation re-enabled: uncomment
-              # elsif col_num == 86
+              # elsif field == :case_status
               #   patient[field] = validate_workflow_specific_enums(workflow, field, row[col_num], row_ind)
               else
-                # TODO: when workflow specific case status validation re-enabled: this line can be updated to not have to check the 86 col
-                patient[field] = import_field(field, row[col_num], row_ind) unless [85, 86].include?(col_num) && workflow != :isolation
+                # TODO: when workflow specific case status validation re-enabled: this line can be updated to not have to check the case_status field
+                patient[field] = import_field(field, row[col_num], row_ind) unless %i[symptom_onset case_status].include?(field) && workflow != :isolation
               end
             end
 
             if format == :epix
-              patient[field] = if col_num == 34 # copy over potential exposure country to location
-                                 import_field(field, row[35], row_ind)
-                               elsif [41, 42].include?(col_num) # contact of known case and was in healthcare facilities
-                                 import_field(field, !row[col_num].blank?, row_ind)
+              patient[field] = if %i[date_of_birth date_of_departure].include?(field)
+                                 import_field(field, Date.strptime(row[col_num], '%m/%d/%Y'), row_ind) if row[col_num].present?
+                               elsif field == :date_of_arrival
+                                 import_field(field, Date.strptime(row[col_num], '%b %d %Y'), row_ind) if row[col_num].present?
                                else
                                  import_field(field, row[col_num], row_ind)
                                end
             end
+          rescue Date::Error
+            @errors << "Invalid date on row #{row_ind + 1} for #{field}: #{row[col_num]}"
           rescue ValidationError => e
-            @errors << e&.message || "Unknown error on row #{row_ind}"
+            @errors << e&.message || "Unknown error on row #{row_ind + 1}"
           rescue StandardError => e
-            @errors << e&.message || 'Unexpected error'
+            @errors << e&.message || "Unexpected error on row #{row_ind + 1}"
           end
         end
 
@@ -112,20 +122,19 @@ class ImportController < ApplicationController
                 @errors << ValidationError.new(error, row_ind).message
               end
             end
-
           end
 
           # Checking for duplicates under current user's viewable patients is acceptable because custom jurisdictions must fall under hierarchy
           patient[:duplicate_data] = patients_for_duplicate_detection.duplicate_data_detection(patient)
         rescue ValidationError => e
-          @errors << e&.message || "Unknown error on row #{row_ind}"
+          @errors << e&.message || "Unknown error on row #{row_ind + 1}"
         rescue StandardError => e
-          @errors << e&.message || 'Unexpected error'
+          @errors << e&.message || "Unexpected error on row #{row_ind + 1}"
         end
         @patients << patient
       end
     rescue ValidationError => e
-      @errors << e&.message || "Unknown error on row #{row_ind}"
+      @errors << e&.message || "Unknown error on row #{row_ind + 1}"
     rescue Zip::Error
       # Roo throws this if the file is not an excel file
       @errors << 'File Error: Please make sure that your import file is a .xlsx file.'
@@ -224,7 +233,7 @@ class ImportController < ApplicationController
     return nil if value.blank?
     return normalize_and_get_state_name(value) if VALID_STATES.include?(normalize_and_get_state_name(value))
 
-    normalized_state = STATE_ABBREVIATIONS[value.upcase.to_sym]
+    normalized_state = STATE_ABBREVIATIONS[value.to_s.upcase.to_sym]
     return normalized_state if normalized_state
 
     # NOTE: Currently only import allows abbreviated state names. If that changes and we begin allowing abbreviations
@@ -249,7 +258,7 @@ class ImportController < ApplicationController
     normalized_value = normalize_enum_field_value(value)
     return NORMALIZED_ENUMS[field][normalized_value] if NORMALIZED_ENUMS[field].keys.include?(normalized_value)
 
-    normalized_sex = SEX_ABBREVIATIONS[value.upcase.to_sym]
+    normalized_sex = SEX_ABBREVIATIONS[value.to_s.upcase.to_sym]
     normalized_sex || value
   end
 
