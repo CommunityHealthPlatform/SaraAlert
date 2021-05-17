@@ -136,8 +136,6 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
     )
     assert_equal(close_email.to[0], patient.email)
     assert_histories_contain(patient, 'Monitoring Complete message was sent.')
-    assert_histories_contain(patient, 'because the monitoree email was blank.')
-    assert_not_histories_contain(patient, 'Monitoree has completed monitoring.')
     assert_not_histories_contain(patient, 'because the monitoree email was blank.')
     assert_histories_contain(patient, 'Monitoree has completed monitoring.')
   end
