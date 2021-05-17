@@ -16,6 +16,7 @@ import DateInput from '../../util/DateInput';
 import InfoTooltip from '../../util/InfoTooltip';
 import PhoneInput from '../../util/PhoneInput';
 import reportError from '../../util/ReportError';
+import DeleteDialog from '../../util/DeleteDialog';
 
 const MAX_NOTES_LENGTH = 2000;
 
@@ -23,7 +24,8 @@ class CloseContact extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      showModal: false,
+      showCloseContactModal: false,
+      showDeleteModal: false,
       disableCreate:
         (!this.props.close_contact.first_name && !this.props.close_contact.last_name) ||
         (!this.props.close_contact.primary_telephone && !this.props.close_contact.email),
@@ -44,32 +46,37 @@ class CloseContact extends React.Component {
       : 'enter additional information about monitoree’s potential exposure';
   }
 
-  toggleModal = () => {
-    let newState = {
-      showModal: !this.state.showModal,
-    };
-    if (this.state.showModal) {
-      // if we currently are showing the modal, that means they clicked cancel
-      // (because the rest of this method hasnt had time to fire, and change 'show' to false)
-      // When they click cancel, we want to null out all of the fields
-      newState = {
-        disableCreate:
-          (!this.props.close_contact.first_name && !this.props.close_contact.last_name) ||
-          (!this.props.close_contact.primary_telephone && !this.props.close_contact.email),
-        errors: {},
-        first_name: this.props.close_contact.first_name || '',
-        last_name: this.props.close_contact.last_name || '',
-        primary_telephone: this.props.close_contact.primary_telephone || '',
-        email: this.props.close_contact.email || '',
-        last_date_of_exposure: this.props.close_contact.last_date_of_exposure || null,
-        assigned_user: this.props.close_contact.assigned_user || null,
-        notes: this.props.close_contact.notes || '',
-        enrolled_id: this.props.close_contact.enrolled_id || null,
-        contact_attempts: this.props.close_contact.contact_attempts || 0,
-        ...newState, // merge in the flip-flopped value of showModal
-      };
+  toggleDeleteModal = () => {
+    let current = this.state.showDeleteModal;
+    this.setState({
+      showDeleteModal: !current,
+      delete_reason: null,
+      delete_reason_text: null,
+    });
+  };
+
+  handleDeleteSubmit = () => {
+    let deleteReason = this.state.delete_reason;
+    if (deleteReason === 'Other' && this.state.delete_reason_text) {
+      deleteReason += ': ' + this.state.delete_reason_text;
     }
-    this.setState(newState);
+
+    this.setState({ loading: true }, () => {
+      axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
+      axios
+        .delete(window.BASE_PATH + '/close_contacts/' + this.props.close_contact.id, {
+          data: {
+            patient_id: this.props.patient.id,
+            delete_reason: deleteReason,
+          },
+        })
+        .then(() => {
+          location.reload(true);
+        })
+        .catch(error => {
+          reportError(error);
+        });
+    });
   };
 
   handleDateChange = event => this.setState({ last_date_of_exposure: event });
@@ -106,7 +113,35 @@ class CloseContact extends React.Component {
     }
   };
 
-  submit = () => {
+  toggleCloseContactModal = () => {
+    let newState = {
+      showCloseContactModal: !this.state.showCloseContactModal,
+    };
+    if (this.state.showCloseContactModal) {
+      // if we currently are showing the modal, that means they clicked cancel
+      // (because the rest of this method hasnt had time to fire, and change 'show' to false)
+      // When they click cancel, we want to null out all of the fields
+      newState = {
+        disableCreate:
+          (!this.props.close_contact.first_name && !this.props.close_contact.last_name) ||
+          (!this.props.close_contact.primary_telephone && !this.props.close_contact.email),
+        errors: {},
+        first_name: this.props.close_contact.first_name || '',
+        last_name: this.props.close_contact.last_name || '',
+        primary_telephone: this.props.close_contact.primary_telephone || '',
+        email: this.props.close_contact.email || '',
+        last_date_of_exposure: this.props.close_contact.last_date_of_exposure || null,
+        assigned_user: this.props.close_contact.assigned_user || null,
+        notes: this.props.close_contact.notes || '',
+        enrolled_id: this.props.close_contact.enrolled_id || null,
+        contact_attempts: this.props.close_contact.contact_attempts || 0,
+        ...newState, // merge in the flip-flopped value of showCloseContactModal
+      };
+    }
+    this.setState(newState);
+  };
+
+  handleCloseContactSubmit = () => {
     schema
       .validate({ ...this.state }, { abortEarly: false })
       .then(() => {
@@ -145,7 +180,7 @@ class CloseContact extends React.Component {
       });
   };
 
-  createModal(title, toggle, submit) {
+  createModal(title, toggle, handleCloseContactSubmit) {
     return (
       <Modal size="lg" show centered onHide={toggle}>
         <h1 className="sr-only">{title}</h1>
@@ -268,7 +303,7 @@ class CloseContact extends React.Component {
           <Button variant="secondary btn-square" onClick={toggle}>
             Cancel
           </Button>
-          <Button variant="primary btn-square" onClick={submit} disabled={this.state.disableCreate || this.state.loading}>
+          <Button variant="primary btn-square" onClick={handleCloseContactSubmit} disabled={this.state.disableCreate || this.state.loading}>
             <span data-for="create-tooltip" data-tip="" className="ml-1">
               {this.props.close_contact.id ? 'Update' : 'Create'}
             </span>
@@ -290,7 +325,7 @@ class CloseContact extends React.Component {
     return (
       <React.Fragment>
         {!this.props.close_contact.id && (
-          <Button onClick={this.toggleModal}>
+          <Button onClick={this.toggleCloseContactModal}>
             <i className="fas fa-plus fa-fw"></i>
             <span className="ml-2">Add New Close Contact</span>
           </Button>
@@ -298,12 +333,16 @@ class CloseContact extends React.Component {
         {this.props.close_contact.id && (
           <div className="pl-2">
             <React.Fragment>
-              <Button variant="link" onClick={this.toggleModal} className="btn btn-link py-0" size="sm">
+              <Button variant="link" onClick={this.toggleCloseContactModal} className="btn btn-link py-0" size="sm">
                 <i className="fas fa-edit"></i> Edit
               </Button>
               <div className="pl-2"></div>
               <Button variant="link" onClick={this.contactAttempt} className="btn btn-link py-0" size="sm">
                 <i className="fas fa-phone fa-flip-horizontal"></i> Contact Attempt
+              </Button>
+              <div className="pl-2"></div>
+              <Button variant="link" onClick={this.toggleDeleteModal} className="btn btn-link py-0" size="sm">
+                <i className="fas fa-trash"></i> Delete
               </Button>
             </React.Fragment>
           </div>
@@ -334,7 +373,16 @@ class CloseContact extends React.Component {
             </Button>
           </div>
         )}
-        {this.state.showModal && this.createModal('Close Contact', this.toggleModal, this.submit)}
+        {this.state.showCloseContactModal && this.createModal('Close Contact', this.toggleCloseContactModal, this.handleCloseContactSubmit)}
+        {this.state.showDeleteModal && (
+          <DeleteDialog
+            type={'Close Contact'}
+            delete={this.handleDeleteSubmit}
+            toggle={this.toggleDeleteModal}
+            onChange={this.handleChange}
+            show_text_input={true}
+          />
+        )}
       </React.Fragment>
     );
   }
