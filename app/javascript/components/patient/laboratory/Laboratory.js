@@ -111,6 +111,8 @@ class Laboratory extends React.Component {
             cancel={this.toggleLabModal}
             editMode={!!this.props.lab.id}
             loading={this.state.loading}
+            onlyPosLab={this.props.onlyPosLab}
+            isolation={this.props.patient.isolation}
           />
         )}
         {this.state.showDeleteModal && (
@@ -125,6 +127,7 @@ Laboratory.propTypes = {
   lab: PropTypes.object,
   patient: PropTypes.object,
   authenticity_token: PropTypes.string,
+  onlyPosLab: PropTypes.bool,
 };
 
 export default Laboratory;

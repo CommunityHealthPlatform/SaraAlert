@@ -54,7 +54,9 @@
                         current_user: current_user,
                         translations: Assessment.new.translations,
                         authenticity_token: form_authenticity_token,
-                        jurisdiction_paths: @possible_jurisdiction_paths
+                        jurisdiction_paths: @possible_jurisdiction_paths,
+                        numPosLabs: @num_pos_labs,
+                        calculatedSymptomOnset: @calculated_symptom_onset
                       }) %>
 <% end %>
 
@@ -86,7 +88,12 @@
         <tr>
           <td>
             <div class="btn-group btn-group-sm" role="group">
-              <%= react_component('patient/laboratory/Laboratory', { authenticity_token: form_authenticity_token, patient: @patient, lab: lab }) %>
+              <%= react_component('patient/laboratory/Laboratory', {
+                                    authenticity_token: form_authenticity_token,
+                                    patient: @patient,
+                                    lab: lab,
+                                    onlyPosLab: @patient[:symptom_onset].nil? && lab[:result] == 'positive' && lab[:specimen_collection].present? && @num_pos_labs == 1
+                                  }) %>
             </div>
           </td>
           <td><%= lab.id %></td>

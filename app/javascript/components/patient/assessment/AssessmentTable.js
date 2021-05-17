@@ -2,17 +2,17 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import { Button, Card, Col, Dropdown, Form, InputGroup, OverlayTrigger, Row, Tooltip } from 'react-bootstrap';
 import axios from 'axios';
+import moment from 'moment';
 import _ from 'lodash';
 import { formatTimestamp } from '../../../utils/DateTime';
 
 import AddAssessmentNote from './actions/AddAssessmentNote';
 import AssessmentModal from './AssessmentModal';
 import ClearAssessments from './actions/ClearAssessments';
-import ClearSingleAssessment from './actions/ClearSingleAssessment';
 import ContactAttempt from './actions/ContactAttempt';
 import CurrentStatus from './actions/CurrentStatus';
 import CustomTable from '../../layout/CustomTable';
-import LastDateExposure from './actions/LastDateExposure';
+import MonitoringPeriod from './actions/MonitoringPeriod';
 import PauseNotifications from './actions/PauseNotifications';
 import reportError from '../../util/ReportError';
 
@@ -24,9 +24,12 @@ class AssessmentTable extends React.Component {
         colData: [
           { label: 'Actions', field: '', isSortable: false, filter: this.createActionsButton },
           { label: 'ID', field: 'id', isSortable: true },
-          // NOTE: This column is only shown in the Exposure workflow. There is a check when the table data
-          // is initially loaded that removes this column data if the Patient is in the Isolation workflow.
-          { label: 'Needs Review', field: 'symptomatic', isSortable: true, tooltip: 'exposureNeedsReviewColumn' },
+          {
+            label: 'Needs Review',
+            field: 'symptomatic',
+            isSortable: true,
+            tooltip: `${this.props.patient.isolation ? 'isolation' : 'exposure'}NeedsReviewColumn`,
+          },
           { label: 'Reporter', field: 'who_reported', isSortable: true },
           { label: 'Created At', field: 'created_at', isSortable: true, filter: formatTimestamp },
         ],
@@ -107,10 +110,6 @@ class AssessmentTable extends React.Component {
             if (isInitialLoad) {
               const symptomColData = this.getSymptomCols(response.data.symptoms);
               updatedColData = state.table.colData.concat(symptomColData);
-              // Only show the Needs Review column if the patient is in the Exposure workflow
-              if (this.props.patient.isolation) {
-                delete updatedColData[2];
-              }
             }
             return {
               table: {
@@ -120,6 +119,7 @@ class AssessmentTable extends React.Component {
                 totalRows: response.data.total,
               },
               isLoading: false,
+              symp_assessments: response.data.symp_assessments || 0,
             };
           });
         } else {
@@ -292,9 +292,13 @@ class AssessmentTable extends React.Component {
             <span className="ml-2">Edit</span>
           </Dropdown.Item>
           <AddAssessmentNote assessment={rowData} patient={this.props.patient} authenticity_token={this.props.authenticity_token} />
-          {!this.props.patient.isolation && (
-            <ClearSingleAssessment assessment_id={rowData.id} patient={this.props.patient} authenticity_token={this.props.authenticity_token} />
-          )}
+          <ClearAssessments
+            assessment_id={rowData.id}
+            patient={this.props.patient}
+            authenticity_token={this.props.authenticity_token}
+            numPosLabs={this.props.numPosLabs}
+            onlySympAssessment={this.state.symp_assessments === 1 && rowData.symptomatic === 'Yes'}
+          />
         </Dropdown.Menu>
       </Dropdown>
     );
@@ -323,7 +327,7 @@ class AssessmentTable extends React.Component {
                     <i className="fas fa-plus fa-fw"></i>
                     <span className="ml-2">Add New Report</span>
                   </Button>
-                  {!this.props.patient.isolation && <ClearAssessments authenticity_token={this.props.authenticity_token} patient={this.props.patient} />}
+                  <ClearAssessments authenticity_token={this.props.authenticity_token} patient={this.props.patient} numPosLabs={this.props.numPosLabs} />
                   <PauseNotifications authenticity_token={this.props.authenticity_token} patient={this.props.patient} />
                   <ContactAttempt authenticity_token={this.props.authenticity_token} patient={this.props.patient} />
                 </Col>
@@ -360,13 +364,16 @@ class AssessmentTable extends React.Component {
                 />
               </div>
             </div>
-            <LastDateExposure
+            <MonitoringPeriod
               authenticity_token={this.props.authenticity_token}
               patient={this.props.patient}
               current_user={this.props.current_user}
               jurisdiction_paths={this.props.jurisdiction_paths}
               household_members={this.props.household_members}
               monitoring_period_days={this.props.monitoring_period_days}
+              symptomaticAssessmentsExist={this.state.table.rowData.map(x => x.symptomatic).includes('Yes')}
+              numPosLabs={this.props.numPosLabs}
+              calculatedSymptomOnset={this.props.calculatedSymptomOnset}
             />
           </Card.Body>
         </Card>
@@ -422,6 +429,14 @@ AssessmentTable.propTypes = {
   translations: PropTypes.object,
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
+  numPosLabs: PropTypes.number,
+  calculatedSymptomOnset: function(props) {
+    if (props.calculatedSymptomOnset && !moment(props.calculatedSymptomOnset, 'YYYY-MM-DD').isValid()) {
+      return new Error(
+        'Invalid prop `calculatedSymptomOnset` supplied to `DateInput`, `calculatedSymptomOnset` must be a valid date string in the `YYYY-MM-DD` format.'
+      );
+    }
+  },
 };
 
 export default AssessmentTable;

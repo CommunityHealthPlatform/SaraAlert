@@ -40,7 +40,11 @@ module PatientHelper
 
   # Calculated symptom onset date is based on latest symptomatic assessment.
   def calculated_symptom_onset(patient)
-    patient.assessments.where(symptomatic: true).minimum(:created_at)&.to_date
+    symptom_onset_ts = patient.assessments.where(symptomatic: true).minimum(:created_at)
+    return if symptom_onset_ts.nil?
+
+    tz = Time.find_zone(patient.time_zone) || Time.find_zone('America/New_York')
+    tz.utc_to_local(symptom_onset_ts).to_date
   end
 
   def self.monitoring_fields
@@ -53,6 +57,7 @@ module PatientHelper
       isolation
       pause_notifications
       symptom_onset
+      asymptomatic
       case_status
       assigned_user
       last_date_of_exposure

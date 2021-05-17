@@ -1,6 +1,6 @@
 import React from 'react';
 import { PropTypes } from 'prop-types';
-import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import { Alert, Button, Col, Form, Modal, Row } from 'react-bootstrap';
 import moment from 'moment';
 
 import DateInput from '../../util/DateInput';
@@ -120,6 +120,15 @@ class LaboratoryModal extends React.Component {
                 </Form.Control>
               </Form.Group>
             </Row>
+            {this.props.editMode &&
+              this.props.isolation &&
+              this.props.onlyPosLab &&
+              (this.state.result !== 'positive' || this.state.specimen_collection == null) && (
+                <Alert variant="warning">
+                  Warning: This record does not have a Symptom Onset Date. Changing this lab result may result in the record not ever being eligible to appear
+                  on the Records Requiring Review line list.
+                </Alert>
+              )}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -146,6 +155,8 @@ LaboratoryModal.propTypes = {
   cancel: PropTypes.func,
   editMode: PropTypes.bool,
   loading: PropTypes.bool,
+  onlyPosLab: PropTypes.bool,
+  isolation: PropTypes.bool,
 };
 
 export default LaboratoryModal;
