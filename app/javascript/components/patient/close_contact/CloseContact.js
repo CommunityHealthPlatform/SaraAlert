@@ -56,12 +56,17 @@ class CloseContact extends React.Component {
   };
 
   handleDeleteSubmit = () => {
+    let deleteReason = this.state.delete_reason;
+    if (deleteReason === 'Other' && this.state.delete_reason_text) {
+      deleteReason += ', ' + this.state.delete_reason_text;
+    }
     this.setState({ loading: true }, () => {
       axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
       axios
         .delete(window.BASE_PATH + '/close_contacts/' + this.props.close_contact.id, {
           data: {
             patient_id: this.props.patient.id,
+            delete_reason: deleteReason,
           },
         })
         .then(() => {
@@ -174,12 +179,12 @@ class CloseContact extends React.Component {
       });
   };
 
-  createModal(title, toggle, handleCloseContactSubmit) {
+  createModal() {
     return (
-      <Modal size="lg" show centered onHide={toggle}>
-        <h1 className="sr-only">{title}</h1>
+      <Modal size="lg" show centered onHide={this.toggleCloseContactModal}>
+        <h1 className="sr-only">{this.props.close_contact.id ? 'Update Close Contact' : 'Create Close Contact'}</h1>
         <Modal.Header>
-          <Modal.Title>{title}</Modal.Title>
+          <Modal.Title>{this.props.close_contact.id ? 'Update Close Contact' : 'Create Close Contact'}</Modal.Title>
         </Modal.Header>
         <Modal.Body className="px-5">
           <Row className="mt-3">
@@ -294,10 +299,10 @@ class CloseContact extends React.Component {
           </Row>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary btn-square" onClick={toggle}>
+          <Button variant="secondary btn-square" onClick={this.toggleCloseContactModal}>
             Cancel
           </Button>
-          <Button variant="primary btn-square" onClick={handleCloseContactSubmit} disabled={this.state.disableCreate || this.state.loading}>
+          <Button variant="primary btn-square" onClick={this.handleCloseContactSubmit} disabled={this.state.disableCreate || this.state.loading}>
             <span data-for="create-tooltip" data-tip="" className="ml-1">
               {this.props.close_contact.id ? 'Update' : 'Create'}
             </span>
@@ -367,7 +372,7 @@ class CloseContact extends React.Component {
             </Button>
           </div>
         )}
-        {this.state.showCloseContactModal && this.createModal('Close Contact', this.toggleCloseContactModal, this.handleCloseContactSubmit)}
+        {this.state.showCloseContactModal && this.createModal()}
         {this.state.showDeleteModal && (
           <DeleteDialog
             type={'Close Contact'}
