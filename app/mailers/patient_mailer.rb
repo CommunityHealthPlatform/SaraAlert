@@ -243,9 +243,8 @@ class PatientMailer < ApplicationMailer
   end
 
   def add_fail_history_closed_blank_field(patient, type)
-    History.record_automatically_closed(patient: patient,
-                                        comment: 'The system was unable to send a monitoring complete message to this monitoree '\
-                                                 "because their preferred contact method, #{type}, "\
-                                                 'was blank.')
+    History.monitoring_complete_message_sent(patient: patient,
+                                             comment: 'The system was unable to send a monitoring complete message to this '\
+                                                      "monitoree because their preferred contact method, #{type}, was blank.")
   end
 end
