@@ -222,6 +222,7 @@ class PatientMailer < ApplicationMailer
     )
 
     TwilioSender.send_sms(patient, [contents])
+    History.monitoring_complete_message_sent(patient: patient)
   end
 
   private

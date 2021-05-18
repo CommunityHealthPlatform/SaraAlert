@@ -212,6 +212,7 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
       method_text = preferred_contact_method == 'E-mailed Web Link' ? 'email' : 'primary phone number'
       assert_not_histories_contain(patient, "because their preferred contact method, #{method_text}, was blank.")
       assert_histories_contain(patient, 'Monitoree has completed monitoring.')
+      assert_histories_contain(patient, 'Monitoring Complete message was sent.')
     end
   end
 
