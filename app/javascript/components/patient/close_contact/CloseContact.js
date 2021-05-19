@@ -182,9 +182,9 @@ class CloseContact extends React.Component {
   createModal() {
     return (
       <Modal size="lg" show centered onHide={this.toggleCloseContactModal}>
-        <h1 className="sr-only">{this.props.close_contact.id ? 'Update Close Contact' : 'Create Close Contact'}</h1>
+        <h1 className="sr-only">{this.props.close_contact.id ? 'Update' : 'Create'} Close Contact</h1>
         <Modal.Header>
-          <Modal.Title>{this.props.close_contact.id ? 'Update Close Contact' : 'Create Close Contact'}</Modal.Title>
+          <Modal.Title>{this.props.close_contact.id ? 'Update' : 'Create'} Close Contact</Modal.Title>
         </Modal.Header>
         <Modal.Body className="px-5">
           <Row className="mt-3">
