@@ -24,7 +24,6 @@
                       jurisdiction_path: @jurisdiction[:path],
                       jurisdiction_paths: @possible_jurisdiction_paths,
                       blocked_sms: @patient.blocked_sms,
-                      follow_up_reasons: ValidationHelper::USER_SELECTABLE_FOLLOW_UP_REASONS
                     }) %>
 
 <% if current_user.can_modify_subject_status? %>

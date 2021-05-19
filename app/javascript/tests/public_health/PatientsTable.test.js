@@ -14,7 +14,6 @@ import UpdateAssignedUser from '../../components/public_health/actions/UpdateAss
 import { mockJurisdiction1, mockJurisdictionPaths } from '../mocks/mockJurisdiction';
 import { mockExposureTabs, mockIsolationTabs } from '../mocks/mockTabs';
 import { mockMonitoringReasons } from '../mocks/mockMonitoringReasons';
-import { mockFollowUpReasons } from '../mocks/mockFollowUpReasons';
 
 const authyToken = "Q1z4yZXLdN+tZod6dBSIlMbZ3yWAUFdY44U06QWffEP76nx1WGMHIz8rYxEUZsl9sspS3ePF2ZNmSue8wFpJGg==";
 const setQueryMock = jest.fn();
@@ -23,12 +22,12 @@ const dropdownOptions = [ 'Close Records', 'Update Case Status', 'Update Assigne
 
 function getExposureWrapper() {
   return shallow(<PatientsTable authenticity_token={authyToken} jurisdiction_paths={mockJurisdictionPaths} workflow={'exposure'} jurisdiction={mockJurisdiction1}
-    tabs={mockExposureTabs} monitoring_reasons={mockMonitoringReasons} follow_up_reasons={mockFollowUpReasons} setQuery={setQueryMock} setFilteredMonitoreesCount={setMonitoreeCountMock}/>);
+    tabs={mockExposureTabs} monitoring_reasons={mockMonitoringReasons} setQuery={setQueryMock} setFilteredMonitoreesCount={setMonitoreeCountMock}/>);
 }
 
 function getIsolationWrapper() {
   return shallow(<PatientsTable authenticity_token={authyToken} jurisdiction_paths={mockJurisdictionPaths} workflow={'isolation'} jurisdiction={mockJurisdiction1}
-    tabs={mockIsolationTabs} monitoring_reasons={mockMonitoringReasons} follow_up_reasons={mockFollowUpReasons} setQuery={setQueryMock} setFilteredMonitoreesCount={setMonitoreeCountMock}/>);
+    tabs={mockIsolationTabs} monitoring_reasons={mockMonitoringReasons} setQuery={setQueryMock} setFilteredMonitoreesCount={setMonitoreeCountMock}/>);
 }
 
 afterEach(() => {

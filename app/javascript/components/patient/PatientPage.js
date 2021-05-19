@@ -22,9 +22,8 @@ class PatientPage extends React.Component {
               details={{ ...this.props.patient, blocked_sms: this.props.blocked_sms }}
               collapse={this.props.can_modify_subject_status}
               edit_mode={false}
-              follow_up_reasons={this.props.follow_up_reasons}
               other_household_members={this.props.other_household_members}
-              display_follow_up_flag={this.props.current_user.role != 'enroller'}
+              can_modify_subject_status={this.props.can_modify_subject_status}
               authenticity_token={this.props.authenticity_token}
             />
             <div className="household-info">
@@ -64,7 +63,6 @@ PatientPage.propTypes = {
   jurisdiction_path: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
   blocked_sms: PropTypes.bool,
-  follow_up_reasons: PropTypes.array,
 };
 
 export default PatientPage;

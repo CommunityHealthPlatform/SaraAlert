@@ -8,13 +8,12 @@ import Individual from '../../components/patient/household/Individual';
 import { mockUser1 } from '../mocks/mockUsers';
 import { mockPatient1, mockPatient2, mockPatient3 } from '../mocks/mockPatients';
 import { mockJurisdictionPaths } from '../mocks/mockJurisdiction';
-import { mockFollowUpReasons } from '../mocks/mockFollowUpReasons';
 
 const authyToken = "Q1z4yZXLdN+tZod6dBSIlMbZ3yWAUFdY44U06QWffEP76nx1WGMHIz8rYxEUZsl9sspS3ePF2ZNmSue8wFpJGg==";
 
 function getWrapper(patient, householdMembers) {
   return shallow(<PatientPage current_user={mockUser1} patient={patient} other_household_members={householdMembers} blocked_sms={false} can_add_group={true}
-    can_modify_subject_status={true} jurisdiction_path="USA, State 1, County 2" jurisdiction_paths={mockJurisdictionPaths} follow_up_reasons={mockFollowUpReasons} authenticity_token={authyToken} />);
+    can_modify_subject_status={true} jurisdiction_path="USA, State 1, County 2" jurisdiction_paths={mockJurisdictionPaths} authenticity_token={authyToken} />);
 }
 
 describe('PatientPage', () => {
