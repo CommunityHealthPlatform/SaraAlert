@@ -220,8 +220,12 @@ class PatientMailer < ApplicationMailer
       completed_date: patient.closed_at&.strftime('%m-%d-%Y'),
       locale: lang
     )
-
-    TwilioSender.send_sms(patient, [contents])
+    message = {
+      prompt: contents,
+      patient_submission_token: patient.submission_token,
+      threshold_hash: patient.jurisdiction.jurisdiction_path_threshold_hash
+    }
+    TwilioSender.send_sms(patient, [message])
     History.monitoring_complete_message_sent(patient: patient)
   end
 
