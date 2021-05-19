@@ -37,14 +37,14 @@ class CloseContactsController < ApplicationController
     redirect_to(root_url) && return if patient_id.nil?
 
     @close_contact.update(first_name: params.permit(:first_name)[:first_name],
-              last_name: params.permit(:last_name)[:last_name],
-              primary_telephone: params.permit(:primary_telephone)[:primary_telephone],
-              email: params.permit(:email)[:email],
-              last_date_of_exposure: params.permit(:last_date_of_exposure)[:last_date_of_exposure],
-              assigned_user: params.permit(:assigned_user)[:assigned_user],
-              notes: params.permit(:notes)[:notes],
-              contact_attempts: params.permit(:contact_attempts)[:contact_attempts])
-              @close_contact.save
+                          last_name: params.permit(:last_name)[:last_name],
+                          primary_telephone: params.permit(:primary_telephone)[:primary_telephone],
+                          email: params.permit(:email)[:email],
+                          last_date_of_exposure: params.permit(:last_date_of_exposure)[:last_date_of_exposure],
+                          assigned_user: params.permit(:assigned_user)[:assigned_user],
+                          notes: params.permit(:notes)[:notes],
+                          contact_attempts: params.permit(:contact_attempts)[:contact_attempts])
+    @close_contact.save
     History.close_contact_edit(patient: patient_id,
                                created_by: current_user.email,
                                comment: "User edited a close contact (ID: #{@close_contact.id}).")
@@ -57,10 +57,10 @@ class CloseContactsController < ApplicationController
       reason = params.permit(:delete_reason)[:delete_reason]
       History.close_contact_edit(patient: params.permit(:patient_id)[:patient_id],
                                  created_by: current_user.email,
-                                 comment: "User deleted a close contact (ID: #{@close_contact.id}, Name: #{@close_contact.first_name} #{@close_contact.last_name}"\
-                                 ", Primary Telephone: #{@close_contact.primary_telephone}, Email: #{@close_contact.email}, Last Date of Exposure: "\
-                                 "#{@close_contact.last_date_of_exposure}, Assigned User: #{@close_contact.assigned_user}, Notes: #{@close_contact.notes}, "\
-                                 "Contact Attempts: #{@close_contact.contact_attempts}, Reason: #{reason}.)")
+                                 comment: "User deleted a close contact (ID: #{@close_contact.id}, Name: #{@close_contact.first_name} "\
+                                 "#{@close_contact.last_name}, Primary Telephone: #{@close_contact.primary_telephone}, Email: #{@close_contact.email}, "\
+                                 "Last Date of Exposure: #{@close_contact.last_date_of_exposure}, Assigned User: #{@close_contact.assigned_user}, Notes: "\
+                                 "#{@close_contact.notes}, Contact Attempts: #{@close_contact.contact_attempts}. Reason: #{reason}.)")
     else
       render status: 500
     end
@@ -81,7 +81,7 @@ class CloseContactsController < ApplicationController
 
     # Check if Patient ID is valid
     unless Patient.exists?(@patient_id)
-      error_message = "Close contact cannot be edited for unknown monitoree with ID: #{@patient_id}"
+      error_message = "Close Contact cannot be modified for unknown monitoree with ID: #{@patient_id}"
       render(json: { error: error_message }, status: :bad_request) && return
     end
 

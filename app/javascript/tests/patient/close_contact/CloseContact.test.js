@@ -92,7 +92,7 @@ describe('CloseContact', () => {
     expect(emptyCCWrapper.state('showCloseContactModal')).toBeTruthy();
     expect(emptyCCWrapper.find(Modal.Header).exists()).toBeTruthy();
     expect(emptyCCWrapper.find(Modal).find('.sr-only').text()).toEqual('Create Close Contact');
-    expect(emptyCCWrapper.find(Modal.Header).find('ModalTitle').text()).toEqual('Close Contact');
+    expect(emptyCCWrapper.find(Modal.Header).find('ModalTitle').text()).toEqual('Create Close Contact');
     expect(emptyCCWrapper.find(Modal.Body).exists()).toBeTruthy();
     // Using 'toContain' instead of 'toEqual' to avoid any whitespace issues
     expect(emptyCCWrapper.find(Modal.Body).find('Row').at(0).find(Form.Label).at(0).text()).toContain('First Name');
