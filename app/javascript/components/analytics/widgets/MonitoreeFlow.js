@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { Card, Col, Row } from 'react-bootstrap';
 import { formatPercentage } from '../../../utils/Analytics';
 
-const WORKFLOWS = ['Exposure', 'Isolation'];
+let WORKFLOWS;
 
 // Provide a separate array, as object-iteration order is not guaranteed in JS
 const MONITOREE_FLOW_HEADERS = ['Last 24 Hours', 'Last 7 Days', 'Last 14 Days', 'Total'];
@@ -12,6 +12,8 @@ const MONITOREE_FLOW_HEADERS = ['Last 24 Hours', 'Last 7 Days', 'Last 14 Days', 
 class MonitoreeFlow extends React.Component {
   constructor(props) {
     super(props);
+    WORKFLOWS = this.props.available_workflows.map(wf => wf.label);
+
     this.tableData = WORKFLOWS.map(workflow => {
       return MONITOREE_FLOW_HEADERS.map(time_frame => {
         let thisTimeFrameData = props.stats.monitoree_snapshots.find(
@@ -44,7 +46,7 @@ class MonitoreeFlow extends React.Component {
 
   renderWorkflowTable(data, index) {
     return (
-      <Col lg="12" key={index} className="pb-3">
+      <Col key={index} className="pb-3">
         <table className="analytics-table">
           <thead>
             <tr>
@@ -135,6 +137,7 @@ class MonitoreeFlow extends React.Component {
 
 MonitoreeFlow.propTypes = {
   stats: PropTypes.object,
+  available_workflows: PropTypes.array,
 };
 
 export default MonitoreeFlow;

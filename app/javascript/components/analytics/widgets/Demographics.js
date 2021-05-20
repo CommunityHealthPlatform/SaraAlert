@@ -9,7 +9,7 @@ import _ from 'lodash';
 import CustomizedAxisTick from './CustomizedAxisTick';
 import InfoTooltip from '../../util/InfoTooltip';
 
-const WORKFLOWS = ['Exposure', 'Isolation'];
+let WORKFLOWS; // = ['Exposure', 'Isolation'];
 const AGEGROUPS = ['0-19', '20-29', '30-39', '40-49', '50-59', '60-69', '70-79', '>=80', 'Missing', 'FAKE_BIRTHDATE'];
 const SEXES = ['Male', 'Female', 'Unknown', 'Missing'];
 const ETHNICITIES = ['Hispanic or Latino', 'Not Hispanic or Latino', 'Missing'];
@@ -36,11 +36,13 @@ const SEXUAL_ORIENTATIONS = [
 class Demographics extends React.Component {
   constructor(props) {
     super(props);
-    this.ageData = parseOutFields(this.props.stats.monitoree_counts, AGEGROUPS, 'Age Group');
-    this.sexData = parseOutFields(this.props.stats.monitoree_counts, SEXES, 'Sex');
-    this.ethnicityData = parseOutFields(this.props.stats.monitoree_counts, ETHNICITIES, 'Ethnicity');
-    this.raceData = parseOutFields(this.props.stats.monitoree_counts, RACES, 'Race');
-    this.soData = parseOutFields(this.props.stats.monitoree_counts, SEXUAL_ORIENTATIONS, 'Sexual Orientation');
+    WORKFLOWS = this.props.available_workflows.map(wf => wf.label);
+
+    this.ageData = parseOutFields(this.props.stats.monitoree_counts, AGEGROUPS, 'Age Group', WORKFLOWS);
+    this.sexData = parseOutFields(this.props.stats.monitoree_counts, SEXES, 'Sex', WORKFLOWS);
+    this.ethnicityData = parseOutFields(this.props.stats.monitoree_counts, ETHNICITIES, 'Ethnicity', WORKFLOWS);
+    this.raceData = parseOutFields(this.props.stats.monitoree_counts, RACES, 'Race', WORKFLOWS);
+    this.soData = parseOutFields(this.props.stats.monitoree_counts, SEXUAL_ORIENTATIONS, 'Sexual Orientation', WORKFLOWS);
     this.hasFakeBirthdateData = false;
     this.numberOfFakeBirthdates = 0;
 
@@ -59,11 +61,11 @@ class Demographics extends React.Component {
     this.showSexualOrientationData = !!_.sum(this.soData.map(x => _.last(x)));
 
     // Map and translate all of the Tabular Data to the Chart Format
-    this.ageChartData = mapToChartFormat(_.initial(AGEGROUPS), this.ageData);
-    this.sexChartData = mapToChartFormat(SEXES, this.sexData);
-    this.ethnicityChartData = mapToChartFormat(ETHNICITIES, this.ethnicityData);
-    this.raceChartData = mapToChartFormat(RACES, this.raceData);
-    this.soChartData = mapToChartFormat(SEXUAL_ORIENTATIONS, this.soData);
+    this.ageChartData = mapToChartFormat(_.initial(AGEGROUPS), this.ageData, WORKFLOWS);
+    this.sexChartData = mapToChartFormat(SEXES, this.sexData, WORKFLOWS);
+    this.ethnicityChartData = mapToChartFormat(ETHNICITIES, this.ethnicityData, WORKFLOWS);
+    this.raceChartData = mapToChartFormat(RACES, this.raceData, WORKFLOWS);
+    this.soChartData = mapToChartFormat(SEXUAL_ORIENTATIONS, this.soData, WORKFLOWS);
     this.barGraphData = [
       { title: 'Current Age (Years)', data: this.ageChartData },
       { title: 'Sex', data: this.sexChartData },
@@ -285,6 +287,7 @@ class Demographics extends React.Component {
 
 Demographics.propTypes = {
   stats: PropTypes.object,
+  available_workflows: PropTypes.array,
   showGraphs: PropTypes.bool,
 };
 
