@@ -35,6 +35,8 @@ class Workflow extends React.Component {
           query={this.state.query}
           current_monitorees_count={this.state.current_monitorees_count}
           custom_export_options={this.props.custom_export_options}
+          available_workflows={this.props.available_workflows}
+          playbook={this.props.playbook}
         />
         <PatientsTable
           authenticity_token={this.props.authenticity_token}
@@ -59,6 +61,8 @@ Workflow.propTypes = {
   tabs: PropTypes.object,
   custom_export_options: PropTypes.object,
   monitoring_reasons: PropTypes.array,
+  available_workflows: PropTypes.array,
+  playbook: PropTypes.string,
 };
 
 export default Workflow;

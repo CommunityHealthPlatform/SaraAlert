@@ -196,14 +196,16 @@ class PublicHealthHeader extends React.Component {
         </ButtonGroup>
 
         <ButtonGroup className="float-right mb-4 mr-2">
-          <Button variant={this.props.workflow === 'exposure' ? 'primary' : 'outline-primary'} href={`${window.BASE_PATH}/public_health`}>
-            <i className="fas fa-people-arrows"></i> Exposure Monitoring{' '}
-            {this.state.counts.exposure !== undefined && <span id="exposureCount">({this.state.counts.exposure})</span>}
-          </Button>
-          <Button variant={this.props.workflow === 'isolation' ? 'primary' : 'outline-primary'} href={`${window.BASE_PATH}/public_health/isolation`}>
-            <i className="fas fa-street-view"></i> Isolation Monitoring{' '}
-            {this.state.counts.isolation !== undefined && <span id="isolationCount">({this.state.counts.isolation})</span>}
-          </Button>
+          {this.props.available_workflows.map(value => {
+            return (
+              <Button
+                key={value.name}
+                variant={this.props.workflow === value.name ? 'primary' : 'outline-primary'}
+                href={`${window.BASE_PATH}/dashboard/${this.props.playbook}/${value.name}`}>
+                <i className="fas fa-people-arrows"></i> {value.label} Monitoring{' '}
+              </Button>
+            );
+          })}
         </ButtonGroup>
 
         {this.renderUploadModal()}
@@ -216,7 +218,8 @@ class PublicHealthHeader extends React.Component {
 PublicHealthHeader.propTypes = {
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
-  workflow: PropTypes.oneOf(['exposure', 'isolation']),
+  //workflow: PropTypes.oneOf(['exposure', 'isolation']),
+  workflow: PropTypes.string,
   jurisdiction: PropTypes.object,
   tabs: PropTypes.object,
   abilities: PropTypes.exact({
@@ -228,6 +231,8 @@ PublicHealthHeader.propTypes = {
   query: PropTypes.object,
   current_monitorees_count: PropTypes.number,
   custom_export_options: PropTypes.object,
+  available_workflows: PropTypes.array,
+  playbook: PropTypes.string,
 };
 
 export default PublicHealthHeader;
