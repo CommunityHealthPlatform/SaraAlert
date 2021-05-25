@@ -118,7 +118,7 @@ class Import extends React.Component {
       };
       if (await confirmDialog(confirmText, options)) {
         this.setState({ isPaused: false });
-        location.href = `${window.BASE_PATH}/public_health/${this.props.workflow === 'exposure' ? '' : 'isolation'}`;
+        location.href = `${window.BASE_PATH}/dashboard/${this.props.playbook}/${this.props.workflow}`;
       } else {
         this.setState({ isPaused: false });
         if (this.state.acceptedAllStarted) {
@@ -177,7 +177,7 @@ class Import extends React.Component {
 
   render() {
     if (this.state.patients.length === this.state.accepted.length + this.state.rejected.length && this.state.errors.length == 0) {
-      location.href = `${window.BASE_PATH}/`;
+      location.href = `${window.BASE_PATH}/dashboard/${this.props.playbook}/${this.props.workflow}`;
     }
     return (
       <React.Fragment>
@@ -331,6 +331,7 @@ class Import extends React.Component {
 }
 
 Import.propTypes = {
+  playbook: PropTypes.string,
   workflow: PropTypes.string,
   patients: PropTypes.array,
   errors: PropTypes.array,

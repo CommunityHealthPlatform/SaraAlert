@@ -71,7 +71,7 @@ class PublicHealthHeader extends React.Component {
               additionalNote: 'Records imported prior to clicking "X" will not be deleted from the system.',
             };
             if (await confirmDialog(confirmText, options)) {
-              location.href = `${window.BASE_PATH}/public_health/${this.props.workflow === 'exposure' ? '' : 'isolation'}`;
+              location.href = `${window.BASE_PATH}/dashboard/${this.props.playbook}/${this.props.workflow}`;
             }
           } else {
             const confirmText = 'You are about to cancel the import process. Are you sure you want to do this?';
@@ -102,6 +102,7 @@ class PublicHealthHeader extends React.Component {
         <Modal.Body>
           {this.state.importData && this.state.importData.patients && this.state.importData.errors && (
             <Import
+              playbook={this.props.playbook}
               workflow={this.props.workflow}
               patients={this.state.importData.patients}
               errors={this.state.importData.errors}
@@ -151,7 +152,7 @@ class PublicHealthHeader extends React.Component {
             <Button
               variant="primary"
               className="ml-2 mb-4"
-              href={`${window.BASE_PATH}/patients/new${this.props.workflow === 'exposure' ? '' : '?isolation=true'}`}>
+              href={`${window.BASE_PATH}/patients/new${this.props.workflow === 'isolation' ? '?isolation=true' : ''}`}>
               {this.props.workflow === 'exposure' && (
                 <span>
                   <i className="fas fa-user-plus"></i> Enroll New Monitoree
@@ -218,7 +219,6 @@ class PublicHealthHeader extends React.Component {
 PublicHealthHeader.propTypes = {
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
-  //workflow: PropTypes.oneOf(['exposure', 'isolation']),
   workflow: PropTypes.string,
   jurisdiction: PropTypes.object,
   tabs: PropTypes.object,
