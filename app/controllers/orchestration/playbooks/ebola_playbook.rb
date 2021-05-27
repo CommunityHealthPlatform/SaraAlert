@@ -15,7 +15,7 @@ module Orchestration::Playbooks::EbolaPlaybook
       } }
     },
     system: {
-      continuous_exposure_on: false
+      continuous_exposure_enabled: false
     },
     other_properties: {
     }

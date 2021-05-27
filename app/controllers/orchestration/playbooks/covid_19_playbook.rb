@@ -8,7 +8,7 @@ module Orchestration::Playbooks::Covid19Playbook
     workflows: {
       exposure: { label: 'Exposure', base: INFECTIOUS[:workflows][:exposure], custom_options: {
         dashboard_tabs: {
-          type: 'subset',
+          type: 'all',
           config: {
             set: %i[symptomatic non_reporting]
           }
@@ -23,7 +23,9 @@ module Orchestration::Playbooks::Covid19Playbook
       } }
     },
     system: {
-      continuous_exposure_on: true
+      # Define primary, i.e., default, workflow to present on dashboard
+      primary_workflow: :exposure,
+      continuous_exposure_enabled: true
     },
     other_properties: {
     }
