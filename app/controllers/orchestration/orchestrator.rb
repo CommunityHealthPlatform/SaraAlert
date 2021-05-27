@@ -40,4 +40,32 @@ module Orchestration::Orchestrator
   def available_workflows(playbook)
     PLAYBOOKS[playbook][:workflows].keys.collect { |key| { name: key, label: PLAYBOOKS[playbook][:workflows][key][:label] } }
   end
+
+  def default_workflow(playbook)
+    available_workflows = available_workflows(playbook)
+
+    if available_workflows.size == 1 then
+      default = available_workflows[0]
+    else
+      primary_workflow_key = PLAYBOOKS.dig(playbook, :system, :primary_workflow)
+
+      # No workflows were marked as primary. Prefer one named exposure
+      if primary_workflow_key.nil? then
+        workflow = PLAYBOOKS.dig(playbook, :workflows, :exposure)
+        if workflow.nil? then
+          # NOTE: This does not guarantee the same workflow is selected every time.
+          workflow = available_workflows[0]
+          default = {name: workflow[:name], label: workflow[:label].nil? ? '' : workflow[:label].to_s}
+        else
+          default = {name: :exposure, label: workflow[:label].nil? ? '' : workflow[:label].to_s}
+        end
+      else
+        label = PLAYBOOKS.dig(playbook, :workflows, primary_workflow_key, :label)
+        default = {name: (":"+primary_workflow_key.to_s).parameterize.underscore.to_sym,
+            label: (label.nil? ? '' : label.to_s)}
+      end
+    end
+    return default
+  end
+
 end

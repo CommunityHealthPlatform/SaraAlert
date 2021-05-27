@@ -21,6 +21,28 @@ class DashboardController < ApplicationController
     @available_workflows = available_workflows(playbook)
   end
 
+
+  def index
+    @path_params = request.path_parameters
+
+    if @path_params[:playbook].nil? then
+      # Select the playbook to use as the default
+      # NOTE: This is not deterministic if there are multiple playbook.
+      default_playbook = available_playbooks[0]
+      playbook_name = default_playbook[:name]
+    else
+      playbook_name = @path_params[:playbook].parameterize.underscore.to_sym
+       # return error if given playbook doesn't exist
+      redirect_to('/404') && return if PLAYBOOKS.dig(playbook_name).nil?
+    end
+
+    # Select the workflow to present as the default
+    workflow = default_workflow(playbook_name)
+
+    redirect_to('/404') && return if workflow.nil?
+    redirect_to ("/dashboard/#{playbook_name}/" + workflow[:name].to_s)
+  end
+
   def authenticate_user_role
     # Role restriction with current_user, but we don't know if this is conifgurable yet
   end
