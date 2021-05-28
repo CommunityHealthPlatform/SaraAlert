@@ -9,7 +9,7 @@ module Orchestration::Orchestrator
 
   PLAYBOOKS = playbooks.freeze
 
-  def custom_configuration(playbook, workflow, option)
+  def workflow_configuration(playbook, workflow, option)
     base_configuration = PLAYBOOKS.dig(playbook, :workflows, workflow, :base, option)
     options = PLAYBOOKS.dig(playbook, :workflows, workflow, :custom_options, option)
 
@@ -31,6 +31,10 @@ module Orchestration::Orchestrator
     when 'custom'
       options[:config]
     end
+  end
+
+  def system_configuration(playbook, option)
+    PLAYBOOKS.dig(playbook, :system, option)
   end
 
   def available_playbooks
@@ -68,4 +72,13 @@ module Orchestration::Orchestrator
     return default
   end
 
+  # Return the symbol to the default playbook
+  def default_playbook
+      # Sara Alert is always expected to have a covid_19 playbook
+      playbook_name = ADMIN_OPTIONS['playbook_name'] || 'covid_19'
+
+      default_playbook = playbook_name.parameterize.underscore.to_sym
+      redirect_to('/404') && return if PLAYBOOKS.dig(default_playbook).nil?
+      return default_playbook
+  end
 end
