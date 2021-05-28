@@ -3,6 +3,7 @@
 # PatientsController: handles all subject actions
 class PatientsController < ApplicationController
   include PatientQueryHelper
+  include Orchestration::Orchestrator
 
   before_action :authenticate_user!
 
@@ -59,6 +60,9 @@ class PatientsController < ApplicationController
                            contact_of_known_case_id: @close_contact.nil? ? '' : @close_contact.patient_id,
                            exposure_notes: @close_contact.nil? ? '' : @close_contact.notes,
                            preferred_contact_method: 'Unknown')
+
+    @continuous_exposure_enabled = ActiveModel::Type::Boolean.new.cast(system_configuration(default_playbook, :continuous_exposure_enabled))
+    @continuous_exposure_enabled = true if @continuous_exposure_enabled.nil?
   end
 
   # Similar to 'new', except used for creating a new group member
