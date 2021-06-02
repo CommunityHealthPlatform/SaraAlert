@@ -28,6 +28,7 @@ class MonitoringActions extends React.Component {
                 monitoring_reasons={this.props.monitoring_reasons}
                 current_user={this.props.current_user}
                 jurisdiction_paths={this.props.jurisdiction_paths}
+                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
             </Form.Group>
             <Form.Group as={Col} md="12" lg="8" className="pt-2">
@@ -37,6 +38,7 @@ class MonitoringActions extends React.Component {
                 household_members={this.props.household_members}
                 current_user={this.props.current_user}
                 jurisdiction_paths={this.props.jurisdiction_paths}
+                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
             </Form.Group>
             <Form.Group as={Col} md="12" lg="8" className="pt-2">
@@ -46,6 +48,7 @@ class MonitoringActions extends React.Component {
                 household_members={this.props.household_members}
                 current_user={this.props.current_user}
                 jurisdiction_paths={this.props.jurisdiction_paths}
+                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
             </Form.Group>
             <Form.Group as={Col} md="12" lg="8" className="pt-2">
@@ -55,6 +58,7 @@ class MonitoringActions extends React.Component {
                 household_members={this.props.household_members}
                 current_user={this.props.current_user}
                 jurisdiction_paths={this.props.jurisdiction_paths}
+                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
             </Form.Group>
             <Form.Group as={Col} md="12" lg="8" className="pt-2">
@@ -64,6 +68,7 @@ class MonitoringActions extends React.Component {
                 household_members={this.props.household_members}
                 current_user={this.props.current_user}
                 jurisdiction_paths={this.props.jurisdiction_paths}
+                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
             </Form.Group>
             <Form.Group as={Col} md="12" lg="8" className="pt-2">
@@ -74,6 +79,7 @@ class MonitoringActions extends React.Component {
                 assigned_users={this.props.assigned_users}
                 current_user={this.props.current_user}
                 jurisdiction_paths={this.props.jurisdiction_paths}
+                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
             </Form.Group>
             <Form.Group as={Col} lg="24" className="pt-2">
@@ -83,6 +89,7 @@ class MonitoringActions extends React.Component {
                 household_members={this.props.household_members}
                 jurisdiction_paths={this.props.jurisdiction_paths}
                 current_user={this.props.current_user}
+                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
             </Form.Group>
           </Form.Row>
@@ -101,6 +108,7 @@ MonitoringActions.propTypes = {
   assigned_users: PropTypes.array,
   household_members: PropTypes.array,
   monitoring_reasons: PropTypes.array,
+  continuous_exposure_enabled: PropTypes.bool,
 };
 
 export default MonitoringActions;

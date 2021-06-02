@@ -20,7 +20,8 @@
                       other_household_members: @household_members_exclude_self,
                       authenticity_token: form_authenticity_token,
                       jurisdiction_path: @jurisdiction[:path],
-                      blocked_sms: @patient.blocked_sms
+                      blocked_sms: @patient.blocked_sms,
+                      continuous_exposure_enabled: @continuous_exposure_enabled
                     }) %>
 
 <% if current_user.can_modify_subject_status? %>
@@ -34,7 +35,8 @@
                         patient: @patient,
                         jurisdiction_paths: @possible_jurisdiction_paths,
                         assigned_users: @possible_assigned_users,
-                        monitoring_reasons: ValidationHelper::USER_SELECTABLE_MONITORING_REASONS
+                        monitoring_reasons: ValidationHelper::USER_SELECTABLE_MONITORING_REASONS,
+                        continuous_exposure_enabled: @continuous_exposure_enabled
                       }) %>
 </div>
 <% end %>
@@ -54,7 +56,8 @@
                         current_user: current_user,
                         translations: Assessment.new.translations,
                         authenticity_token: form_authenticity_token,
-                        jurisdiction_paths: @possible_jurisdiction_paths
+                        jurisdiction_paths: @possible_jurisdiction_paths,
+                        continuous_exposure_enabled: @continuous_exposure_enabled
                       }) %>
 <% end %>
 

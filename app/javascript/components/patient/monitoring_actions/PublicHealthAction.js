@@ -112,6 +112,7 @@ class PublicHealthAction extends React.Component {
                 jurisdiction_paths={this.props.jurisdiction_paths}
                 handleApplyHouseholdChange={this.handleApplyHouseholdChange}
                 handleApplyHouseholdIdsChange={this.handleApplyHouseholdIdsChange}
+                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
               {this.state.apply_to_household && this.props.patient.monitoring && (
                 <Form.Group>
@@ -187,6 +188,7 @@ PublicHealthAction.propTypes = {
   household_members: PropTypes.array,
   current_user: PropTypes.object,
   jurisdiction_paths: PropTypes.object,
+  continuous_exposure_enabled: PropTypes.bool,
 };
 
 export default PublicHealthAction;

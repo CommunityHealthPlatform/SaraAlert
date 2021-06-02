@@ -367,6 +367,7 @@ class AssessmentTable extends React.Component {
               jurisdiction_paths={this.props.jurisdiction_paths}
               household_members={this.props.household_members}
               monitoring_period_days={this.props.monitoring_period_days}
+              continuous_exposure_enabled={this.props.continuous_exposure_enabled}
             />
           </Card.Body>
         </Card>
@@ -422,6 +423,7 @@ AssessmentTable.propTypes = {
   translations: PropTypes.object,
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
+  continuous_exposure_enabled: PropTypes.bool,
 };
 
 export default AssessmentTable;

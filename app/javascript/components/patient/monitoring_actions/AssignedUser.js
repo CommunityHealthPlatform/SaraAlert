@@ -107,6 +107,7 @@ class AssignedUser extends React.Component {
               jurisdiction_paths={this.props.jurisdiction_paths}
               handleApplyHouseholdChange={this.handleApplyHouseholdChange}
               handleApplyHouseholdIdsChange={this.handleApplyHouseholdIdsChange}
+              continuous_exposure_enabled={this.props.continuous_exposure_enabled}
             />
           )}
           <Form.Group>
@@ -187,6 +188,7 @@ AssignedUser.propTypes = {
   assigned_users: PropTypes.array,
   current_user: PropTypes.object,
   jurisdiction_paths: PropTypes.object,
+  continuous_exposure_enabled: PropTypes.bool,
 };
 
 export default AssignedUser;

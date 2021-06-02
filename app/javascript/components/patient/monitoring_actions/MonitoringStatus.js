@@ -112,7 +112,8 @@ class MonitoringStatus extends React.Component {
         <Modal.Body>
           <p>
             Are you sure you want to change monitoring status to &quot;{this.state.monitoring_status}&quot;?
-            {!this.state.monitoring && <b> This will move the selected record(s) to the Closed line list and turn Continuous Exposure OFF.</b>}
+            {!this.state.monitoring && <b> This will move the selected record(s) to the Closed line list
+              {this.props.continuous_exposure_enabled && (<span>and turn Continuous Exposure OFF</span>)}.</b>}
             {this.state.monitoring && <b> This will move the selected record(s) from the Closed line list to the appropriate Active Monitoring line list.</b>}
           </p>
           {this.props.household_members.length > 0 && (
@@ -122,6 +123,7 @@ class MonitoringStatus extends React.Component {
               jurisdiction_paths={this.props.jurisdiction_paths}
               handleApplyHouseholdChange={this.handleApplyHouseholdChange}
               handleApplyHouseholdIdsChange={this.handleApplyHouseholdIdsChange}
+              continuous_exposure_enabled={this.props.continuous_exposure_enabled}
             />
           )}
           {!this.state.monitoring && (
@@ -248,6 +250,7 @@ MonitoringStatus.propTypes = {
   monitoring_reasons: PropTypes.array,
   current_user: PropTypes.object,
   jurisdiction_paths: PropTypes.object,
+  continuous_exposure_enabled: PropTypes.bool,
 };
 
 export default MonitoringStatus;

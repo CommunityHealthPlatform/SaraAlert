@@ -39,6 +39,8 @@ class PatientsController < ApplicationController
     @translations = Assessment.new.translations
 
     @history_types = History::HISTORY_TYPES
+
+    @continuous_exposure_enabled = continuous_exposure_enabled?
   end
 
   # Returns a new (unsaved) subject, for creating a new subject
@@ -61,8 +63,7 @@ class PatientsController < ApplicationController
                            exposure_notes: @close_contact.nil? ? '' : @close_contact.notes,
                            preferred_contact_method: 'Unknown')
 
-    @continuous_exposure_enabled = ActiveModel::Type::Boolean.new.cast(system_configuration(default_playbook, :continuous_exposure_enabled))
-    @continuous_exposure_enabled = true if @continuous_exposure_enabled.nil?
+    @continuous_exposure_enabled = continuous_exposure_enabled?
   end
 
   # Similar to 'new', except used for creating a new group member
@@ -95,6 +96,7 @@ class PatientsController < ApplicationController
     @dependents_exclude_hoh = @patient.dependents_exclude_self
     @propagated_fields = group_member_subset.collect { |field| [field, false] }.to_h
     @enrollment_step = params.permit(:step)[:step]&.to_i
+    @continuous_exposure_enabled = continuous_exposure_enabled?
   end
 
   # This follows 'new', this will receive the subject details and save a new subject
@@ -623,6 +625,12 @@ class PatientsController < ApplicationController
   # Fetches table data for viable HoH options.
   def head_of_household_options
     patients_table_data(params)
+  end
+
+  def continuous_exposure_enabled?
+    @continuous_exposure_enabled = ActiveModel::Type::Boolean.new.cast(system_configuration(default_playbook, :continuous_exposure_enabled))
+    @continuous_exposure_enabled = true if @continuous_exposure_enabled.nil?
+    return @continuous_exposure_enabled
   end
 
   # Parameters allowed for saving to database

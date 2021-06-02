@@ -17,7 +17,9 @@ class HeadOfHousehold extends React.Component {
                 <th>Name</th>
                 <th>Workflow</th>
                 <th>Monitoring Status</th>
-                <th>Continuous Exposure?</th>
+                { this.props.continuous_exposure_enabled && (
+                 <th>Continuous Exposure?</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -29,7 +31,9 @@ class HeadOfHousehold extends React.Component {
                     </td>
                     <td>{member.isolation ? 'Isolation' : 'Exposure'}</td>
                     <td>{member.monitoring ? 'Actively Monitoring' : 'Not Monitoring'}</td>
-                    <td>{member.continuous_exposure ? 'Yes' : 'No'}</td>
+                    { this.props.continuous_exposure_enabled && (
+                      <td>{member.continuous_exposure ? 'Yes' : 'No'}</td>
+                    )}
                   </tr>
                 );
               })}
@@ -50,6 +54,7 @@ HeadOfHousehold.propTypes = {
   patient: PropTypes.object,
   dependents: PropTypes.array,
   authenticity_token: PropTypes.string,
+  continuous_exposure_enabled: PropTypes.bool,
 };
 
 export default HeadOfHousehold;

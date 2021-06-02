@@ -25,7 +25,6 @@ class ApplyToHousehold extends React.Component {
             tooltip: null,
             options: { true: 'Actively Monitoring', false: 'Not Monitoring' },
           },
-          { field: 'continuous_exposure', label: 'Continuous Exposure?', isSortable: true, tooltip: null, options: { true: 'Yes', false: 'No' } },
         ],
         rowData: props.household_members,
         selectedRows: [],
@@ -36,6 +35,10 @@ class ApplyToHousehold extends React.Component {
       selectedIds: [],
       disabledIds: this.getDisabledIds(props.household_members),
     };
+    if (props.continuous_exposure_enabled) {
+      var obj = { field: 'continuous_exposure', label: 'Continuous Exposure?', isSortable: true, tooltip: null, options: { true: 'Yes', false: 'No' } };
+      this.state.table.colData.push(obj);
+    }
   }
 
   /**
@@ -352,6 +355,7 @@ ApplyToHousehold.propTypes = {
   handleApplyHouseholdIdsChange: PropTypes.func,
   current_user: PropTypes.object,
   jurisdiction_paths: PropTypes.object,
+  continuous_exposure_enabled: PropTypes.bool,
 };
 
 export default ApplyToHousehold;

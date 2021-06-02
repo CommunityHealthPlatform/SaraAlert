@@ -207,6 +207,7 @@ class CaseStatus extends React.Component {
               jurisdiction_paths={this.props.jurisdiction_paths}
               handleApplyHouseholdChange={this.handleApplyHouseholdChange}
               handleApplyHouseholdIdsChange={this.handleApplyHouseholdIdsChange}
+              continuous_exposure_enabled={this.props.continuous_exposure_enabled}
             />
           )}
         </Modal.Body>
@@ -269,6 +270,7 @@ CaseStatus.propTypes = {
   household_members: PropTypes.array,
   current_user: PropTypes.object,
   jurisdiction_paths: PropTypes.object,
+  continuous_exposure_enabled: PropTypes.bool,
 };
 
 export default CaseStatus;
