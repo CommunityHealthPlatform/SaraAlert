@@ -40,8 +40,12 @@ class PatientsController < ApplicationController
 
     @history_types = History::HISTORY_TYPES
 
-    @available_workflows = available_workflows(default_playbook)
-    @continuous_exposure_enabled = continuous_exposure_enabled?
+    playbook = default_playbook
+    @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @workflow_label = default_workflow(playbook).dig(:label)
+
+    @available_workflows = available_workflows(playbook)
+    @continuous_exposure_enabled = continuous_exposure_enabled?(playbook)
   end
 
   # Returns a new (unsaved) subject, for creating a new subject
@@ -64,7 +68,11 @@ class PatientsController < ApplicationController
                            exposure_notes: @close_contact.nil? ? '' : @close_contact.notes,
                            preferred_contact_method: 'Unknown')
 
-    @continuous_exposure_enabled = continuous_exposure_enabled?
+    playbook = default_playbook
+    @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @workflow_label = default_workflow(playbook).dig(:label)
+
+    @continuous_exposure_enabled = continuous_exposure_enabled?(playbook)
   end
 
   # Similar to 'new', except used for creating a new group member
@@ -83,6 +91,10 @@ class PatientsController < ApplicationController
     redirect_to(root_url) && return if @patient.nil?
 
     @parent_id = parent.id
+
+    playbook = default_playbook
+    @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @workflow_label = default_workflow(playbook).dig(:label)
   end
 
   # Editing a patient
@@ -97,7 +109,11 @@ class PatientsController < ApplicationController
     @dependents_exclude_hoh = @patient.dependents_exclude_self
     @propagated_fields = group_member_subset.collect { |field| [field, false] }.to_h
     @enrollment_step = params.permit(:step)[:step]&.to_i
-    @continuous_exposure_enabled = continuous_exposure_enabled?
+
+    playbook = default_playbook
+    @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @workflow_label = default_workflow(playbook).dig(:label)
+    @continuous_exposure_enabled = continuous_exposure_enabled?(playbook)
   end
 
   # This follows 'new', this will receive the subject details and save a new subject
@@ -628,10 +644,10 @@ class PatientsController < ApplicationController
     patients_table_data(params)
   end
 
-  def continuous_exposure_enabled?
-    @continuous_exposure_enabled = ActiveModel::Type::Boolean.new.cast(system_configuration(default_playbook, :continuous_exposure_enabled))
-    @continuous_exposure_enabled = true if @continuous_exposure_enabled.nil?
-    return @continuous_exposure_enabled
+  def continuous_exposure_enabled?(playbook)
+    enabled = ActiveModel::Type::Boolean.new.cast(system_configuration(playbook, :continuous_exposure_enabled))
+    enabled = true if enabled.nil?
+    return enabled
   end
 
   # Parameters allowed for saving to database

@@ -5,7 +5,7 @@
 <%= render partial: 'layouts/breadcrumb',
            locals: {
              jurisdiction_path: current_user.jurisdiction_path,
-             crumbs: [{ value: 'Return to Exposure Dashboard', href: '/' }, { value: 'Monitoree Details', href: nil }],
+             crumbs: [{ value: 'Return to ' + @workflow_label + ' Dashboard (' + @playbook_label + ')', href: '/' }, { value: 'Monitoree Details', href: nil }],
              isolation: @patient&.isolation || false
            } %>
 
