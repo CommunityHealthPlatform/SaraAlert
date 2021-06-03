@@ -59,6 +59,7 @@ class MonitoringActions extends React.Component {
                 current_user={this.props.current_user}
                 jurisdiction_paths={this.props.jurisdiction_paths}
                 continuous_exposure_enabled={this.props.continuous_exposure_enabled}
+                available_workflows={this.props.available_workflows}
               />
             </Form.Group>
             <Form.Group as={Col} md="12" lg="8" className="pt-2">
@@ -109,6 +110,7 @@ MonitoringActions.propTypes = {
   household_members: PropTypes.array,
   monitoring_reasons: PropTypes.array,
   continuous_exposure_enabled: PropTypes.bool,
+  available_workflows: PropTypes.array,
 };
 
 export default MonitoringActions;

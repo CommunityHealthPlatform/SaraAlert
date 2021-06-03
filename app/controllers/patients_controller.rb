@@ -40,6 +40,7 @@ class PatientsController < ApplicationController
 
     @history_types = History::HISTORY_TYPES
 
+    @available_workflows = available_workflows(default_playbook)
     @continuous_exposure_enabled = continuous_exposure_enabled?
   end
 

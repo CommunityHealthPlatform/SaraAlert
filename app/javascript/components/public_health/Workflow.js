@@ -47,6 +47,7 @@ class Workflow extends React.Component {
           monitoring_reasons={this.props.monitoring_reasons}
           setQuery={query => this.setState({ query })}
           setFilteredMonitoreesCount={current_monitorees_count => this.setState({ current_monitorees_count })}
+          available_workflows={this.props.available_workflows}
         />
       </React.Fragment>
     );
