@@ -2,7 +2,8 @@
   <%= javascript_packs_with_chunks_tag 'moment' %>
 <% end %>
 
-<%= render partial: 'layouts/breadcrumb', locals: { jurisdiction_path: current_user.jurisdiction_path, crumbs: [{ value: @workflow_label + ' Dashboard (' + @playbook_label + ')', href: nil }] } %>
+
+<%= render partial: 'layouts/breadcrumb', locals: { playbook: @path_params[:playbook].to_s, jurisdiction_path: current_user.jurisdiction_path, crumbs: [{ value: @workflow_label + ' Dashboard (' + @playbook_label + ')', href: nil }] } %>
 
 
 <%= react_component('public_health/Workflow', {

@@ -1,4 +1,8 @@
-<%= render partial: 'layouts/breadcrumb', locals: { jurisdiction_path: current_user.jurisdiction_path, crumbs: [{ value: 'Return ' + @workflow_label + ' Dashboard (' + @playbook_label + ')', href: '/' }, { value: 'Return to Monitoree Details', href: '/' }, { value: 'Edit Monitoree', href: nil }], isolation: @patient&.isolation || false } %>
+<%= render partial: 'layouts/breadcrumb',
+    locals: {
+        jurisdiction_path: current_user.jurisdiction_path,
+        playbook: @playbook,
+        crumbs: [{ value: 'Return ' + @workflow_label + ' Dashboard (' + @playbook_label + ')', href: '/' }, { value: 'Return to Monitoree Details', href: '/' }, { value: 'Edit Monitoree', href: nil }], isolation: @patient&.isolation || false } %>
 
 <%= react_component('enrollment/Enrollment', {
                       current_user: current_user,

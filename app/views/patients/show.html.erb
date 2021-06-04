@@ -5,6 +5,7 @@
 <%= render partial: 'layouts/breadcrumb',
            locals: {
              jurisdiction_path: current_user.jurisdiction_path,
+             playbook: @playbook,
              crumbs: [{ value: 'Return to ' + @workflow_label + ' Dashboard (' + @playbook_label + ')', href: '/' }, { value: 'Monitoree Details', href: nil }],
              isolation: @patient&.isolation || false
            } %>

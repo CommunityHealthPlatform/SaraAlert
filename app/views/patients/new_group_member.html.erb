@@ -1,4 +1,8 @@
-<%= render partial: 'layouts/breadcrumb', locals: { jurisdiction_path: current_user.jurisdiction_path, crumbs: [{ value: 'Return ' + @workflow_label + ' Dashboard (' + @playbook_label + ')', href: '/' }, { value: 'Enroll New Monitoree', href: nil }] } %>
+<%= render partial: 'layouts/breadcrumb',
+    locals: {
+        jurisdiction_path: current_user.jurisdiction_path,
+        playbook: @playbook,
+        crumbs: [{ value: 'Return ' + @workflow_label + ' Dashboard (' + @playbook_label + ')', href: '/' }, { value: 'Enroll New Monitoree', href: nil }] } %>
 
 <%= react_component('enrollment/Enrollment', {
                       current_user: current_user,

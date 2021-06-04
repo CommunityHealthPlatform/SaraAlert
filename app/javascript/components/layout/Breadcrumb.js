@@ -25,7 +25,8 @@ class Breadcrumb extends React.Component {
     if (window?.WORKFLOW === 'exposure') {
       return name;
     }
-    if (window?.location?.pathname?.endsWith('/public_health')) {
+    if (window?.location?.pathname?.endsWith('/dashboard')
+        || window?.location?.pathname?.endsWith('/public_health')) {
       return name;
     }
     if (window?.WORKFLOW === 'isolation') {
@@ -58,10 +59,19 @@ class Breadcrumb extends React.Component {
                         onClick={() => {
                           if (this.renderWorkflowName(crumb['value']).includes('Isolation')) {
                             // Public Health "Return to Isolation Dashboard"
-                            location.assign(`${window.BASE_PATH}/public_health/isolation`);
+                            if (this.props.playbook && this.props.playbook.length > 0) {
+                              location.assign(`${window.BASE_PATH}/dashboard/` + this.props.playbook + '/isolation');
+                            } else {
+                              // fall back to legacy
+                              location.assign(`${window.BASE_PATH}/public_health/isolation`);
+                            }
                           } else if (this.renderWorkflowName(crumb['value']).includes('Exposure')) {
                             // Public Health "Return to Exposure Dashboard"
-                            location.assign(`${window.BASE_PATH}/public_health`);
+                            if (this.props.playbook && this.props.playbook.length > 0) {
+                              location.assign(`${window.BASE_PATH}/dashboard/` + this.props.playbook + '/exposure');
+                            } else {
+                              location.assign(`${window.BASE_PATH}/dashboard`);
+                            }
                           } else if (this.renderWorkflowName(crumb['value']).includes('Dashboard')) {
                             // Enroller "Return to Dashboard"
                             location.assign(`${window.BASE_PATH}/patients`);
@@ -86,6 +96,7 @@ class Breadcrumb extends React.Component {
 }
 
 Breadcrumb.propTypes = {
+  playbook: PropTypes.string,
   crumbs: PropTypes.array,
   jurisdiction: PropTypes.string,
   isolation: PropTypes.bool,

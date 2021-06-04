@@ -11,6 +11,10 @@ class PatientsController < ApplicationController
   def index
     @enrolled_patients = current_user.enrolled_patients.eager_load(:jurisdiction)
     redirect_to(root_url) && return unless current_user.can_create_patient?
+
+    playbook = default_playbook
+    @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @playbook = playbook.to_s
   end
 
   # The single subject view
@@ -42,6 +46,7 @@ class PatientsController < ApplicationController
 
     playbook = default_playbook
     @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @playbook = playbook.to_s
     @workflow_label = default_workflow(playbook).dig(:label)
 
     @available_workflows = available_workflows(playbook)
@@ -70,6 +75,7 @@ class PatientsController < ApplicationController
 
     playbook = default_playbook
     @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @playbook = playbook.to_s
     @workflow_label = default_workflow(playbook).dig(:label)
 
     @continuous_exposure_enabled = continuous_exposure_enabled?(playbook)
@@ -94,6 +100,7 @@ class PatientsController < ApplicationController
 
     playbook = default_playbook
     @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @playbook = playbook.to_s
     @workflow_label = default_workflow(playbook).dig(:label)
   end
 
@@ -112,6 +119,7 @@ class PatientsController < ApplicationController
 
     playbook = default_playbook
     @playbook_label = PLAYBOOKS.dig(playbook, :label)
+    @playbook = playbook.to_s
     @workflow_label = default_workflow(playbook).dig(:label)
     @continuous_exposure_enabled = continuous_exposure_enabled?(playbook)
   end
