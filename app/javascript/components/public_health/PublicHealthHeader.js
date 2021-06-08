@@ -170,6 +170,7 @@ class PublicHealthHeader extends React.Component {
               authenticity_token={this.props.authenticity_token}
               jurisdiction_paths={this.props.jurisdiction_paths}
               jurisdiction={this.props.jurisdiction}
+              available_workflows={this.props.available_workflows}
               tabs={this.props.tabs}
               workflow={this.props.workflow}
               query={this.props.query}

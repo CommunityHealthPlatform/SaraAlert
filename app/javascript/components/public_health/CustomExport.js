@@ -28,7 +28,13 @@ class CustomExport extends React.Component {
       selected_records: props.preset?.id ? 'custom' : 'current',
       custom_patient_query: props.preset?.config?.data?.patients?.query
         ? _.clone(props.preset.config.data.patients.query)
-        : { workflow: 'all', tab: 'all', jurisdiction: props.jurisdiction.id, scope: 'all', user: null, search: '', tz_offset: new Date().getTimezoneOffset() },
+        : { workflow: props.available_workflows.length > 1 ? 'all' : props.available_workflows[0].name, 
+            tab: 'all', 
+            jurisdiction: props.jurisdiction.id, 
+            scope: 'all', 
+            user: null, 
+            search: '', 
+            tz_offset: new Date().getTimezoneOffset() },
       filtered_monitorees_count: props.all_monitorees_count,
       show_confirm_export_modal: false,
       cancel_token: axios.CancelToken.source(),
@@ -281,6 +287,7 @@ class CustomExport extends React.Component {
                       authenticity_token={this.props.authenticity_token}
                       jurisdiction_paths={this.props.jurisdiction_paths}
                       jurisdiction={this.props.jurisdiction}
+                      available_workflows={this.props.available_workflows}
                       query={this.state.custom_patient_query}
                       onQueryChange={(field, value, cb) =>
                         this.setState(
@@ -532,6 +539,7 @@ CustomExport.propTypes = {
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
   jurisdiction: PropTypes.object,
+  available_workflows: PropTypes.array,
   tabs: PropTypes.object,
   preset: PropTypes.object,
   presets: PropTypes.array,

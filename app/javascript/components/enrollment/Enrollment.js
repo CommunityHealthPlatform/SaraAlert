@@ -223,6 +223,7 @@ class Enrollment extends React.Component {
               currentState={this.state.enrollmentState}
               race_options={this.props.race_options}
               authenticity_token={this.props.authenticity_token}
+              available_workflows={this.props.available_workflows}
             />
           </Carousel.Item>
           <Carousel.Item>
@@ -300,6 +301,7 @@ Enrollment.propTypes = {
   blocked_sms: PropTypes.bool,
   first_positive_lab: PropTypes.object,
   symptomatic_assessments_exist: PropTypes.bool,
+  available_workflows: PropTypes.array,
   continuous_exposure_enabled: PropTypes.bool,
 };
 

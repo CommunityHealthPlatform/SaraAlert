@@ -77,6 +77,7 @@ class PatientsController < ApplicationController
     @playbook_label = PLAYBOOKS.dig(playbook, :label)
     @playbook = playbook.to_s
     @workflow_label = default_workflow(playbook).dig(:label)
+    @available_workflows = available_workflows(playbook)
 
     @continuous_exposure_enabled = continuous_exposure_enabled?(playbook)
   end

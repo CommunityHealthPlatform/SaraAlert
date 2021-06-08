@@ -61,9 +61,12 @@ class PatientsFilters extends React.Component {
                   this.props.onQueryChange('tab', 'all');
                 }}
                 value={this.props.query?.workflow}>
-                <option value="all">All</option>
-                <option value="exposure">Exposure</option>
-                <option value="isolation">Isolation</option>
+                  {this.props.available_workflows.length > 1 && (
+                    <option value="all"> All </option>
+                  )}
+                  {this.props.available_workflows.map(wf => (
+                    <option value={wf.name}> {wf.label} </option>
+                  ))}
               </Form.Control>
             </InputGroup>
           </Col>
@@ -176,6 +179,7 @@ PatientsFilters.propTypes = {
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
   jurisdiction: PropTypes.object,
+  available_workflows: PropTypes.array,
   query: PropTypes.object,
   onQueryChange: PropTypes.func,
 };

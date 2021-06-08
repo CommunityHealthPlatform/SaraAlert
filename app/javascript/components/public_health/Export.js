@@ -124,6 +124,7 @@ class Export extends React.Component {
             authenticity_token={this.props.authenticity_token}
             jurisdiction_paths={this.props.jurisdiction_paths}
             jurisdiction={this.props.jurisdiction}
+            available_workflows={this.props.available_workflows}
             tabs={this.props.tabs}
             preset={this.state.savedPreset}
             presets={this.state.savedExportPresets}
@@ -146,6 +147,7 @@ Export.propTypes = {
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
   jurisdiction: PropTypes.object,
+  available_workflows: PropTypes.array,
   tabs: PropTypes.object,
   query: PropTypes.object,
   all_monitorees_count: PropTypes.number,
