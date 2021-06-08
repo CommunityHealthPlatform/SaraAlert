@@ -27,10 +27,11 @@ class CaseStatus extends React.Component {
       loading: false,
       disabled: false,
       noMembersSelected: false,
-      isolationWorkflowAvailable: -1 < props.available_workflows.findIndex(function(w, index) {
-        if (w.name.toLowerCase() == 'isolation')
-          return true;
-      }),
+      isolationWorkflowAvailable:
+        -1 <
+        props.available_workflows.findIndex(w => {
+          if (w.name.toLowerCase() == 'isolation') return true;
+        }),
     };
     this.origState = Object.assign({}, this.state);
   }
@@ -199,9 +200,7 @@ class CaseStatus extends React.Component {
                 value={this.state.monitoring_option}>
                 <option></option>
                 <option>End Monitoring</option>
-                {this.state.isolationWorkflowAvailable && (
-                  <option>Continue Monitoring in Isolation Workflow</option>
-                )}
+                {this.state.isolationWorkflowAvailable && <option>Continue Monitoring in Isolation Workflow</option>}
               </Form.Control>
             </React.Fragment>
           )}
@@ -277,6 +276,7 @@ CaseStatus.propTypes = {
   current_user: PropTypes.object,
   jurisdiction_paths: PropTypes.object,
   continuous_exposure_enabled: PropTypes.bool,
+  available_workflows: PropTypes.object,
 };
 
 export default CaseStatus;

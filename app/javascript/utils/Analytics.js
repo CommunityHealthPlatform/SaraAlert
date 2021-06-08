@@ -10,11 +10,12 @@ const WORKFLOWS = ['Exposure', 'Isolation']
   * @param {Object} monitoreeCounts - The full list of MonitoreeCounts
   * @param {Array} masterList - An array of the values the Analytics Commponents will display in the table
   * @param {String} categoryTypeName - The value of `category` that should be parsed out of MonitoreeCounts
+  * @param {Array of Strings} workflows - An Array of Strings of Workflow Values (defaults to the constant above)
 */
-function parseOutFields (monitoreeCounts, masterList, categoryTypeName) {
+function parseOutFields (monitoreeCounts, masterList, categoryTypeName, workflows = WORKFLOWS) {
   return masterList
     .map(ml =>
-      WORKFLOWS.map(
+      workflows.map(
         wf => monitoreeCounts.find(x => x.status === wf && x.category_type === categoryTypeName && x.category === ml)?.total || 0
       )
     )
@@ -26,12 +27,13 @@ function parseOutFields (monitoreeCounts, masterList, categoryTypeName) {
   * It formats the data (the output of `parseOutFields` in a manner that ReactCharts can use)
   * @param {Array} masterList - An array of the values the Analytics Commponents will display in the graph
   * @param {Object} values - An object containing the resultant output of the `parseOutFields` function to be mapped
+  * @param {Array of Strings} workflows - An Array of Strings of Workflow Values (defaults to the constant above)
 */
-function mapToChartFormat (masterList, values) {
+function mapToChartFormat (masterList, values, workflows = WORKFLOWS) {
   return masterList.map((ml, index0) => {
     let retVal = {};
     retVal['name'] = ml;
-    WORKFLOWS.map((workflow, index1) => {
+    workflows.map((workflow, index1) => {
       retVal[`${workflow}`] = values[Number(index0)][Number(index1)];
     });
     return retVal;

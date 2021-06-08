@@ -184,13 +184,13 @@ class LastDateExposure extends React.Component {
             'Last Date of Exposure',
             `Are you sure you want to ${this.state.last_date_of_exposure ? 'modify' : 'clear'} the Last Date of Exposure${
               this.state.last_date_of_exposure ? ` to ${moment(this.state.last_date_of_exposure).format('MM/DD/YYYY')}` : ''
-            }? ${this.props.continuous_exposure_enabled ? 
-                `The Last Date of Exposure will be updated ${this.state.last_date_of_exposure ? '' : 'to blank '} ${
-                 this.props.patient.monitoring ? 
-                    `and Continuous Exposure will be turned ${this.state.last_date_of_exposure ? 'OFF' : 'ON'}` : ''
-                      } for the selected record${this.props.household_members.length > 1 ? '(s):' : '.'
-                } ` : ''
-               }`,
+            }? ${
+              this.props.continuous_exposure_enabled
+                ? `The Last Date of Exposure will be updated ${this.state.last_date_of_exposure ? '' : 'to blank '} ${
+                    this.props.patient.monitoring ? `and Continuous Exposure will be turned ${this.state.last_date_of_exposure ? 'OFF' : 'ON'}` : ''
+                  } for the selected record${this.props.household_members.length > 1 ? '(s):' : '.'} `
+                : ''
+            }`,
             this.closeModal,
             this.submit
           )}
@@ -233,7 +233,7 @@ class LastDateExposure extends React.Component {
                 />
               </Col>
             </Row>
-            { this.props.continuous_exposure_enabled && (
+            {this.props.continuous_exposure_enabled && (
               <Row className="pt-2">
                 <Col>
                   <OverlayTrigger

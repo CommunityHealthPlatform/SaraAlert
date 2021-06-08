@@ -8,7 +8,7 @@ import _ from 'lodash';
 
 import CustomizedAxisTick from './CustomizedAxisTick';
 
-const WORKFLOWS = ['Exposure', 'Isolation'];
+let WORKFLOWS;
 const RISKFACTORS = [
   'Close Contact with Known Case',
   'Travel from Affected Country or Area',
@@ -23,6 +23,7 @@ const NUM_COUNTRIES_TO_SHOW = 5;
 class ExposureSummary extends React.Component {
   constructor(props) {
     super(props);
+    WORKFLOWS = this.props.available_workflows.map(wf => wf.label);
 
     this.allCountryData = _.uniq(props.stats.monitoree_counts.filter(x => x.category_type === 'Exposure Country').map(x => x.category)).map(country => {
       return {
@@ -32,15 +33,15 @@ class ExposureSummary extends React.Component {
     });
     this.COUNTRY_HEADERS = this.allCountryData.sort((a, b) => b.total - a.total).map(x => x.country);
 
-    this.rfData = parseOutFields(this.props.stats.monitoree_counts, RISKFACTORS, 'Risk Factor');
-    this.countryData = parseOutFields(this.props.stats.monitoree_counts, this.COUNTRY_HEADERS, 'Exposure Country');
+    this.rfData = parseOutFields(this.props.stats.monitoree_counts, RISKFACTORS, 'Risk Factor', WORKFLOWS);
+    this.countryData = parseOutFields(this.props.stats.monitoree_counts, this.COUNTRY_HEADERS, 'Exposure Country', WORKFLOWS);
 
     this.fullCountryData = _.cloneDeep(this.countryData); // Get the full countryData object for exporting
     this.COUNTRY_HEADERS = this.COUNTRY_HEADERS.slice(0, NUM_COUNTRIES_TO_SHOW); // and trim the headers so it wont display all the countries
 
     // Map and translate all of the Tabular Data to the Chart Format
-    this.rfChartData = mapToChartFormat(RISKFACTORS, this.rfData);
-    this.countryChartData = mapToChartFormat(this.COUNTRY_HEADERS, this.countryData);
+    this.rfChartData = mapToChartFormat(RISKFACTORS, this.rfData, WORKFLOWS);
+    this.countryChartData = mapToChartFormat(this.COUNTRY_HEADERS, this.countryData, WORKFLOWS);
     this.barGraphData = [
       { title: 'Risk Factors', data: this.rfChartData },
       { title: 'Country of Exposure', data: this.countryChartData },
@@ -176,6 +177,7 @@ class ExposureSummary extends React.Component {
 
 ExposureSummary.propTypes = {
   stats: PropTypes.object,
+  available_workflows: PropTypes.array,
   showGraphs: PropTypes.bool,
 };
 

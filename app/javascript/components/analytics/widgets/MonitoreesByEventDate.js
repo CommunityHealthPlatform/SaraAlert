@@ -9,16 +9,22 @@ import _ from 'lodash';
 
 import 'resize-observer-polyfill/dist/ResizeObserver.global';
 
-const WORKFLOWS = ['Exposure', 'Isolation'];
-const GRAPH_CONFIGS = [
+let WORKFLOWS;
+
+const GRAPH_CONFIGS_OPTIONS = [
   { dataKey: 'Exposure', fill: '#557385', legendText: 'Last Date of Exposure' },
   { dataKey: 'Isolation', fill: '#DCC5A7', legendText: 'Symptom Onset Date' },
 ];
+let graph_configs;
+
 let DATES_OF_INTEREST = []; // If certain dates are desired, they can be specified here
 
 class MonitoreesByEventDate extends React.Component {
   constructor(props) {
     super(props);
+    WORKFLOWS = this.props.available_workflows.map(wf => wf.label);
+    graph_configs = GRAPH_CONFIGS_OPTIONS.filter(option => WORKFLOWS.includes(option.dataKey)).filter(x => x);
+
     this.state = {
       graphData: {},
     };
@@ -40,7 +46,11 @@ class MonitoreesByEventDate extends React.Component {
     DATES_OF_INTEREST = _.uniq(
       this.props.stats.monitoree_counts.filter(x => x.category_type === dateRangeInQuestion && x.category).map(x => x.category)
     ).sort();
-    let fd = mapToChartFormat(DATES_OF_INTEREST, parseOutFields(this.props.stats.monitoree_counts, DATES_OF_INTEREST, dateRangeInQuestion, WORKFLOWS));
+    let fd = mapToChartFormat(
+      DATES_OF_INTEREST,
+      parseOutFields(this.props.stats.monitoree_counts, DATES_OF_INTEREST, dateRangeInQuestion, WORKFLOWS),
+      WORKFLOWS
+    );
     // The formattedData from this function needs to be slightly split up by workflow for this use-case
     let graphData = WORKFLOWS.map(workflow =>
       fd.map(y => ({
@@ -70,8 +80,8 @@ class MonitoreesByEventDate extends React.Component {
               </Form.Group>
             </Form.Row>
             <Row className="mx-2 px-0">
-              {GRAPH_CONFIGS.map((val, index) => (
-                <Col xs="12" key={index}>
+              {graph_configs.map((val, index) => (
+                <Col key={index}>
                   <div className="font-weight-bold h5 ml-5"> {val.dataKey} Workflow </div>
                   <ResponsiveContainer width="100%" height={400}>
                     <BarChart width={500} height={300} data={this.state.graphData[Number(index)]} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
@@ -95,6 +105,7 @@ class MonitoreesByEventDate extends React.Component {
 
 MonitoreesByEventDate.propTypes = {
   stats: PropTypes.object,
+  available_workflows: PropTypes.array,
 };
 
 export default MonitoreesByEventDate;
