@@ -13,7 +13,6 @@ import InfoTooltip from '../../util/InfoTooltip';
 import { getLanguageData } from '../../../utils/Languages';
 
 let workflow_options;
-//];
 
 class Identification extends React.Component {
   constructor(props) {
