@@ -19,6 +19,7 @@ class DashboardController < ApplicationController
 
     @tabs = workflow_configuration(playbook, workflow, :dashboard_tabs)
     @available_workflows = available_workflows(playbook)
+    @available_line_lists = available_line_lists(playbook)
   end
 
 

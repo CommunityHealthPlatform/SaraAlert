@@ -36,6 +36,7 @@ class Workflow extends React.Component {
           current_monitorees_count={this.state.current_monitorees_count}
           custom_export_options={this.props.custom_export_options}
           available_workflows={this.props.available_workflows}
+          available_line_lists={this.props.available_line_lists}
           playbook={this.props.playbook}
         />
         <PatientsTable
@@ -63,6 +64,7 @@ Workflow.propTypes = {
   custom_export_options: PropTypes.object,
   monitoring_reasons: PropTypes.array,
   available_workflows: PropTypes.array,
+  available_line_lists: PropTypes.array,
   playbook: PropTypes.string,
 };
 

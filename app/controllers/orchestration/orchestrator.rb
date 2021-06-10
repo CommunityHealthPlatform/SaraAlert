@@ -45,6 +45,19 @@ module Orchestration::Orchestrator
     PLAYBOOKS[playbook][:workflows].keys.collect { |key| { name: key, label: PLAYBOOKS[playbook][:workflows][key][:label] } }
   end
 
+  # Returns array of hashes (for each available workflow that lists the available line lists.
+  def available_line_lists(playbook)
+    workflows = available_workflows(playbook)
+
+    line_lists = {}
+    workflows.each { |wf|
+        line_lists[wf[:name]] = workflow_configuration(playbook, wf[:name], :dashboard_tabs)
+    }
+
+    logger.info "mel: line lists1: #{line_lists}"
+    return line_lists
+  end
+
   def default_workflow(playbook)
     available_workflows = available_workflows(playbook)
 
@@ -54,9 +67,9 @@ module Orchestration::Orchestrator
       primary_workflow_key = PLAYBOOKS.dig(playbook, :system, :primary_workflow)
 
       # No workflows were marked as primary. Prefer one named exposure
-      if primary_workflow_key.nil? then
+      if primary_workflow_key.blank? then
         workflow = PLAYBOOKS.dig(playbook, :workflows, :exposure)
-        if workflow.nil? then
+        if workflow.blank? then
           # NOTE: This does not guarantee the same workflow is selected every time.
           workflow = available_workflows[0]
           default = {name: workflow[:name], label: workflow[:label].nil? ? '' : workflow[:label].to_s}
@@ -79,6 +92,7 @@ module Orchestration::Orchestrator
 
       default_playbook = playbook_name.parameterize.underscore.to_sym
       redirect_to('/404') && return if PLAYBOOKS.dig(default_playbook).nil?
+      default_playbook = :covid_19
       return default_playbook
   end
 end

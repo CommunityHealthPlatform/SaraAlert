@@ -171,6 +171,7 @@ class PublicHealthHeader extends React.Component {
               jurisdiction_paths={this.props.jurisdiction_paths}
               jurisdiction={this.props.jurisdiction}
               available_workflows={this.props.available_workflows}
+              available_line_lists={this.props.available_line_lists}
               tabs={this.props.tabs}
               workflow={this.props.workflow}
               query={this.props.query}
@@ -233,6 +234,7 @@ PublicHealthHeader.propTypes = {
   current_monitorees_count: PropTypes.number,
   custom_export_options: PropTypes.object,
   available_workflows: PropTypes.array,
+  available_line_lists: PropTypes.array,
   playbook: PropTypes.string,
 };
 

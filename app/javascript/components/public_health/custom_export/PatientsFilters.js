@@ -15,7 +15,10 @@ class PatientsFilters extends React.Component {
     this.state = {
       assigned_users: [],
     };
-  }
+
+
+}
+
 
   componentDidMount() {
     this.updateAssignedUsers();
@@ -180,6 +183,7 @@ PatientsFilters.propTypes = {
   jurisdiction_paths: PropTypes.object,
   jurisdiction: PropTypes.object,
   available_workflows: PropTypes.array,
+  available_line_lists: PropTypes.array,
   query: PropTypes.object,
   onQueryChange: PropTypes.func,
 };
