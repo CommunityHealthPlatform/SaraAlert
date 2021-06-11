@@ -15,9 +15,8 @@ class PatientsFilters extends React.Component {
     this.state = {
       assigned_users: [],
     };
+  }
 
-
-}
 
 
   componentDidMount() {
@@ -90,25 +89,21 @@ class PatientsFilters extends React.Component {
                 className="form-square"
                 onChange={event => this.props.onQueryChange('tab', event?.target?.value)}
                 value={this.props.query?.tab}>
-                <option value="all">All</option>
-                {this.props.query?.workflow === 'exposure' && (
+                {this.props.query?.workflow === 'all' && (
                   <React.Fragment>
-                    <option value="symptomatic">Symptomatic</option>
-                    <option value="non_reporting">Non-Reporting</option>
-                    <option value="asymptomatic">Asymptomatic</option>
-                    <option value="pui">PUI</option>
+                    <option value="all">All</option>
+                    <option value="closed">Closed</option>
+                    <option value="transferred_in">Transferred In</option>
+                    <option value="transferred_out">Transferred Out</option>
                   </React.Fragment>
                 )}
-                {this.props.query?.workflow === 'isolation' && (
-                  <React.Fragment>
-                    <option value="requiring_review">Records Requiring Review</option>
-                    <option value="non_reporting">Non-Reporting</option>
-                    <option value="reporting">Reporting</option>
-                  </React.Fragment>
-                )}
-                <option value="closed">Closed</option>
-                <option value="transferred_in">Transferred In</option>
-                <option value="transferred_out">Transferred Out</option>
+                {this.props.query?.workflow != 'all' &&
+                  Object.entries(this.props.available_line_lists[this.props.query?.workflow]).map(([ll, llProps]) => {
+                    return (
+                      <option value={ll}>{llProps.label}</option>
+                    );
+                  })
+                }
               </Form.Control>
             </InputGroup>
           </Col>
