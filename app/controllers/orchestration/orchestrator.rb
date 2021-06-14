@@ -92,7 +92,6 @@ module Orchestration::Orchestrator
 
       default_playbook = playbook_name.parameterize.underscore.to_sym
       redirect_to('/404') && return if PLAYBOOKS.dig(default_playbook).nil?
-      default_playbook = :covid_19
       return default_playbook
   end
 end
