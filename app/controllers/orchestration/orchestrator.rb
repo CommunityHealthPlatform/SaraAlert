@@ -54,7 +54,6 @@ module Orchestration::Orchestrator
         line_lists[wf[:name]] = workflow_configuration(playbook, wf[:name], :dashboard_tabs)
     }
 
-    logger.info "mel: line lists1: #{line_lists}"
     return line_lists
   end
 
