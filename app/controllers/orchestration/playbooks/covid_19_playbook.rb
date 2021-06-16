@@ -10,7 +10,27 @@ module Orchestration::Playbooks::Covid19Playbook
         dashboard_tabs: {
           type: 'subset',
           config: {
-            set: %i[symptomatic non_reporting]
+            set: %i[symptomatic non_reporting],
+            custom_options: {
+              symptomatic: {
+                label: 'Some random label'
+              }
+            }
+          }
+        },
+        header_action_buttons: {
+          type: 'subset',
+          config: {
+            set: %i[enroll import],
+            custom_options: {
+              import: {
+                  label: 'Some random label',
+                  type: 'subset',
+                  config: {
+                    set: %i[saf]
+                  }
+              }
+            }
           }
         },
         other_properties: {
@@ -18,12 +38,18 @@ module Orchestration::Playbooks::Covid19Playbook
       } },
       isolation: { label: 'Isolation', base: INFECTIOUS[:workflows][:isolation], custom_options: {
         dashboard_tabs: {
+          type: 'base'
+        },
+        header_action_buttons: {
           type: 'all'
-        }
+        },
       } }
     },
     system: {
-      continuous_exposure_on: true
+      continuous_exposure_on: true,
+      monitoring_period_days: 14,
+      isolation_non_reporting_max_days: 7
+
     },
     other_properties: {
     }

@@ -147,6 +147,7 @@ Export.propTypes = {
   jurisdiction_paths: PropTypes.object,
   jurisdiction: PropTypes.object,
   tabs: PropTypes.object,
+  export_options: PropTypes.object,
   query: PropTypes.object,
   all_monitorees_count: PropTypes.number,
   current_monitorees_count: PropTypes.number,

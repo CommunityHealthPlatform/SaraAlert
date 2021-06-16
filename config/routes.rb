@@ -130,7 +130,10 @@ Rails.application.routes.draw do
 
   post '/patients/:patient_submission_token/assessments/:id', to: 'assessments#update'
 
+
   get '/dashboard/:playbook/:workflow', to: 'dashboard#dashboard'
+  # TODO: For now, since we're assuming exposure is the default workflow, let's redirect here
+  get '/dashboard/:playbook', to: redirect('/dashboard/%{playbook}/exposure')
 
 
   get '/public_health', to: 'public_health#exposure', as: :public_health
