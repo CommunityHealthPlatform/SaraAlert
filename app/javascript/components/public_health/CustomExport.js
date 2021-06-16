@@ -28,13 +28,15 @@ class CustomExport extends React.Component {
       selected_records: props.preset?.id ? 'custom' : 'current',
       custom_patient_query: props.preset?.config?.data?.patients?.query
         ? _.clone(props.preset.config.data.patients.query)
-        : { workflow: props.available_workflows.length > 1 ? 'all' : props.available_workflows[0].name, 
-            tab: 'all', 
-            jurisdiction: props.jurisdiction.id, 
-            scope: 'all', 
-            user: null, 
-            search: '', 
-            tz_offset: new Date().getTimezoneOffset() },
+        : {
+            workflow: props.available_workflows.length > 1 ? 'all' : props.available_workflows[0].name,
+            tab: 'all',
+            jurisdiction: props.jurisdiction.id,
+            scope: 'all',
+            user: null,
+            search: '',
+            tz_offset: new Date().getTimezoneOffset(),
+          },
       filtered_monitorees_count: props.all_monitorees_count,
       show_confirm_export_modal: false,
       cancel_token: axios.CancelToken.source(),

@@ -26,7 +26,7 @@ class Identification extends React.Component {
       secondaryLanguageData: {},
       languageOptions: [], // store these on state so the component re-renders when they are returned asynchronously
     };
-    workflow_options = props.available_workflows.map(wf => ({value: wf.name, label: wf.label}))
+    workflow_options = props.available_workflows.map(wf => ({ value: wf.name, label: wf.label }));
   }
 
   componentDidMount() {
@@ -141,7 +141,8 @@ class Identification extends React.Component {
     );
   };
   // TODO: At the current moment, it is assumed that at least one of `isolation` and `exposure` will be an available workflow option.
-  getWorkflowValue = () => (this.state.current.isolation ? workflow_options.find(wf => wf.value === 'isolation') : workflow_options.find(wf => wf.value === 'exposure'));
+  getWorkflowValue = () =>
+    this.state.current.isolation ? workflow_options.find(wf => wf.value === 'isolation') : workflow_options.find(wf => wf.value === 'exposure');
 
   handleDOBChange = date => {
     const date_of_birth = date;

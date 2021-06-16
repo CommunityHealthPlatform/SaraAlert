@@ -1,27 +1,9 @@
 # frozen_string_literal: true
 
-# ValidationHelperHelper: Helper methods used to adjust constant arrays in ValidationHelper.
-class ValidationHelperHelper
-  include Orchestration::Orchestrator
-
-  def adjust_user_selectable_monitoring_reasons(reasons)
-    workflows = available_workflows(default_playbook)
-    Rails.logger.info  "mel: workflows: #{workflows}"
-
-    if workflows.find{|wf| wf[:name] == :isolation}.nil?
-      Rails.logger.info "mel: workflow does NOT contain isolation"
-      # remove reasons that reference isolation
-      reasons.reject!{|r| r =~ /isolation/i }
-    end
-  
-    Rails.logger.info  "mel: reasons: #{reasons}"
-    return reasons
-  end
-end
+include Orchestration::Orchestrator
 
 # ValidationHelper: Helper constants and methods for validation.
 module ValidationHelper # rubocop:todo Metrics/ModuleLength
- include Orchestration::Orchestrator
   SEX_ABBREVIATIONS = {
     M: 'Male',
     F: 'Female',
@@ -92,8 +74,10 @@ module ValidationHelper # rubocop:todo Metrics/ModuleLength
 
   VALID_STATES = STATE_ABBREVIATIONS.values
 
-  user_selectable_monitoring_reasons = [
-    'Completed Monitoring',
+  ISOLATION_AVAILABLE = isolation_available?(default_playbook).freeze
+
+  USER_SELECTABLE_MONITORING_REASONS = [
+    *['Completed Monitoring',
     'Meets criteria to shorten quarantine',
     'Does not meet criteria for monitoring',
     'Meets Case Definition',
@@ -102,15 +86,12 @@ module ValidationHelper # rubocop:todo Metrics/ModuleLength
     'Transferred to another jurisdiction',
     'Person Under Investigation (PUI)',
     'Case confirmed',
-    'Past monitoring period',
-    'Meets criteria to discontinue isolation',
-    'Deceased',
+    'Past monitoring period'],
+    *(['Meets criteria to discontinue isolation'] if ISOLATION_AVAILABLE),
+    *['Deceased',
     'Duplicate',
-    'Other'
-  ]
-
-  USER_SELECTABLE_MONITORING_REASONS = 
-      ValidationHelperHelper.new.adjust_user_selectable_monitoring_reasons(user_selectable_monitoring_reasons).freeze
+    'Other']
+    ].freeze
 
   RACE_OPTIONS = {
     non_exclusive: [

@@ -45,6 +45,12 @@ module Orchestration::Orchestrator
     PLAYBOOKS[playbook][:workflows].keys.collect { |key| { name: key, label: PLAYBOOKS[playbook][:workflows][key][:label] } }
   end
 
+  # NOTE: Since we're currently assuming that really we just have exposure/isolation
+  # and isolation is being treated as special, this function is useful
+  def isolation_available?(playbook)
+    PLAYBOOKS.dig(playbook, :workflows, :isolation).present?
+  end 
+
   # Returns array of hashes (for each available workflow that lists the available line lists.
   def available_line_lists(playbook)
     workflows = available_workflows(playbook)

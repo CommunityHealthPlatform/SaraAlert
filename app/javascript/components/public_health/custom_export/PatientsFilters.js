@@ -17,8 +17,6 @@ class PatientsFilters extends React.Component {
     };
   }
 
-
-
   componentDidMount() {
     this.updateAssignedUsers();
   }
@@ -63,12 +61,13 @@ class PatientsFilters extends React.Component {
                   this.props.onQueryChange('tab', 'all');
                 }}
                 value={this.props.query?.workflow}>
-                  {this.props.available_workflows.length > 1 && (
-                    <option value="all"> All </option>
-                  )}
-                  {this.props.available_workflows.map(wf => (
-                    <option value={wf.name}> {wf.label} </option>
-                  ))}
+                {this.props.available_workflows.length > 1 && <option value="all"> All </option>}
+                {this.props.available_workflows.map(wf => (
+                  <option key={wf.name} value={wf.name}>
+                    {' '}
+                    {wf.label}{' '}
+                  </option>
+                ))}
               </Form.Control>
             </InputGroup>
           </Col>
@@ -100,10 +99,11 @@ class PatientsFilters extends React.Component {
                 {this.props.query?.workflow != 'all' &&
                   Object.entries(this.props.available_line_lists[this.props.query?.workflow]).map(([ll, llProps]) => {
                     return (
-                      <option value={ll}>{llProps.label}</option>
+                      <option key={ll} value={ll}>
+                        {llProps.label}
+                      </option>
                     );
-                  })
-                }
+                  })}
               </Form.Control>
             </InputGroup>
           </Col>
