@@ -1,7 +1,27 @@
 # frozen_string_literal: true
 
+# ValidationHelperHelper: Helper methods used to adjust constant arrays in ValidationHelper.
+class ValidationHelperHelper
+  include Orchestration::Orchestrator
+
+  def adjust_user_selectable_monitoring_reasons(reasons)
+    workflows = available_workflows(default_playbook)
+    Rails.logger.info  "mel: workflows: #{workflows}"
+
+    if workflows.find{|wf| wf[:name] == :isolation}.nil?
+      Rails.logger.info "mel: workflow does NOT contain isolation"
+      # remove reasons that reference isolation
+      reasons.reject!{|r| r =~ /isolation/i }
+    end
+  
+    Rails.logger.info  "mel: reasons: #{reasons}"
+    return reasons
+  end
+end
+
 # ValidationHelper: Helper constants and methods for validation.
 module ValidationHelper # rubocop:todo Metrics/ModuleLength
+ include Orchestration::Orchestrator
   SEX_ABBREVIATIONS = {
     M: 'Male',
     F: 'Female',
@@ -72,7 +92,7 @@ module ValidationHelper # rubocop:todo Metrics/ModuleLength
 
   VALID_STATES = STATE_ABBREVIATIONS.values
 
-  USER_SELECTABLE_MONITORING_REASONS = [
+  user_selectable_monitoring_reasons = [
     'Completed Monitoring',
     'Meets criteria to shorten quarantine',
     'Does not meet criteria for monitoring',
@@ -87,7 +107,10 @@ module ValidationHelper # rubocop:todo Metrics/ModuleLength
     'Deceased',
     'Duplicate',
     'Other'
-  ].freeze
+  ]
+
+  USER_SELECTABLE_MONITORING_REASONS = 
+      ValidationHelperHelper.new.adjust_user_selectable_monitoring_reasons(user_selectable_monitoring_reasons).freeze
 
   RACE_OPTIONS = {
     non_exclusive: [
@@ -258,3 +281,5 @@ module ValidationHelper # rubocop:todo Metrics/ModuleLength
     end
   end
 end
+
+
