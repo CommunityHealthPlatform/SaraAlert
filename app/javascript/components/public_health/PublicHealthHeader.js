@@ -7,14 +7,25 @@ import Export from './Export';
 import Import from './Import';
 import confirmDialog from '../util/ConfirmDialog';
 
+const importOptions = [
+  { importType: 'epix', workflowSpecific: true, label: 'Epi-X' },
+  { importType: 'saf', workflowSpecific: true, label: 'Sara Alert Format' },
+];
+
 class PublicHealthHeader extends React.Component {
   constructor(props) {
     super(props);
+    let allowedImportOptions = importOptions;
+    if (props?.header_action_buttons?.import_options?.import) {
+      let import_labels = Object.values(props.header_action_buttons?.import_options?.import.options).map(x => x.label);
+      allowedImportOptions = allowedImportOptions.filter(x => import_labels.includes(x.label));
+    }
     this.state = {
       counts: {},
       showUploadModal: false,
       showImportModal: false,
       uploading: false,
+      importOptions: allowedImportOptions,
     };
   }
 
@@ -181,9 +192,9 @@ class PublicHealthHeader extends React.Component {
                   <i className="fas fa-upload"></i> {this.props.header_action_buttons.import.label || 'Import'}{' '}
                 </React.Fragment>
               }>
-              {Object.entries(this.props.header_action_buttons.import.options).map(([key, value]) => (
-                <Dropdown.Item key={key} onClick={() => this.setState({ importType: key, showUploadModal: true })}>
-                  {value.label}
+              {importOptions.map((io, ioIndex) => (
+                <Dropdown.Item key={`import-option-${ioIndex}`} onClick={() => this.setState({ importType: io.importType, showUploadModal: true })}>
+                  {io.label} {io.workflowSpecific && `(${this.props.query.workflow})`}
                 </Dropdown.Item>
               ))}
             </DropdownButton>
