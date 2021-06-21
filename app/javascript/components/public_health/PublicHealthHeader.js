@@ -10,8 +10,6 @@ import confirmDialog from '../util/ConfirmDialog';
 class PublicHealthHeader extends React.Component {
   constructor(props) {
     super(props);
-    console.log(props);
-    console.log(Object.entries(this.props.header_action_buttons.import.options));
     this.state = {
       counts: {},
       showUploadModal: false,
@@ -166,7 +164,7 @@ class PublicHealthHeader extends React.Component {
               jurisdiction={this.props.jurisdiction}
               tabs={this.props.tabs}
               workflow={this.props.workflow}
-              export_options={this.props.header_action_buttons.export_options}
+              export_options={this.props.header_action_buttons}
               query={this.props.query}
               all_monitorees_count={this.state.counts.exposure + this.state.counts.isolation}
               current_monitorees_count={this.props.current_monitorees_count}
@@ -180,7 +178,7 @@ class PublicHealthHeader extends React.Component {
               className="ml-2 mb-4"
               title={
                 <React.Fragment>
-                  <i className="fas fa-upload"></i> Import{' '}
+                  <i className="fas fa-upload"></i> {this.props.header_action_buttons.import.label || 'Import'}{' '}
                 </React.Fragment>
               }>
               {Object.entries(this.props.header_action_buttons.import.options).map(([key, value]) => (
