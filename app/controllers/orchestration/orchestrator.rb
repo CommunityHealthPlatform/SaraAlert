@@ -1,11 +1,21 @@
 module Orchestration::Orchestrator
   include Orchestration::Playbooks
+  include Orchestration::PlaybookValidator
 
   available = Orchestration::Playbooks.constants.reject { |m| m == :Templates }
   modules = available.map { |m| ('Orchestration::Playbooks::' + m.to_s).constantize }
 
   playbooks = {}
   modules.each { |m| playbooks[m::NAME] = m::PLAYBOOK }
+
+  #remove invalid playbooks
+  playbooks.each_with_index do |playbook, index|
+    errors = Orchestration::PlaybookValidator.validate_playbook(playbook)
+    if errors > 0
+       puts 'Playbook ' + (index + 1).to_s + ' - ' + playbook[1][:label] + ' - contained ' + errors.to_s + ' error(s) and was removed.'
+       playbooks.delete(playbook[index])
+    end
+  end
 
   PLAYBOOKS = playbooks.freeze
 
