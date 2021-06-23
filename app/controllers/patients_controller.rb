@@ -3,6 +3,7 @@
 # PatientsController: handles all subject actions
 class PatientsController < ApplicationController
   include PatientQueryHelper
+  include Orchestration::Orchestrator
 
   before_action :authenticate_user!
 
@@ -38,6 +39,11 @@ class PatientsController < ApplicationController
     @translations = Assessment.new.translations
 
     @history_types = History::HISTORY_TYPES
+
+    # Assume covid_19 for now
+    @patient_page_sections = custom_configuration(:covid_19, nil, :patient_page_sections)
+    @columns = custom_configuration(:covid_19, :exposure, :dashboard_table_columns)
+
   end
 
   # Returns a new (unsaved) subject, for creating a new subject

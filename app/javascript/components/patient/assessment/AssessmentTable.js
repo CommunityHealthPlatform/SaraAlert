@@ -313,7 +313,7 @@ class AssessmentTable extends React.Component {
     return (
       <React.Fragment>
         <Card id="reports" className="mx-2 mt-3 mb-4 card-square">
-          <Card.Header className="h5">Reports</Card.Header>
+          <Card.Header className="h5">{this.props.section_label}</Card.Header>
           <Card.Body>
             <div className="mt-4">
               <CurrentStatus report_eligibility={this.props.report_eligibility} status={this.props.patient_status} isolation={this.props.patient?.isolation} />
@@ -422,6 +422,7 @@ AssessmentTable.propTypes = {
   translations: PropTypes.object,
   authenticity_token: PropTypes.string,
   jurisdiction_paths: PropTypes.object,
+  section_label: PropTypes.string,
 };
 
 export default AssessmentTable;

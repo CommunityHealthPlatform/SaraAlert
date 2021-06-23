@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+include Orchestration::Orchestrator
 
 # Helper methods for filtering through patients
 module PatientQueryHelper # rubocop:todo Metrics/ModuleLength
@@ -643,22 +644,8 @@ module PatientQueryHelper # rubocop:todo Metrics/ModuleLength
   end
 
   def linelist_specific_fields(workflow, tab)
-    return %i[jurisdiction assigned_user expected_purge_date reason_for_closure closed_at] if tab == :closed
-
-    if workflow == :isolation
-      if tab == :all
-        return %i[jurisdiction assigned_user extended_isolation first_positive_lab_at symptom_onset monitoring_plan latest_report status report_eligibility]
-      end
-      return %i[transferred_from monitoring_plan transferred_at] if tab == :transferred_in
-      return %i[transferred_to monitoring_plan transferred_at] if tab == :transferred_out
-
-      return %i[jurisdiction assigned_user extended_isolation first_positive_lab_at symptom_onset monitoring_plan latest_report report_eligibility]
-    end
-
-    return %i[jurisdiction assigned_user end_of_monitoring risk_level monitoring_plan latest_report status report_eligibility] if tab == :all
-    return %i[jurisdiction assigned_user end_of_monitoring risk_level public_health_action latest_report report_eligibility] if tab == :pui
-    return %i[transferred_from end_of_monitoring risk_level monitoring_plan transferred_at] if tab == :transferred_in
-    return %i[transferred_to end_of_monitoring risk_level monitoring_plan transferred_at] if tab == :transferred_out
+    columns = custom_configuration(:covid_19, workflow, :dashboard_table_columns)
+    return columns[:options][tab][:options] unless columns.nil?
 
     %i[jurisdiction assigned_user end_of_monitoring risk_level monitoring_plan latest_report report_eligibility]
   end
