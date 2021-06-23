@@ -13,7 +13,7 @@ module Orchestration::Orchestrator
     errors = Orchestration::PlaybookValidator.validate_playbook(playbook)
     if errors > 0
        puts 'Playbook ' + (index + 1).to_s + ' - ' + playbook[1][:label] + ' - contained ' + errors.to_s + ' error(s) and was removed.'
-       playbooks.delete(playbook[index])
+       playbooks.delete(playbooks.index(playbook[1]))
     end
   end
 
