@@ -319,7 +319,7 @@ class AssessmentTable extends React.Component {
       <React.Fragment>
         <Card id="reports" className="mx-2 my-4 card-square">
           <Card.Header as="h1" className="patient-card-header">
-            {this.props.section_label}
+            {this.props.section_label || 'Reports'}
           </Card.Header>
           <Card.Body>
             <div className="mt-4">
