@@ -56,7 +56,6 @@ class PatientsController < ApplicationController
 
     @patient_page_sections = workflow_configuration(@playbook, nil, :patient_page_sections)
     @columns = workflow_configuration(@playbook, :exposure, :dashboard_table_columns)
-
   end
 
   # Returns a new (unsaved) subject, for creating a new subject
@@ -120,7 +119,6 @@ class PatientsController < ApplicationController
 
     # If we failed to find a subject given the id, redirect to index
     redirect_to(root_url) && return if @patient.nil?
-
 
     @dependents_exclude_hoh = @patient.dependents_exclude_self
     @propagated_fields = group_member_subset.collect { |field| [field, false] }.to_h
@@ -1029,6 +1027,5 @@ class PatientsController < ApplicationController
     end
 
     @dashboard_path = current_user.enroller? && @dashboard == 'global' ? patients_path : "/dashboard/#{playbook}/#{dashboard}"
-
   end
 end

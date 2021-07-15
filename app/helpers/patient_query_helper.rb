@@ -1,8 +1,8 @@
 # frozen_string_literal: true
-include Orchestration::Orchestrator
 
 # Helper methods for filtering through patients
 module PatientQueryHelper # rubocop:todo Metrics/ModuleLength
+  include Orchestration::Orchestrator
   def patients_table_data(params)
     # Require workflow and tab params
     workflow = params.require(:query).require(:workflow).to_sym
