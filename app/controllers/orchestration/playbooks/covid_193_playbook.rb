@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-# Covid19Playbook: The COVID-19 Playbook
-module Orchestration::Playbooks::Covid19Playbook
+# Covid193Playbook: tests 'remove' type on unsupported tab is not valid
+module Orchestration::Playbooks::Covid193Playbook
   include Orchestration::Playbooks::Templates::DiseaseTemplate
 
-  NAME = :covid_19
+  NAME = :covid_193
 
   PLAYBOOK = {
-    label: 'COVID-19',
+    label: 'COVID-193',
     workflows: {
       exposure: { label: 'Exposure', base: INFECTIOUS[:workflows][:exposure], custom_options: {
         dashboard_tabs: {
-          type: 'subset',
+          type: 'remove',
           config: {
-            set: %i[symptomatic non_reporting],
+            set: %i[requiring_review non_reporting],
             custom_options: {
               symptomatic: {
                 label: 'Some random label'
@@ -22,7 +22,7 @@ module Orchestration::Playbooks::Covid19Playbook
           }
         },
         header_action_buttons: {
-          type: 'subset',
+          type: 'remove',
           config: {
             set: %i[enroll import],
             custom_options: {

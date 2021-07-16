@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# EbolaPlaybook: the Ebola playbook
 module Orchestration::Playbooks::EbolaPlaybook
   include Orchestration::Playbooks::Templates::DiseaseTemplate
 
@@ -19,5 +22,5 @@ module Orchestration::Playbooks::EbolaPlaybook
     },
     other_properties: {
     }
-  }
+  }.freeze
 end

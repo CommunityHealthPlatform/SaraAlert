@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+# Covid192Playbook: tests playbooks without workflows are not valid
+module Orchestration::Playbooks::Covid191Playbook
+  include Orchestration::Playbooks::Templates::DiseaseTemplate
+
+  NAME = :covid_191
+
+  PLAYBOOK = {
+    label: 'COVID-191',
+    system: {
+      continuous_exposure_on: true
+    },
+    other_properties: {
+    }
+  }.freeze
+end

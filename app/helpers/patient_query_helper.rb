@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 include Orchestration::Orchestrator
 
 # Helper methods for filtering through patients

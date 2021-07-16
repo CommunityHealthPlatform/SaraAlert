@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-# Covid19Playbook: The COVID-19 Playbook
-module Orchestration::Playbooks::Covid19Playbook
+# Covid22Playbook: tests 'remove' type works
+module Orchestration::Playbooks::Covid22Playbook
   include Orchestration::Playbooks::Templates::DiseaseTemplate
 
-  NAME = :covid_19
+  NAME = :covid_22
 
   PLAYBOOK = {
-    label: 'COVID-19',
+    label: 'COVID-22',
     workflows: {
       exposure: { label: 'Exposure', base: INFECTIOUS[:workflows][:exposure], custom_options: {
         dashboard_tabs: {
-          type: 'subset',
+          type: 'remove',
           config: {
             set: %i[symptomatic non_reporting],
             custom_options: {
@@ -22,7 +22,7 @@ module Orchestration::Playbooks::Covid19Playbook
           }
         },
         header_action_buttons: {
-          type: 'subset',
+          type: 'remove',
           config: {
             set: %i[enroll import],
             custom_options: {
