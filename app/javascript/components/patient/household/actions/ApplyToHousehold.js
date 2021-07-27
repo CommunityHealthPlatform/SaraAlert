@@ -52,6 +52,7 @@ class ApplyToHousehold extends React.Component {
             isSelectable={true}
             handleApplyHouseholdIdsChange={this.props.handleApplyHouseholdIdsChange}
             workflow={this.props.workflow}
+            continuous_exposure_enabled={this.props.continuous_exposure_enabled}
           />
         )}
       </React.Fragment>
