@@ -10,6 +10,16 @@ class DashboardController < ApplicationController
   def dashboard
     @path_params = request.path_parameters
 
+    # Look to see if the user has access to this monitoring program.
+    # We're going go 1 for 1 playbook to monitoring program as mentioned before
+    mp = MonitoringProgram.includes(:jurisdiction_monitoring_programs)
+        .where( {monitoring_programs: { name: @path_params[:playbook] },
+                jurisdiction_monitoring_programs: { jurisdiction_id: current_user.jurisdiction.id}}).first
+
+    # TODO: Should this be 404 or 403?
+    redirect_to('/404') && return if mp.nil?
+    
+
     playbook = @path_params[:playbook].parameterize.underscore.to_sym
     workflow = @path_params[:workflow].parameterize.underscore.to_sym
 
@@ -36,8 +46,14 @@ class DashboardController < ApplicationController
     @path_params = request.path_parameters
 
     if @path_params[:playbook].nil?
+      # See if there is also a default in the database
+      mp = MonitoringProgram.includes(:jurisdiction_monitoring_programs)
+        .where( {monitoring_programs: { name: @path_params[:playbook] },
+                jurisdiction_monitoring_programs: { jurisdiction_id: current_user.jurisdiction.id, is_default: true}}).first
+
       # Request the playbook to use as the default from the orchestrator
-      playbook = default_playbook
+      playbook = mp.nil? ? default_playbook : mp.name
+
     else
       playbook = @path_params[:playbook].parameterize.underscore.to_sym
       # return error if playbook doesn't exist
@@ -49,7 +65,7 @@ class DashboardController < ApplicationController
 
     redirect_to('/404') && return if workflow.nil?
 
-    redirect_to("/dashboard/#{playbook}/" + workflow[:name].to_s)
+    redirect_to("/monitoring_program/#{playbook}/dashboard/" + workflow[:name].to_s)
   end
 
   def authenticate_user_role

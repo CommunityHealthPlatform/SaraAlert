@@ -1036,7 +1036,7 @@ class PatientsController < ApplicationController
       @dashboard_path = patients_path
     else
       @dashboard = %w[global isolation exposure].include?(dashboard) ? dashboard : (patient&.isolation ? 'isolation' : 'exposure')
-      @dashboard_path = "/dashboard/#{playbook}/#{dashboard}"
+      @dashboard_path = "/monitoring_program/#{playbook}/dashboard/#{dashboard}"
     end
   end
 

@@ -86,7 +86,7 @@ class PublicHealthHeader extends React.Component {
               additionalNote: 'Records imported prior to clicking "X" will not be deleted from the system.',
             };
             if (await confirmDialog(confirmText, options)) {
-              location.href = `${window.BASE_PATH}/dashboard/${this.props.playbook}/${this.props.workflow}`;
+              location.href = `${window.BASE_PATH}/monitoring_program/${this.props.playbook}/dashboard/${this.props.workflow}`;
             }
           } else {
             const confirmText = 'You are about to cancel the import process. Are you sure you want to do this?';
@@ -219,7 +219,7 @@ class PublicHealthHeader extends React.Component {
                   <Button
                     key={key}
                     variant={this.props.workflow === key ? 'primary' : 'outline-primary'}
-                    href={`${window.BASE_PATH}/dashboard/${this.props.playbook}/${key}`}>
+                    href={`${window.BASE_PATH}/monitoring_program/${this.props.playbook}/dashboard/${key}`}>
                     <i className={`fas ${value.icon}`} /> {value.label}{' '}
                     {this.state.counts[`${key}`] !== undefined && <span id={`${key}Count`}>({this.state.counts[`${key}`]})</span>}
                   </Button>

@@ -94,7 +94,7 @@ class Jurisdiction extends React.Component {
           // check if current_user has access to the changed jurisdiction
           // if so, reload the page, if not, redirect to exposure or isolation dashboard
           if (!this.state.jurisdiction_path.startsWith(currentUserJurisdictionString)) {
-            location.assign(`${window.BASE_PATH}/dashboard/${this.props.playbook}/${this.props.workflow}`);
+            location.assign(`${window.BASE_PATH}/monitoring_program/${this.props.playbook}/dashboard/${this.props.workflow}`);
           } else {
             location.reload();
           }

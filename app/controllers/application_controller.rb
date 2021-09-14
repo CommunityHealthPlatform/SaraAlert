@@ -2,6 +2,8 @@
 
 # ApplicationController: base controller, handles password changes
 class ApplicationController < ActionController::Base
+  include ::ActionController::Serialization
+  
   before_action :user_must_change_password
   before_action :ensure_authy_enabled
   protect_from_forgery prepend: true

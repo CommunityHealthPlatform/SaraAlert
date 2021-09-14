@@ -15,6 +15,10 @@ class Jurisdiction < ApplicationRecord
 
   has_many :stats, class_name: 'Stat'
 
+  # has_and_belongs_to_many :monitoring_programs, class_name: 'MonitoringProgram'
+  has_many :jurisdiction_monitoring_programs
+  has_many :monitoring_programs, through: :jurisdiction_monitoring_programs
+
   # Find the USA Jurisdiction
   def self.root
     Jurisdiction.find_by(name: 'USA')
@@ -113,4 +117,6 @@ class Jurisdiction < ApplicationRecord
     end
     bool_symptom_labels.join(', ')
   end
+
+
 end

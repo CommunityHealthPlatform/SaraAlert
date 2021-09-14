@@ -83,6 +83,11 @@ Rails.application.routes.draw do
   get '/jurisdictions/paths', to: 'jurisdictions#jurisdiction_paths', as: :jurisdiction_paths
   get '/jurisdictions/allpaths', to: 'jurisdictions#all_jurisdiction_paths', as: :all_jurisdiction_paths
   post '/jurisdictions/assigned_users', to: 'jurisdictions#assigned_users_for_viewable_patients', as: :assigned_users_for_viewable_patients
+  get '/jurisdictions/:monitoring_program/paths', to: 'jurisdictions#jurisdiction_paths_under_monitoring_program', as: :jurisdiction_paths_under_monitoring_program
+
+  get '/monitoring_programs/:monitoring_program/jurisdictions/paths', to: 'jurisdictions#jurisdiction_paths_under_monitoring_program'
+  get '/monitoring_programs/available_monitoring_programs', to: 'monitoring_programs#available_monitoring_programs', as: :available_monitoring_programs
+  get '/monitoring_programs/all_programs', to: 'monitoring_programs#all_monitoring_programs', as: :all_monitoring_programs
 
   post '/close_contacts', to: 'close_contacts#create'
   post '/close_contacts/:id', to: 'close_contacts#update'
@@ -142,8 +147,8 @@ Rails.application.routes.draw do
 
   post '/patients/:patient_submission_token/assessments/:id', to: 'assessments#update'
 
-  get '/dashboard/:playbook/:workflow', to: 'dashboard#dashboard'
-  get '/dashboard/:playbook', to: 'dashboard#index'
+  get '/monitoring_program/:playbook/dashboard/:workflow', to: 'dashboard#dashboard'
+  get '/monitoring_program/:playbook/dashboard', to: 'dashboard#index'
   get '/dashboard', to: 'dashboard#index', as: :dashboard
 
   post '/public_health/patients', to: 'public_health#patients', as: :public_health_patients

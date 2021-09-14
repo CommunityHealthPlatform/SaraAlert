@@ -12,9 +12,22 @@ class JurisdictionsController < ApplicationController
     render json: { jurisdiction_paths: current_user.jurisdiction.subtree.pluck(:id, :path).to_h }
   end
 
+  # Get jurisdiction ids and paths under a specific monitoring program
+  def jurisdiction_paths_under_monitoring_program
+    mp = params.require(:monitoring_program)
+
+    # TODO Eventually determine if this should be by name or by id
+    render json: { jurisdiction_paths: current_user.jurisdiction.subtree.includes(:monitoring_programs).where(monitoring_programs: { name: mp }).pluck(:id, :path).to_h }
+  end
+
   # Get all jurisdiction ids and paths
   def all_jurisdiction_paths
     render json: { all_jurisdiction_paths: Jurisdiction.all.pluck(:id, :path).to_h }
+  end
+
+  # Get monitoring programs available to jurisdiction
+  def available_monitoring_programs
+    render json: { monitoring_programs: current_user.jurisdiction.monitoring_programs}
   end
 
   # Get list of assigned users unique to jurisdiction

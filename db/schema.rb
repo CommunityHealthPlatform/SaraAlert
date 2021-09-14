@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_24_154651) do
+ActiveRecord::Schema.define(version: 2021_08_30_130746) do
 
   create_table "active_storage_attachments", charset: "utf8", force: :cascade do |t|
     t.string "name", null: false
@@ -179,6 +179,14 @@ ActiveRecord::Schema.define(version: 2021_08_24_154651) do
     t.index ["old_unique_identifier"], name: "index_jurisdiction_lookups_on_old_unique_identifier"
   end
 
+  create_table "jurisdiction_monitoring_programs", charset: "utf8", force: :cascade do |t|
+    t.bigint "monitoring_program_id"
+    t.bigint "jurisdiction_id"
+    t.boolean "is_default", default: false
+    t.index ["jurisdiction_id"], name: "index_jurisdiction_monitoring_programs_on_jurisdiction_id"
+    t.index ["monitoring_program_id"], name: "index_jurisdiction_monitoring_programs_on_monitoring_program_id"
+  end
+
   create_table "jurisdictions", charset: "utf8", force: :cascade do |t|
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
@@ -261,6 +269,13 @@ ActiveRecord::Schema.define(version: 2021_08_24_154651) do
     t.integer "exposure_to_isolation"
     t.integer "isolation_to_exposure"
     t.index ["analytic_id"], name: "index_monitoree_snapshots_on_analytic_id"
+  end
+
+  create_table "monitoring_programs", charset: "utf8", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "label", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "oauth_access_grants", charset: "utf8", force: :cascade do |t|

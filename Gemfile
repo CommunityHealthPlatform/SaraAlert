@@ -49,6 +49,9 @@ gem 'activerecord-session_store'
 # Useful db query helpers
 gem 'activerecord_where_assoc'
 
+# Allow custom serialization
+gem 'active_model_serializers'
+
 # Pagination
 gem 'will_paginate'
 
