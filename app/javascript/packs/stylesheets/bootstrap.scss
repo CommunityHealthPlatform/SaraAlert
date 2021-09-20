@@ -212,3 +212,19 @@ select.form-control {
 .justify-unset {
   justify-content: unset;
 }
+
+.mm-disease-list {
+ border-top: 2px solid #3333330a;
+}
+
+.mm-disease-entry {
+  cursor: pointer;
+  border: 1px solid #ffffff00;
+  &:hover{
+    background-color: #6494ed35;
+    border: 1px solid #ffffff40;
+  }
+  &:active {
+    background-color: #6494ed46;
+  }
+}

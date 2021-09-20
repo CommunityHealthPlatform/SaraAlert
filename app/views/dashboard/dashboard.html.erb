@@ -3,6 +3,7 @@
 <% end %>
 
 <%= render partial: 'layouts/breadcrumb', locals: { jurisdiction_path: current_user.jurisdiction_path, crumbs: [{ value: @workflow_label + ' Dashboard (' + @playbook_label + ')', href: nil }] } %>
+<%= react_component('layout/ModuleManager', { playbook_label: @playbook_label, available_monitoring_programs: current_user.jurisdiction.monitoring_programs }) %>
 
 <%= react_component('public_health/Workflow', {
                       authenticity_token: form_authenticity_token,
