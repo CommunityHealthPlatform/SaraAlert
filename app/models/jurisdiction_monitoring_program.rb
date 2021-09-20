@@ -16,7 +16,7 @@ class JurisdictionMonitoringProgram < ApplicationRecord
         throws :abort unless relation.nil?
 
         other_default = JurisdictionMonitoringProgram.where(
-                        { default: true,
+                        { is_default: true,
                           jurisdiction_id: self.jurisdiction_id } ).first
         
         # If there isn't another default, we're okay too
