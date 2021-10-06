@@ -8,6 +8,15 @@ class Patient < ApplicationRecord
   include ValidationHelper
   include ActiveModel::Validations
   include FhirHelper
+  
+  def period
+    #return ADMIN_OPTIONS['ebola_monitoring_period_days']
+    if (last_name == "Crist82") # (enrolled_plan == "COVID")
+      return ADMIN_OPTIONS['covid_monitoring_period_days']
+    else #if (enrolled_plan == "Ebola")
+      return ADMIN_OPTIONS['ebola_monitoring_period_days']
+    end
+  end
 
   columns.each do |column|
     case column.type
@@ -250,9 +259,9 @@ class Patient < ApplicationRecord
         true,
         true,
         Time.now.getlocal('-00:00'),
-        ADMIN_OPTIONS['monitoring_period_days'],
+        period,
         Time.now.getlocal('-00:00'),
-        ADMIN_OPTIONS['monitoring_period_days']
+        period
       )
       .within_preferred_contact_time
       .reminder_not_sent_recently
@@ -276,9 +285,9 @@ class Patient < ApplicationRecord
       true,
       true,
       Time.now.getlocal('-00:00'),
-      ADMIN_OPTIONS['monitoring_period_days'],
+      period,
       Time.now.getlocal('-00:00'),
-      ADMIN_OPTIONS['monitoring_period_days']
+      period
     )
   }
 
@@ -705,9 +714,9 @@ class Patient < ApplicationRecord
         '  DATE_ADD(DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone)), INTERVAL ? DAY)'\
         '    <= DATE(CONVERT_TZ(?, "UTC", patients.time_zone))'\
         ')',
-        ADMIN_OPTIONS['monitoring_period_days'],
+        period,
         Time.now.getlocal('-00:00'),
-        ADMIN_OPTIONS['monitoring_period_days'],
+        period,
         Time.now.getlocal('-00:00')
       )
   }
@@ -775,7 +784,7 @@ class Patient < ApplicationRecord
          .where(
            'DATE_ADD(DATE(patients.last_date_of_exposure), INTERVAL ? DAY)'\
            ' < DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone))',
-           ADMIN_OPTIONS['monitoring_period_days']
+           period
          )
   }
 
@@ -788,7 +797,7 @@ class Patient < ApplicationRecord
          .where(
            'DATE_ADD(DATE(patients.last_date_of_exposure), INTERVAL ? DAY)'\
            ' = DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone))',
-           ADMIN_OPTIONS['monitoring_period_days']
+           period
          )
   }
 
@@ -943,7 +952,7 @@ class Patient < ApplicationRecord
   #     OR
   #    - within monitoring period based on creation date if no LDE specified
   def active_dependents
-    monitoring_days_ago = ADMIN_OPTIONS['monitoring_period_days'].days.ago.beginning_of_day
+    monitoring_days_ago = period.days.ago.beginning_of_day
     dependents.where(purged: false, monitoring: true)
               .where('isolation = ? OR continuous_exposure = ? OR last_date_of_exposure >= ? OR (last_date_of_exposure IS NULL AND created_at >= ?)',
                      true, true, monitoring_days_ago, monitoring_days_ago)
@@ -972,10 +981,10 @@ class Patient < ApplicationRecord
   # Single place for calculating the end of monitoring date for this subject.
   def end_of_monitoring
     return 'Continuous Exposure' if continuous_exposure
-    return (last_date_of_exposure + ADMIN_OPTIONS['monitoring_period_days'].days)&.to_s if last_date_of_exposure.present?
+    return (last_date_of_exposure + period.days)&.to_s if last_date_of_exposure.present?
 
     # Check for created_at is necessary here because custom as_json is automatically called when enrolling a new patient, which calls this method indirectly.
-    return (created_at.to_date + ADMIN_OPTIONS['monitoring_period_days'].days)&.to_s if created_at.present?
+    return (created_at.to_date + period.days)&.to_s if created_at.present?
   end
 
   # Date when patient is expected to be purged (without any formatting)
@@ -1033,13 +1042,14 @@ class Patient < ApplicationRecord
     # so we also have to check that someone receiving messages is not past they're monitoring period unless they're  in isolation,
     # continuous exposure, or have active dependents.
     start_of_exposure = last_date_of_exposure || created_at
-    return unless (monitoring && start_of_exposure >= ADMIN_OPTIONS['monitoring_period_days'].days.ago.beginning_of_day) ||
+    return unless (monitoring && start_of_exposure >= period.days.ago.beginning_of_day) ||
                   (monitoring && isolation) ||
                   (monitoring && continuous_exposure) ||
                   active_dependents_exclude_self.exists?
 
     # Check last_assessment_reminder_sent before enqueueing to cover potential race condition of multiple reports
     # being sent out for the same monitoree.
+    # mpd we are going to need this in each monitoringInfo
     return unless last_assessment_reminder_sent_eligible?
 
     contact_method = preferred_contact_method&.downcase
@@ -1106,7 +1116,7 @@ class Patient < ApplicationRecord
   # a boolean result to switch on, and a tailored message useful for user interfaces.
   def report_eligibility
     report_cutoff_time = Time.now.getlocal('-04:00').beginning_of_day
-    reporting_period = (ADMIN_OPTIONS['monitoring_period_days'] + 1).days.ago
+    reporting_period = (period + 1).days.ago
     eligible = true
     sent = false
     reported = false

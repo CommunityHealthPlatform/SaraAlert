@@ -7,6 +7,7 @@ require 'test_case'
 class ClosePatientsJobTest < ActiveSupport::TestCase
   def setup
     # Variable's purpose is strictly to reduce line size
+    # mpd - needs update for different periods
     @period = ADMIN_OPTIONS['monitoring_period_days']
     ADMIN_OPTIONS['job_run_email'] = 'test@test.com'
     ENV['TWILLIO_STUDIO_FLOW'] = 'TEST'

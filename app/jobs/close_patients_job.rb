@@ -2,6 +2,13 @@
 
 # ClosePatientsJob: closes patient records based on criteria
 class ClosePatientsJob < ApplicationJob
+  def period
+    if (true) #(enrolled_plan == "COVID")
+      return patient.ADMIN_OPTIONS['covid_monitoring_period_days']
+    else
+      return patient.ADMIN_OPTIONS['ebola_monitoring_period_days']
+    end
+  end
   queue_as :default
 
   def perform(*_args)
@@ -15,7 +22,7 @@ class ClosePatientsJob < ApplicationJob
     no_recent_activity = Patient.close_eligible(:no_recent_activity)
     completed_monitoring = Patient.close_eligible(:completed_monitoring)
     # Close patients using the scopes that have not been executed yet.
-    monitoring_period = ADMIN_OPTIONS['monitoring_period_days']
+    monitoring_period = period
     results = combine_batch_results(
       [
         perform_batch(enrolled_past_monitioring_period, "Enrolled more than #{monitoring_period} days after last date of exposure (system)", juris_send_close),
