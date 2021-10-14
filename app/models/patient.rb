@@ -76,27 +76,27 @@ class Patient < ApplicationRecord
     validates required_field, on: :api, presence: { message: 'is required' }
   end
 
-  validates :extended_isolation,
-            on: :api,
-            absence: { message: "is not allowed unless 'Isolation' is 'true'" },
-            if: -> { !isolation }
+  # validates :extended_isolation,
+  #           on: :api,
+  #           absence: { message: "is not allowed unless 'Isolation' is 'true'" },
+  #           if: -> { !isolation }
 
-  validates :last_date_of_exposure,
-            on: :api,
-            presence: { message: "is required when 'Isolation' is 'false' and 'Continuous Exposure' is 'false'" },
-            if: -> { !isolation && !continuous_exposure }
+  # validates :last_date_of_exposure,
+  #           on: :api,
+  #           presence: { message: "is required when 'Isolation' is 'false' and 'Continuous Exposure' is 'false'" },
+  #           if: -> { !isolation && !continuous_exposure }
 
-  validates :continuous_exposure,
-            on: :api,
-            absence: { message: "cannot be 'true' when 'Last Date of Exposure' is specified" },
-            if: -> { last_date_of_exposure.present? }
+  # validates :continuous_exposure,
+  #           on: :api,
+  #           absence: { message: "cannot be 'true' when 'Last Date of Exposure' is specified" },
+  #           if: -> { last_date_of_exposure.present? }
 
-  validates :follow_up_reason,
-            on: %i[api import],
-            presence: { message: "is required when 'Follow-Up Note' is present" },
-            if: -> { follow_up_note.present? }
+  # validates :follow_up_reason,
+  #           on: %i[api import],
+  #           presence: { message: "is required when 'Follow-Up Note' is present" },
+  #           if: -> { follow_up_note.present? }
 
-  validates :email, on: %i[api import], email: true
+  # validates :email, on: %i[api import], email: true
 
   validates :assigned_user, numericality: { only_integer: true,
                                             allow_nil: true,
@@ -123,6 +123,8 @@ class Patient < ApplicationRecord
   has_many :close_contacts
   has_many :contact_attempts
 
+  has_many :monitoring_infos
+
   before_update :set_time_zone, if: proc { |patient|
     patient.monitored_address_state_changed? || patient.address_state_changed?
   }
@@ -132,7 +134,7 @@ class Patient < ApplicationRecord
   around_destroy :inform_responder
   before_update :handle_update
 
-  accepts_nested_attributes_for :laboratories, :vaccines
+  accepts_nested_attributes_for :laboratories, :vaccines, :monitoring_infos
 
   # Most recent assessment
   def latest_assessment
