@@ -61,23 +61,23 @@ class Symptom < ApplicationRecord
   private
 
   def update_patient_linelist_after_save
-    patient = Patient.joins(assessments: :reported_condition).where('conditions.id = ?', condition_id).first
-    return unless patient
+    monitoring_info = MonitoringInfo.joins(assessments: :reported_condition).where('conditions.id = ?', condition_id).first
+    return unless monitoring_info
 
-    patient.update(
-      latest_fever_or_fever_reducer_at: patient.assessments
+    monitoring_info.patient.update(
+      latest_fever_or_fever_reducer_at: monitoring_info.assessments
                                               .where_assoc_exists(:reported_condition, &:fever_or_fever_reducer)
                                               .maximum(:created_at)
     )
   end
 
   def update_patient_linelist_before_destroy
-    patient = Patient.joins(assessments: :reported_condition).where('conditions.id = ?', condition_id).first
-    return unless patient
+    monitoring_info = MonitoringInfo.joins(assessments: :reported_condition).where('conditions.id = ?', condition_id).first
+    return unless monitoring_info
 
-    patient.update(
+    monitoring_info.patient.update(
       latest_fever_or_fever_reducer_at: Assessment.joins(:reported_condition)
-                                                  .where(id: patient.assessments)
+                                                  .where(id: monitoring_info.assessments)
                                                   .where.not('conditions.id = ?', condition_id)
                                                   .where_assoc_exists(:reported_condition, &:fever_or_fever_reducer)
                                                   .maximum(:created_at)
