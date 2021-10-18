@@ -3,10 +3,10 @@
 # ClosePatientsJob: closes patient records based on criteria
 class ClosePatientsJob < ApplicationJob
   def period
-    if (true) #(enrolled_plan == "COVID")
-      return ADMIN_OPTIONS['covid_monitoring_period_days']
+    if true # (enrolled_plan == "COVID")
+      ADMIN_OPTIONS['covid_monitoring_period_days']
     else
-      return ADMIN_OPTIONS['ebola_monitoring_period_days']
+      ADMIN_OPTIONS['ebola_monitoring_period_days']
     end
   end
   queue_as :default

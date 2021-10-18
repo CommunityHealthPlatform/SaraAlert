@@ -8,40 +8,37 @@ class Patient < ApplicationRecord
   include ValidationHelper
   include ActiveModel::Validations
   include FhirHelper
-  
-  # for scopes
-  @period = "0"
-  if (true)
-    @period = ADMIN_OPTIONS['covid_monitoring_period_days']
-  else #if (enrolled_plan == "Ebola")
-    @period = ADMIN_OPTIONS['ebola_monitoring_period_days']
-  end
 
-  @reporting_period = "0"
-  if (true)
-    @reporting_period = ADMIN_OPTIONS['covid_reporting_period_minutes']
-  else #if (enrolled_plan == "Ebola")
-    @reporting_period = ADMIN_OPTIONS['test_reporting_period_minutes']
-  end
+  # for scopes
+  @period = if true # (enrolled_plan == "COVID")
+              ADMIN_OPTIONS['covid_monitoring_period_days']
+            else # if (enrolled_plan == "Ebola")
+              ADMIN_OPTIONS['ebola_monitoring_period_days']
+            end
+
+  @reporting_period = if true # (enrolled_plan == "COVID")
+                        ADMIN_OPTIONS['covid_reporting_period_minutes']
+                      else # if (enrolled_plan == "Ebola")
+                        ADMIN_OPTIONS['test_reporting_period_minutes']
+                      end
 
   # for defs
   def period
-    #return ADMIN_OPTIONS['ebola_monitoring_period_days']
-    if (last_name == "Crist82") # (enrolled_plan == "COVID")
-      return ADMIN_OPTIONS['covid_monitoring_period_days']
-    else #if (enrolled_plan == "Ebola")
-      return ADMIN_OPTIONS['ebola_monitoring_period_days']
+    # return ADMIN_OPTIONS['ebola_monitoring_period_days']
+    if last_name == 'Crist82' # (enrolled_plan == "COVID")
+      ADMIN_OPTIONS['covid_monitoring_period_days']
+    else # if (enrolled_plan == "Ebola")
+      ADMIN_OPTIONS['ebola_monitoring_period_days']
     end
   end
 
   def reporting_period
-    if (true)
-      return ADMIN_OPTIONS['covid_reporting_period_minutes']
-    else #if (enrolled_plan == "Ebola")
-      return ADMIN_OPTIONS['test_reporting_period_minutes']
+    if true
+      ADMIN_OPTIONS['covid_reporting_period_minutes']
+    else # if (enrolled_plan == "Ebola")
+      ADMIN_OPTIONS['test_reporting_period_minutes']
     end
   end
-
 
   columns.each do |column|
     case column.type

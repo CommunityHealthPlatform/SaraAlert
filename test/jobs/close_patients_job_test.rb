@@ -5,7 +5,7 @@ require 'test_case'
 # IMPORTANT NOTE ON CHANGES TO Time.now CALLS IN THIS FILE
 # Updated Time.now to Time.now.getlocal for Rails/TimeZone because Time.now defaulted to a zone. In this case it was the developer machine or CI/CD server zone.
 class ClosePatientsJobTest < ActiveSupport::TestCase
-  def setup    
+  def setup
     ADMIN_OPTIONS['job_run_email'] = 'test@test.com'
     ENV['TWILLIO_STUDIO_FLOW'] = 'TEST'
     ActionMailer::Base.deliveries.clear
@@ -60,14 +60,12 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                      latest_assessment_at: Time.now.getlocal,
                      last_date_of_exposure: 20.days.ago)
 
-    
     # the LDOE will need to be updated to account for longer monitoring periods
-    @period = "0"
-    if (true) #(patient.enrolled_plan == "COVID")
-      @period =  ADMIN_OPTIONS['covid_monitoring_period_days']
-    else
-      @period =  ADMIN_OPTIONS['ebola_monitoring_period_days']
-    end
+    @period = if true # (patient.enrolled_plan == "COVID")
+                ADMIN_OPTIONS['covid_monitoring_period_days']
+              else
+                ADMIN_OPTIONS['ebola_monitoring_period_days']
+              end
     ClosePatientsJob.perform_now
     updated_patient = Patient.find_by(id: patient.id)
     assert_equal(updated_patient.histories.last.history_type, History::HISTORY_TYPES[:record_automatically_closed])
@@ -103,12 +101,11 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                      created_at: Time.now.getlocal)
 
     # the LDOE will need to be updated to account for longer monitoring periods
-    @period = "0"
-    if (true) #(patient.enrolled_plan == "COVID")
-      @period =  ADMIN_OPTIONS['covid_monitoring_period_days']
-    else
-      @period =  ADMIN_OPTIONS['ebola_monitoring_period_days']
-    end
+    @period = if true # (patient.enrolled_plan == "COVID")
+                ADMIN_OPTIONS['covid_monitoring_period_days']
+              else
+                ADMIN_OPTIONS['ebola_monitoring_period_days']
+              end
     ClosePatientsJob.perform_now
     updated_patient = Patient.find_by(id: patient.id)
     assert_equal(updated_patient.monitoring_reason, "Enrolled more than #{@period} days after last date of exposure (system)")
@@ -176,14 +173,13 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                      last_date_of_exposure: 20.days.ago,
                      email: 'testpatient@example.com',
                      preferred_contact_method: 'E-mailed Web Link')
-    
+
     # the LDOE will need to be updated to account for longer monitoring periods
-    @period = "0"
-    if (true) #(patient.enrolled_plan == "COVID")
-      @period =  ADMIN_OPTIONS['covid_monitoring_period_days']
-    else
-      @period =  ADMIN_OPTIONS['ebola_monitoring_period_days']
-    end
+    @period = if true # (patient.enrolled_plan == "COVID")
+                ADMIN_OPTIONS['covid_monitoring_period_days']
+              else
+                ADMIN_OPTIONS['ebola_monitoring_period_days']
+              end
     patient.jurisdiction.update(send_close: false)
     ClosePatientsJob.perform_now
     assert_equal(ActionMailer::Base.deliveries.count, 1)

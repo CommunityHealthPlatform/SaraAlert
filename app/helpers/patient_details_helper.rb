@@ -16,17 +16,15 @@ module PatientDetailsHelper # rubocop:todo Metrics/ModuleLength
 
   # Current patient status
   def status
-    @reporting_period = "0"
-    if (true)
-      @reporting_period = ADMIN_OPTIONS['covid_reporting_period_minutes']
-    else #if (enrolled_plan == "Ebola")
-      @reporting_period = ADMIN_OPTIONS['test_reporting_period_minutes']
-    end
-    puts @reporting_period
+    @reporting_period = if true # (enrolled_plan == "COVID")
+                          ADMIN_OPTIONS['covid_reporting_period_minutes']
+                        else # if (enrolled_plan == "Ebola")
+                          ADMIN_OPTIONS['test_reporting_period_minutes']
+                        end
     return :purged if purged
     return :closed unless monitoring
 
-    unless isolation      
+    unless isolation
       return :exposure_under_investigation if public_health_action != 'None'
       return :exposure_symptomatic unless symptom_onset.nil?
       return :exposure_asymptomatic if (!latest_assessment_at.nil? && latest_assessment_at >= @reporting_period.minutes.ago) ||
