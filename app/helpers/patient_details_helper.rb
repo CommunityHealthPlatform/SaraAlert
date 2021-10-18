@@ -16,14 +16,21 @@ module PatientDetailsHelper # rubocop:todo Metrics/ModuleLength
 
   # Current patient status
   def status
+    @reporting_period = "0"
+    if (true)
+      @reporting_period = ADMIN_OPTIONS['covid_reporting_period_minutes']
+    else #if (enrolled_plan == "Ebola")
+      @reporting_period = ADMIN_OPTIONS['test_reporting_period_minutes']
+    end
+    puts @reporting_period
     return :purged if purged
     return :closed unless monitoring
 
-    unless isolation
+    unless isolation      
       return :exposure_under_investigation if public_health_action != 'None'
       return :exposure_symptomatic unless symptom_onset.nil?
-      return :exposure_asymptomatic if (!latest_assessment_at.nil? && latest_assessment_at >= ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago) ||
-                                       (!created_at.nil? && created_at >= ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+      return :exposure_asymptomatic if (!latest_assessment_at.nil? && latest_assessment_at >= @reporting_period.minutes.ago) ||
+                                       (!created_at.nil? && created_at >= @reporting_period.minutes.ago)
 
       return :exposure_non_reporting
     end
@@ -34,8 +41,8 @@ module PatientDetailsHelper # rubocop:todo Metrics/ModuleLength
                                              !symptom_onset.nil? && symptom_onset <= 10.days.ago && (!extended_isolation || extended_isolation < Date.today)
     return :isolation_test_based if !latest_assessment_at.nil? && (latest_fever_or_fever_reducer_at.nil? || latest_fever_or_fever_reducer_at < 24.hours.ago) &&
                                     negative_lab_count >= 2 && (!extended_isolation || extended_isolation < Date.today)
-    return :isolation_reporting if (!latest_assessment_at.nil? && latest_assessment_at >= ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago) ||
-                                   (!created_at.nil? && created_at >= ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+    return :isolation_reporting if (!latest_assessment_at.nil? && latest_assessment_at >= @reporting_period.minutes.ago) ||
+                                   (!created_at.nil? && created_at >= @reporting_period.minutes.ago)
 
     :isolation_non_reporting
   end

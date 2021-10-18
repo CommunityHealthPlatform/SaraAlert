@@ -3133,14 +3133,14 @@ class PatientTest < ActiveSupport::TestCase
 
   test 'is_being_monitored scope' do
     # mpd - needs update for different periods
-    original_monitoring_period = ADMIN_OPTIONS['monitoring_period_days']
+    original_monitoring_period = ADMIN_OPTIONS['covid_monitoring_period_days']
     [
       14,
       21,
       60
     ].each do |monitoring_period|
       # mpd - needs update for different periods
-      ADMIN_OPTIONS['monitoring_period_days'] = monitoring_period
+      ADMIN_OPTIONS['covid_monitoring_period_days'] = monitoring_period
       state_params_array = [
         { monitored_address_state: nil, address_state: nil },
         { monitored_address_state: 'minnesota', address_state: nil },
@@ -3185,7 +3185,7 @@ class PatientTest < ActiveSupport::TestCase
       end
     end
     # mpd - needs update for different periods
-    ADMIN_OPTIONS['monitoring_period_days'] = original_monitoring_period
+    ADMIN_OPTIONS['covid_monitoring_period_days'] = original_monitoring_period
   end
 
   test 'submitted_assessment_today scope' do
@@ -3250,14 +3250,14 @@ class PatientTest < ActiveSupport::TestCase
 
   test 'end_of_monitoring_period scope' do
     # mpd - needs update for different periods
-    original_monitoring_period = ADMIN_OPTIONS['monitoring_period_days']
+    original_monitoring_period = ADMIN_OPTIONS['covid_monitoring_period_days']
     [
       14,
       21,
       60
     ].each do |monitoring_period|
       # mpd - needs update for different periods
-      ADMIN_OPTIONS['monitoring_period_days'] = monitoring_period
+      ADMIN_OPTIONS['covid_monitoring_period_days'] = monitoring_period
       state_params_array = [
         { monitored_address_state: nil, address_state: nil },
         { monitored_address_state: 'minnesota', address_state: nil },
@@ -3303,7 +3303,7 @@ class PatientTest < ActiveSupport::TestCase
       end
     end
     # mpd - needs update for different periods
-    ADMIN_OPTIONS['monitoring_period_days'] = original_monitoring_period
+    ADMIN_OPTIONS['covid_monitoring_period_days'] = original_monitoring_period
   end
 
   test 'has_usable_preferred_contact_method scope' do
@@ -3454,13 +3454,13 @@ class PatientTest < ActiveSupport::TestCase
     # ineligible because end of monitoring has not elapsed
     patient.update(continuous_exposure: false)
     # mpd - needs update for different periods
-    patient.update(last_date_of_exposure: Time.now.getlocal(patient.address_timezone_offset).to_date - ADMIN_OPTIONS['monitoring_period_days'] + 1)
+    patient.update(last_date_of_exposure: Time.now.getlocal(patient.address_timezone_offset).to_date - ADMIN_OPTIONS['covid_monitoring_period_days'] + 1)
     patient.update(updated_at: 300.days.ago)
     assert_nil Patient.close_eligible(:no_recent_activity).find_by(id: patient.id)
 
     # eligible because continuous exposure is false and end of monitoring has elapsed
     # mpd - needs update for different periods
-    patient.update(last_date_of_exposure: Time.now.getlocal(patient.address_timezone_offset).to_date - ADMIN_OPTIONS['monitoring_period_days'])
+    patient.update(last_date_of_exposure: Time.now.getlocal(patient.address_timezone_offset).to_date - ADMIN_OPTIONS['covid_monitoring_period_days'])
     patient.update(updated_at: 300.days.ago)
     assert_not_nil Patient.close_eligible(:no_recent_activity).find_by(id: patient.id)
   end

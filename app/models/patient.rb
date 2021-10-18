@@ -9,6 +9,22 @@ class Patient < ApplicationRecord
   include ActiveModel::Validations
   include FhirHelper
   
+  # for scopes
+  @period = "0"
+  if (true)
+    @period = ADMIN_OPTIONS['covid_monitoring_period_days']
+  else #if (enrolled_plan == "Ebola")
+    @period = ADMIN_OPTIONS['ebola_monitoring_period_days']
+  end
+
+  @reporting_period = "0"
+  if (true)
+    @reporting_period = ADMIN_OPTIONS['covid_reporting_period_minutes']
+  else #if (enrolled_plan == "Ebola")
+    @reporting_period = ADMIN_OPTIONS['test_reporting_period_minutes']
+  end
+
+  # for defs
   def period
     #return ADMIN_OPTIONS['ebola_monitoring_period_days']
     if (last_name == "Crist82") # (enrolled_plan == "COVID")
@@ -17,6 +33,15 @@ class Patient < ApplicationRecord
       return ADMIN_OPTIONS['ebola_monitoring_period_days']
     end
   end
+
+  def reporting_period
+    if (true)
+      return ADMIN_OPTIONS['covid_reporting_period_minutes']
+    else #if (enrolled_plan == "Ebola")
+      return ADMIN_OPTIONS['test_reporting_period_minutes']
+    end
+  end
+
 
   columns.each do |column|
     case column.type
@@ -202,7 +227,7 @@ class Patient < ApplicationRecord
       '    DATE(CONVERT_TZ(patients.last_assessment_reminder_sent, "UTC", patients.time_zone)),'\
       '    INTERVAL ? DAY'\
       ') < CONVERT_TZ(?, "UTC", patients.time_zone)',
-      (ADMIN_OPTIONS['reporting_period_minutes'] / 1440).to_i,
+      (@reporting_period / 1440).to_i,
       Time.now.getlocal('-00:00')
     )
   }
@@ -259,9 +284,9 @@ class Patient < ApplicationRecord
         true,
         true,
         Time.now.getlocal('-00:00'),
-        period,
+        @period,
         Time.now.getlocal('-00:00'),
-        period
+        @period
       )
       .within_preferred_contact_time
       .reminder_not_sent_recently
@@ -285,9 +310,9 @@ class Patient < ApplicationRecord
       true,
       true,
       Time.now.getlocal('-00:00'),
-      period,
+      @period,
       Time.now.getlocal('-00:00'),
-      period
+      @period
     )
   }
 
@@ -307,7 +332,7 @@ class Patient < ApplicationRecord
       # Example: 1 day reporting period => was patient last assessment before midnight today?
       # Example: 2 day reporting period => was patient last assessment before midnight yesterday?
       # Example: 7 day reporting period => was patient last assessment before midnight 6 days ago?
-      (ADMIN_OPTIONS['reporting_period_minutes'] / 1440).to_i,
+      (@reporting_period / 1440).to_i,
       Time.now.getlocal('-00:00')
     )
   }
@@ -405,13 +430,13 @@ class Patient < ApplicationRecord
       .where(purged: false)
       .where(public_health_action: 'None')
       .where(symptom_onset: nil)
-      .where('latest_assessment_at >= ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+      .where('latest_assessment_at >= ?', @reporting_period.minutes.ago)
       .or(
         where(monitoring: true)
         .where(purged: false)
         .where(public_health_action: 'None')
         .where(symptom_onset: nil)
-        .where('patients.created_at >= ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+        .where('patients.created_at >= ?', @reporting_period.minutes.ago)
       )
   }
 
@@ -422,14 +447,14 @@ class Patient < ApplicationRecord
       .where(public_health_action: 'None')
       .where(symptom_onset: nil)
       .where(latest_assessment_at: nil)
-      .where('patients.created_at < ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+      .where('patients.created_at < ?', @reporting_period.minutes.ago)
       .or(
         where(monitoring: true)
         .where(purged: false)
         .where(public_health_action: 'None')
         .where(symptom_onset: nil)
-        .where('latest_assessment_at < ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
-        .where('patients.created_at < ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+        .where('latest_assessment_at < ?', @reporting_period.minutes.ago)
+        .where('patients.created_at < ?', @reporting_period.minutes.ago)
       )
   }
 
@@ -537,13 +562,13 @@ class Patient < ApplicationRecord
          .where(monitoring: true)
          .where(purged: false)
          .where(isolation: true)
-         .where('latest_assessment_at >= ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+         .where('latest_assessment_at >= ?', @reporting_period.minutes.ago)
          .or(
            where.not(id: Patient.unscoped.isolation_requiring_review)
            .where(monitoring: true)
            .where(purged: false)
            .where(isolation: true)
-           .where('patients.created_at >= ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+           .where('patients.created_at >= ?', @reporting_period.minutes.ago)
          )
   }
 
@@ -554,14 +579,14 @@ class Patient < ApplicationRecord
          .where(purged: false)
          .where(isolation: true)
          .where(latest_assessment_at: nil)
-         .where('patients.created_at < ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+         .where('patients.created_at < ?', @reporting_period.minutes.ago)
          .or(
            where.not(id: Patient.unscoped.isolation_requiring_review)
            .where(monitoring: true)
            .where(purged: false)
            .where(isolation: true)
-           .where('latest_assessment_at < ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
-           .where('patients.created_at < ?', ADMIN_OPTIONS['reporting_period_minutes'].minutes.ago)
+           .where('latest_assessment_at < ?', @reporting_period.minutes.ago)
+           .where('patients.created_at < ?', @reporting_period.minutes.ago)
          )
   }
 
@@ -714,9 +739,9 @@ class Patient < ApplicationRecord
         '  DATE_ADD(DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone)), INTERVAL ? DAY)'\
         '    <= DATE(CONVERT_TZ(?, "UTC", patients.time_zone))'\
         ')',
-        period,
+        @period,
         Time.now.getlocal('-00:00'),
-        period,
+        @period,
         Time.now.getlocal('-00:00')
       )
   }
@@ -784,7 +809,7 @@ class Patient < ApplicationRecord
          .where(
            'DATE_ADD(DATE(patients.last_date_of_exposure), INTERVAL ? DAY)'\
            ' < DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone))',
-           period
+           @period
          )
   }
 
@@ -797,7 +822,7 @@ class Patient < ApplicationRecord
          .where(
            'DATE_ADD(DATE(patients.last_date_of_exposure), INTERVAL ? DAY)'\
            ' = DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone))',
-           period
+           @period
          )
   }
 
@@ -1049,7 +1074,6 @@ class Patient < ApplicationRecord
 
     # Check last_assessment_reminder_sent before enqueueing to cover potential race condition of multiple reports
     # being sent out for the same monitoree.
-    # mpd we are going to need this in each monitoringInfo
     return unless last_assessment_reminder_sent_eligible?
 
     contact_method = preferred_contact_method&.downcase

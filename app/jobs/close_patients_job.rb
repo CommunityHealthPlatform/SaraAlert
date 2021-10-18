@@ -4,9 +4,9 @@
 class ClosePatientsJob < ApplicationJob
   def period
     if (true) #(enrolled_plan == "COVID")
-      return patient.ADMIN_OPTIONS['covid_monitoring_period_days']
+      return ADMIN_OPTIONS['covid_monitoring_period_days']
     else
-      return patient.ADMIN_OPTIONS['ebola_monitoring_period_days']
+      return ADMIN_OPTIONS['ebola_monitoring_period_days']
     end
   end
   queue_as :default
