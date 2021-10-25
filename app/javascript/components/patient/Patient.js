@@ -416,7 +416,7 @@ class Patient extends React.Component {
                   </Row>
                 )}
               </Col>
-              <Col lg={10} xl={12} className="col-xxxl-14">
+              {/* <Col lg={10} xl={12} className="col-xxxl-14">
                 <Row>
                   <Col id="arrival-information" xl={24} className="col-xxxl-12">
                     <div className="section-header">
@@ -553,9 +553,9 @@ class Patient extends React.Component {
                     )}
                   </Col>
                 </Row>
-              </Col>
+              </Col> */}
             </Row>
-            <Row>
+            {/* <Row>
               <Col id="potential-exposure-information" md={14} xl={12} className={this.props.details.isolation ? 'col-xxxl-8' : 'col-xxxl-10'}>
                 <div className="section-header">
                   <Heading level={rootHeaderLevel + 1} className="section-title">
@@ -680,7 +680,7 @@ class Patient extends React.Component {
                   </React.Fragment>
                 )}
               </Col>
-            </Row>
+            </Row> */}
           </div>
         </Collapse>
         {this.state.showSetFlagModal && (

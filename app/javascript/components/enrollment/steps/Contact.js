@@ -526,13 +526,13 @@ class Contact extends React.Component {
                 Previous
               </Button>
             )}
-            {this.props.next && (
+            {this.props.review && (
               <Button
                 id="enrollment-next-button"
                 variant="outline-primary"
                 size="lg"
                 className="float-right btn-square px-5"
-                onClick={() => this.validate(this.props.next)}>
+                onClick={() => this.validate(this.props.review)}>
                 Next
               </Button>
             )}
@@ -565,7 +565,7 @@ Contact.propTypes = {
   setEnrollmentState: PropTypes.func,
   patient: PropTypes.object,
   previous: PropTypes.func,
-  next: PropTypes.func,
+  review: PropTypes.func,
   showPreviousButton: PropTypes.bool,
   edit_mode: PropTypes.bool,
 };

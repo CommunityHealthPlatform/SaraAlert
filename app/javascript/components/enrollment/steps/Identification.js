@@ -301,7 +301,7 @@ class Identification extends React.Component {
           <Card.Header className="h5">Monitoree Identification</Card.Header>
           <Card.Body>
             <Form>
-              <Form.Row>
+              {/* <Form.Row>
                 <Form.Group as={Col} id="workflow_wrapper">
                   <Form.Label htmlFor="workflow-select" className="input-label">
                     WORKFLOW *
@@ -316,7 +316,7 @@ class Identification extends React.Component {
                     theme={theme => bootstrapSelectTheme(theme, 'lg')}
                   />
                 </Form.Group>
-              </Form.Row>
+              </Form.Row> */}
               <Form.Row>
                 <Form.Group as={Col} controlId="first_name">
                   <Form.Label className="input-label">FIRST NAME{schema?.fields?.first_name?._exclusive?.required && ' *'}</Form.Label>

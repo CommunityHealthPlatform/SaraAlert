@@ -15,6 +15,7 @@ import Arrival from './steps/Arrival';
 import AdditionalPlannedTravel from './steps/AdditionalPlannedTravel';
 import ExposureInformation from './steps/ExposureInformation';
 import CaseInformation from './steps/CaseInformation';
+import MonitoringProgram from './steps/MonitoringProgram';
 import Review from './steps/Review';
 import confirmDialog from '../util/ConfirmDialog';
 import reportError from '../util/ReportError';
@@ -35,9 +36,9 @@ class Enrollment extends React.Component {
       enrollmentState: {
         patient: pickBy(props.patient, identity),
         propagatedFields: {},
-        isolation: !!props.patient.isolation,
+        // isolation: !!props.patient.isolation,
         blocked_sms: props.blocked_sms,
-        first_positive_lab: props.first_positive_lab,
+        // first_positive_lab: props.first_positive_lab,
       },
     };
   }
@@ -101,6 +102,7 @@ class Enrollment extends React.Component {
     let data = new Object({
       patient: this.props.parent_id ? this.state.enrollmentState.patient : _.pick(this.state.enrollmentState.patient, diffKeys),
       propagated_fields: this.state.enrollmentState.propagatedFields,
+      monitoring_infos: {}
     });
 
     data.patient.primary_telephone = data.patient.primary_telephone
@@ -130,52 +132,54 @@ class Enrollment extends React.Component {
       }
     }
     data['bypass_duplicate'] = false;
-    axios({
-      method: this.props.edit_mode ? 'patch' : 'post',
-      url: window.BASE_PATH + (this.props.edit_mode ? '/patients/' + this.props.patient.id : '/patients'),
-      data: data,
-    })
-      .then(response => {
-        if (response.data && response.data.is_duplicate) {
-          const dupFieldData = response.data.duplicate_field_data;
-          const patientType = this.state.enrollmentState.patient.isolation ? 'case' : 'monitoree';
 
-          let text = `This ${patientType} already appears to exist in the system! `;
+    console.log(data)
+    // axios({
+    //   method: this.props.edit_mode ? 'patch' : 'post',
+    //   url: window.BASE_PATH + (this.props.edit_mode ? '/patients/' + this.props.patient.id : '/patients'),
+    //   data: data,
+    // })
+    //   .then(response => {
+    //     if (response.data && response.data.is_duplicate) {
+    //       const dupFieldData = response.data.duplicate_field_data;
+    //       const patientType = this.state.enrollmentState.patient.isolation ? 'case' : 'monitoree';
 
-          if (dupFieldData) {
-            // Format matching fields and associated counts for text display
-            for (const fieldData of dupFieldData) {
-              text += `There ${fieldData.count > 1 ? `are ${fieldData.count} records` : 'is 1 record'}  with matching values in the following field(s): `;
-              let field;
-              for (let i = 0; i < fieldData.fields.length; i++) {
-                // parseInt() to satisfy eslint-security
-                field = fieldData.fields[parseInt(i)];
-                if (fieldData.fields.length > 1) {
-                  text += i == fieldData.fields.length - 1 ? `and ${field}. ` : `${field}, `;
-                } else {
-                  text += `${field}. `;
-                }
-              }
-            }
-          }
-          text += ` Are you sure you want to enroll this ${patientType}?`;
+    //       let text = `This ${patientType} already appears to exist in the system! `;
 
-          // Duplicate, ask if want to continue with create
-          this.handleConfirmDuplicate(data, groupMember, message, reenableButtons, text);
-        } else {
-          // Success, inform user and redirect to home
-          toast.success(message, {
-            onClose: () =>
-              (location.href =
-                `${window.BASE_PATH}/patients/` +
-                (groupMember ? `${response['data']['responder_id']}/group` : response['data']['id']) +
-                navQueryParam(this.props.workflow, true)),
-          });
-        }
-      })
-      .catch(err => {
-        reportError(err);
-      });
+    //       if (dupFieldData) {
+    //         // Format matching fields and associated counts for text display
+    //         for (const fieldData of dupFieldData) {
+    //           text += `There ${fieldData.count > 1 ? `are ${fieldData.count} records` : 'is 1 record'}  with matching values in the following field(s): `;
+    //           let field;
+    //           for (let i = 0; i < fieldData.fields.length; i++) {
+    //             // parseInt() to satisfy eslint-security
+    //             field = fieldData.fields[parseInt(i)];
+    //             if (fieldData.fields.length > 1) {
+    //               text += i == fieldData.fields.length - 1 ? `and ${field}. ` : `${field}, `;
+    //             } else {
+    //               text += `${field}. `;
+    //             }
+    //           }
+    //         }
+    //       }
+    //       text += ` Are you sure you want to enroll this ${patientType}?`;
+
+    //       // Duplicate, ask if want to continue with create
+    //       this.handleConfirmDuplicate(data, groupMember, message, reenableButtons, text);
+    //     } else {
+    //       // Success, inform user and redirect to home
+    //       toast.success(message, {
+    //         onClose: () =>
+    //           (location.href =
+    //             `${window.BASE_PATH}/patients/` +
+    //             (groupMember ? `${response['data']['responder_id']}/group` : response['data']['id']) +
+    //             navQueryParam(this.props.workflow, true)),
+    //       });
+    //     }
+    //   })
+    //   .catch(err => {
+    //     reportError(err);
+    //   });
   };
 
   next = () => {
@@ -214,7 +218,18 @@ class Enrollment extends React.Component {
     }
   };
 
+  review = () => {
+    window.scroll(0, 0);
+    let index = this.state.index;
+    // if (targetIndex > index) {
+      this.setState({ direction: 'next', index: this.state.enrollmentState.patient.isolation ? 8 : 7, lastIndex: index });
+    // } else if (targetIndex < index) {
+    //   this.setState({ direction: 'prev', index: targetIndex, lastIndex: index });
+    // }
+  };
+
   render() {
+    console.log(this.props.available_monitoring_programs)
     return (
       <React.Fragment>
         <Carousel
@@ -251,11 +266,17 @@ class Enrollment extends React.Component {
               setEnrollmentState={this.setEnrollmentState}
               patient={this.props.patient}
               previous={this.previous}
-              next={this.next}
+              review={this.review}
               showPreviousButton={!this.props.edit_mode && !this.state.review_mode}
               blocked_sms={this.props.blocked_sms}
               edit_mode={this.props.edit_mode}
             />
+          </Carousel.Item>
+          <Carousel.Item>
+            <MonitoringProgram 
+            next={this.next}
+            currentState={this.state.enrollmentState}
+            setEnrollmentState={this.setEnrollmentState} />
           </Carousel.Item>
           <Carousel.Item>
             <Arrival

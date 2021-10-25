@@ -74,8 +74,12 @@ class Review extends React.Component {
               workflow={this.props.workflow}
               headingLevel={2}
             />
-            <div className="pb-4"></div>
-
+            {this.props.submit && (
+              <Button variant="primary" size="lg" className="btn-square mb-4" onClick={() => { this.props.goto(3) }}> 
+              {/* disabled={this.state.disabled} onClick={this.submit}> */}
+                Add Monitoring Program
+              </Button>
+            )}
             {this.props.submit && (
               <Button
                 variant="secondary"

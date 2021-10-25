@@ -9,7 +9,7 @@ class Breadcrumb extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <div className="mx-2 mt-4">
+        <div className="mx-2 mt-4 mb-3">
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb mb-0">
               {this.props.crumbs?.map((crumb, index) => {
