@@ -1,18 +1,10 @@
 import React from 'react';
 import { PropTypes } from 'prop-types';
-import { Alert, Button, Card, Col, Form } from 'react-bootstrap';
+import { Button, Card, Col, Form } from 'react-bootstrap';
+import _ from 'lodash';
+import ReactTooltip from 'react-tooltip';
 import Select from 'react-select';
 import { bootstrapSelectTheme, cursorPointerStyleLg } from '../../../packs/stylesheets/ReactSelectStyling';
-
-import _ from 'lodash';
-import * as yup from 'yup';
-import moment from 'moment-timezone';
-
-import DateInput from '../../util/DateInput';
-import InfoTooltip from '../../util/InfoTooltip';
-import { getLanguageData } from '../../../utils/Languages';
-
-let workflow_options;
 
 // the terms 'contact' and 'case' are used commonly in public health settings,
 // so we want to include them here in the UI for clarity
@@ -20,6 +12,8 @@ let publicHealthTerms = {
   exposure: 'Exposure (contact)',
   isolation: 'Isolation (case)',
 };
+let monitoring_program_options;
+let workflow_options;
 
 class MonitoringProgram extends React.Component {
   constructor(props) {
@@ -27,66 +21,54 @@ class MonitoringProgram extends React.Component {
     this.state = {
       ...this.props,
       current: { ...this.props.currentState },
-      errors: {},
       modified: {},
+      monitoringProgram: null,
+      isolation: false,
     };
-    // workflow_options = props.available_workflows.map(wf => ({ value: wf.name, label: publicHealthTerms[`${wf.name}`] }));
+    monitoring_program_options = props.available_monitoring_programs.map(mp => ({ value: mp.id, label: mp.label }));
+    workflow_options = props.available_workflows.map(wf => ({ value: wf.name, label: publicHealthTerms[`${wf.name}`] }));
   }
 
   handleMonitoringProgramChange = event => {
-    let value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-    let current = this.state.current;
-    let modified = this.state.modified;
-    event.persist();
-    this.setState(
-      {
-        current: { ...current, patient: { ...current.patient, [event.target.id]: value } },
-        modified: { ...modified, patient: { ...modified.patient, [event.target.id]: value } },
-      },
-      () => {
-        this.props.setEnrollmentState({ ...this.state.modified });
-      }
-    );
+    let value = event.value;
+    this.props.setMonitoringInfoIndex(value);
   };
+
+  formatMonitoringProgramOptions = () => {
+    return monitoring_program_options.map(mp => ({
+      value: mp.value,
+      label: mp.label,
+      isDisabled: _.has(this.props.currentState.monitoring_infos, mp.value),
+    }));
+  };
+
+  getMonitoringProgramValue = index => monitoring_program_options.find(mp => mp.value === index) || null;
 
   handleWorkflowChange = event => {
     const value = event.value;
+    this.setState({ isolation: value === 'isolation' });
+  };
+
+  // At the current moment, it is assumed that at least one of `isolation` and `exposure` will be an available workflow option.
+  getWorkflowValue = () =>
+    this.state.isolation ? workflow_options.find(wf => wf.value === 'isolation') : workflow_options.find(wf => wf.value === 'exposure');
+
+  addMonitoringProgram = callback => {
     const current = this.state.current;
     const modified = this.state.modified;
-    const isIsolation = value === 'isolation';
     this.setState(
       {
-        current: { ...current, isolation: isIsolation, patient: { ...current.patient, isolation: isIsolation } },
-        modified: { ...modified, isolation: isIsolation, patient: { ...modified.patient, isolation: isIsolation } },
+        current: { ...current, monitoring_infos: { ...current.monitoring_infos, [this.props.activeMonitoringInfoIndex]: { isolation: this.state.isolation } } },
+        modified: {
+          ...modified,
+          monitoring_infos: { ...modified.monitoring_infos, [this.props.activeMonitoringInfoIndex]: { isolation: this.state.isolation } },
+        },
       },
       () => {
         this.props.setEnrollmentState({ ...this.state.modified });
+        callback();
       }
     );
-  };
-  // At the current moment, it is assumed that at least one of `isolation` and `exposure` will be an available workflow option.
-  getWorkflowValue = () =>
-    this.state.current.isolation ? workflow_options.find(wf => wf.value === 'isolation') : workflow_options.find(wf => wf.value === 'exposure');
-
-  validate = callback => {
-    schema
-      .validate(this.state.current.patient, { abortEarly: false })
-      .then(() => {
-        // No validation issues? Invoke callback (move to next step)
-        this.setState({ errors: {} }, () => {
-          callback();
-        });
-      })
-      .catch(err => {
-        // Validation errors, update state to display to user
-        if (err && err.inner) {
-          let issues = {};
-          for (var issue of err.inner) {
-            issues[issue['path']] = issue['errors'];
-          }
-          this.setState({ errors: issues });
-        }
-      });
   };
 
   render() {
@@ -97,48 +79,62 @@ class MonitoringProgram extends React.Component {
           <Card.Header className="h5">Monitoring Program</Card.Header>
           <Card.Body>
             <Form>
-                <Form.Row>
+              <Form.Row>
                 <Form.Group as={Col}>
                   <Form.Label htmlFor="monitoring-program-select" className="input-label">
                     MONITORING PROGRAM *
                   </Form.Label>
                   <Select
                     inputId="monitoring-program-select"
-                    styles={cursorPointerStyleLg}
-                    // value={this.getWorkflowValue()}
-                    // options={workflow_options}
-                    // onChange={e => this.handleWorkflowChange(e)}
+                    value={this.getMonitoringProgramValue(this.props.activeMonitoringInfoIndex)}
+                    options={this.formatMonitoringProgramOptions()}
+                    onChange={e => this.handleMonitoringProgramChange(e)}
                     placeholder=""
                     theme={theme => bootstrapSelectTheme(theme, 'lg')}
+                    menuPortalTarget={document.body}
+                    styles={{ ...cursorPointerStyleLg, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                   />
                 </Form.Group>
               </Form.Row>
-              <Form.Row>
-                <Form.Group as={Col}>
-                  <Form.Label htmlFor="workflow-select" className="input-label">
-                    WORKFLOW *
-                  </Form.Label>
-                  <Select
-                    inputId="workflow-select"
-                    styles={cursorPointerStyleLg}
-                    // value={this.getWorkflowValue()}
-                    // options={workflow_options}
-                    // onChange={e => this.handleWorkflowChange(e)}
-                    placeholder=""
-                    theme={theme => bootstrapSelectTheme(theme, 'lg')}
-                  />
-                </Form.Group>
-              </Form.Row>
+              {this.props.activeMonitoringInfoIndex && (
+                <Form.Row>
+                  <Form.Group as={Col}>
+                    <Form.Label htmlFor="workflow-select" className="input-label">
+                      WORKFLOW *
+                    </Form.Label>
+                    <Select
+                      inputId="workflow-select"
+                      value={this.getWorkflowValue()}
+                      options={workflow_options}
+                      onChange={e => this.handleWorkflowChange(e)}
+                      placeholder=""
+                      theme={theme => bootstrapSelectTheme(theme, 'lg')}
+                      menuPortalTarget={document.body}
+                      styles={{ ...cursorPointerStyleLg, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                    />
+                  </Form.Group>
+                </Form.Row>
+              )}
             </Form>
             {this.props.next && (
-              <Button
-                id="enrollment-next-button"
-                variant="outline-primary"
-                size="lg"
-                className="float-right btn-square px-5"
-                onClick={() => this.validate(this.props.next)}>
-                Next
-              </Button>
+              <React.Fragment>
+                <span data-for="monitoring-program-select-btn" data-tip="">
+                  <Button
+                    id="enrollment-next-button"
+                    variant="outline-primary"
+                    size="lg"
+                    className="float-right btn-square px-5"
+                    disabled={_.isNil(this.props.activeMonitoringInfoIndex)}
+                    onClick={() => this.addMonitoringProgram(this.props.next)}>
+                    Next
+                  </Button>
+                </span>
+                {_.isNil(this.props.activeMonitoringInfoIndex) && (
+                  <ReactTooltip id="monitoring-program-select-btn" multiline={true} place="left" effect="solid" className="tooltip-container">
+                    Select a Monitoring Program before continuing
+                  </ReactTooltip>
+                )}
+              </React.Fragment>
             )}
           </Card.Body>
         </Card>
@@ -147,37 +143,16 @@ class MonitoringProgram extends React.Component {
   }
 }
 
-const schema = yup.object().shape({
-  // first_name: yup.string().required('Please enter a First Name.').max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  // middle_name: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  // last_name: yup.string().required('Please enter a Last Name.').max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  // date_of_birth: yup
-  //   .date('Date must correspond to the "mm/dd/yyyy" format.')
-  //   .required('Please enter a Date of Birth.')
-  //   .max(new Date(), 'Date can not be in the future.')
-  //   .nullable(),
-  // age: yup.number().nullable(),
-  // sex: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  // white: yup.boolean().nullable(),
-  // black_or_african_american: yup.boolean().nullable(),
-  // american_indian_or_alaska_native: yup.boolean().nullable(),
-  // asian: yup.boolean().nullable(),
-  // native_hawaiian_or_other_pacific_islander: yup.boolean().nullable(),
-  // ethnicity: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  // primary_language: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  // secondary_language: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  // interpretation_required: yup.boolean().nullable(),
-  // nationality: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  // user_defined_id: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-});
-
 MonitoringProgram.propTypes = {
   currentState: PropTypes.object,
   race_options: PropTypes.object,
   next: PropTypes.func,
   setEnrollmentState: PropTypes.func,
+  setMonitoringInfoIndex: PropTypes.func,
+  activeMonitoringInfoIndex: PropTypes.number,
   authenticity_token: PropTypes.string,
   available_workflows: PropTypes.array,
+  available_monitoring_programs: PropTypes.array,
 };
 
 export default MonitoringProgram;

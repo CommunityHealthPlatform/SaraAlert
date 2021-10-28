@@ -1,25 +1,16 @@
 import React from 'react';
 import { PropTypes } from 'prop-types';
 import { Alert, Button, Card, Col, Form } from 'react-bootstrap';
-import Select from 'react-select';
-import { bootstrapSelectTheme, cursorPointerStyleLg } from '../../../packs/stylesheets/ReactSelectStyling';
-
 import _ from 'lodash';
 import * as yup from 'yup';
 import moment from 'moment-timezone';
+import Select from 'react-select';
+import { bootstrapSelectTheme, cursorPointerStyleLg } from '../../../packs/stylesheets/ReactSelectStyling';
 
+import confirmDialog from '../../util/ConfirmDialog';
 import DateInput from '../../util/DateInput';
 import InfoTooltip from '../../util/InfoTooltip';
 import { getLanguageData } from '../../../utils/Languages';
-
-let workflow_options;
-
-// the terms 'contact' and 'case' are used commonly in public health settings,
-// so we want to include them here in the UI for clarity
-let publicHealthTerms = {
-  exposure: 'Exposure (contact)',
-  isolation: 'Isolation (case)',
-};
 
 class Identification extends React.Component {
   constructor(props) {
@@ -32,8 +23,10 @@ class Identification extends React.Component {
       primaryLanguageData: {},
       secondaryLanguageData: {},
       languageOptions: [], // store these on state so the component re-renders when they are returned asynchronously
+      sorted_jurisdiction_paths: _.values(this.props.jurisdiction_paths).sort((a, b) => a.localeCompare(b)),
+      jurisdiction_path: this.props.jurisdiction_paths[this.props.currentState.patient.jurisdiction_id],
+      originalJurisdictionId: this.props.currentState.patient.jurisdiction_id,
     };
-    workflow_options = props.available_workflows.map(wf => ({ value: wf.name, label: publicHealthTerms[`${wf.name}`] }));
   }
 
   componentDidMount() {
@@ -84,6 +77,18 @@ class Identification extends React.Component {
     let current = this.state.current;
     let modified = this.state.modified;
     event.persist();
+
+    if (event.target.id === 'jurisdiction_id') {
+      this.setState({ jurisdiction_path: value });
+      let jurisdiction_id = parseInt(Object.keys(this.props.jurisdiction_paths).find(id => this.props.jurisdiction_paths[parseInt(id)] === event.target.value));
+      if (jurisdiction_id) {
+        value = jurisdiction_id;
+        this.props.updateAssignedUsers(jurisdiction_id);
+      } else {
+        value = -1;
+      }
+    }
+
     this.setState(
       {
         current: { ...current, patient: { ...current.patient, [event.target.id]: value } },
@@ -131,25 +136,6 @@ class Identification extends React.Component {
       }
     );
   };
-
-  handleWorkflowChange = event => {
-    const value = event.value;
-    const current = this.state.current;
-    const modified = this.state.modified;
-    const isIsolation = value === 'isolation';
-    this.setState(
-      {
-        current: { ...current, isolation: isIsolation, patient: { ...current.patient, isolation: isIsolation } },
-        modified: { ...modified, isolation: isIsolation, patient: { ...modified.patient, isolation: isIsolation } },
-      },
-      () => {
-        this.props.setEnrollmentState({ ...this.state.modified });
-      }
-    );
-  };
-  // At the current moment, it is assumed that at least one of `isolation` and `exposure` will be an available workflow option.
-  getWorkflowValue = () =>
-    this.state.current.isolation ? workflow_options.find(wf => wf.value === 'isolation') : workflow_options.find(wf => wf.value === 'exposure');
 
   handleDOBChange = date => {
     const date_of_birth = date;
@@ -199,12 +185,36 @@ class Identification extends React.Component {
   };
 
   validate = callback => {
+    let self = this;
     schema
       .validate(this.state.current.patient, { abortEarly: false })
       .then(() => {
         // No validation issues? Invoke callback (move to next step)
-        this.setState({ errors: {} }, () => {
-          callback();
+        this.setState({ errors: {} }, async () => {
+          if (self.state.current.patient.jurisdiction_id !== self.state.originalJurisdictionId) {
+            // If we set it back to the last saved value no need to confirm.
+            if (self.state.current.patient.jurisdiction_id === self.state.selected_jurisdiction_id) {
+              callback();
+              return;
+            }
+
+            const originalJurisdictionPath = self.props.jurisdiction_paths[self.state.originalJurisdictionId];
+            const newJurisdictionPath = self.props.jurisdiction_paths[self.state.current.patient.jurisdiction_id];
+            const message = `You are about to change the Assigned Jurisdiction from ${originalJurisdictionPath} to ${newJurisdictionPath}. Are you sure you want to do this?`;
+            const options = { title: 'Confirm Jurisdiction Change' };
+
+            if (self.state.current.patient.assigned_user && self.state.current.patient.assigned_user === self.state.originalAssignedUser) {
+              options.additionalNote = 'Please also consider removing or updating the Assigned User if it is no longer applicable.';
+            }
+
+            if (await confirmDialog(message, options)) {
+              self.setState({ selected_jurisdiction_id: self.state.current.patient.jurisdiction_id });
+              callback();
+            }
+          } else {
+            self.setState({ selected_jurisdiction_id: self.state.current.patient.jurisdiction_id });
+            callback();
+          }
         });
       })
       .catch(err => {
@@ -301,22 +311,6 @@ class Identification extends React.Component {
           <Card.Header className="h5">Monitoree Identification</Card.Header>
           <Card.Body>
             <Form>
-              {/* <Form.Row>
-                <Form.Group as={Col} id="workflow_wrapper">
-                  <Form.Label htmlFor="workflow-select" className="input-label">
-                    WORKFLOW *
-                  </Form.Label>
-                  <Select
-                    inputId="workflow-select"
-                    styles={cursorPointerStyleLg}
-                    value={this.getWorkflowValue()}
-                    options={workflow_options}
-                    onChange={e => this.handleWorkflowChange(e)}
-                    placeholder=""
-                    theme={theme => bootstrapSelectTheme(theme, 'lg')}
-                  />
-                </Form.Group>
-              </Form.Row> */}
               <Form.Row>
                 <Form.Group as={Col} controlId="first_name">
                   <Form.Label className="input-label">FIRST NAME{schema?.fields?.first_name?._exclusive?.required && ' *'}</Form.Label>
@@ -555,7 +549,7 @@ class Identification extends React.Component {
                   </Form.Control.Feedback>
                 </Form.Group>
               </Form.Row>
-              <Form.Row className="pb-2">
+              <Form.Row>
                 <Form.Group as={Col} md={8} controlId="user_defined_id_statelocal">
                   <Form.Label className="input-label">STATE/LOCAL ID{schema?.fields?.user_defined_id_statelocal?._exclusive?.required && ' *'}</Form.Label>
                   <Form.Control
@@ -598,6 +592,47 @@ class Identification extends React.Component {
                   </Form.Control.Feedback>
                 </Form.Group>
               </Form.Row>
+              <Form.Row className="pb-2">
+                <Form.Group as={Col} md={24} controlId="jurisdiction_id">
+                  <Form.Label className="input-label">ASSIGNED JURISDICTION{schema?.fields?.jurisdiction_id?._exclusive?.required && ' *'}</Form.Label>
+                  <Form.Control
+                    isInvalid={this.state.errors['jurisdiction_id']}
+                    as="input"
+                    list="jurisdiction_paths"
+                    autoComplete="off"
+                    size="lg"
+                    className="form-square"
+                    onChange={this.handleChange}
+                    value={this.state.jurisdiction_path}
+                  />
+                  <datalist id="jurisdiction_paths">
+                    {this.state.sorted_jurisdiction_paths.map((jurisdiction, index) => {
+                      return (
+                        <option value={jurisdiction} key={index}>
+                          {jurisdiction}
+                        </option>
+                      );
+                    })}
+                  </datalist>
+                  <Form.Control.Feedback className="d-block" type="invalid">
+                    {this.state.errors['jurisdiction_id']}
+                  </Form.Control.Feedback>
+                  {/* {this.props.has_dependents &&
+                    this.state.current.patient.jurisdiction_id !== this.state.originalJurisdictionId &&
+                    Object.keys(this.props.jurisdiction_paths).includes(this.state.current.patient.jurisdiction_id.toString()) && (
+                      <Form.Group className="mt-2">
+                        <Form.Check
+                          type="switch"
+                          id="update_group_member_jurisdiction_id"
+                          name="jurisdiction_id"
+                          label="Apply this change to the entire household that this monitoree is responsible for"
+                          onChange={this.props.onPropagatedFieldChange}
+                          checked={this.props.currentState.propagatedFields.jurisdiction_id || false}
+                        />
+                      </Form.Group>
+                    )} */}
+                </Form.Group>
+              </Form.Row>
             </Form>
             {this.props.next && (
               <Button
@@ -638,6 +673,7 @@ const schema = yup.object().shape({
   interpretation_required: yup.boolean().nullable(),
   nationality: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
   user_defined_id: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
+  jurisdiction_id: yup.number().required().positive('Please enter a valid Assigned Jurisdiction.').nullable(),
 });
 
 Identification.propTypes = {
@@ -647,6 +683,8 @@ Identification.propTypes = {
   setEnrollmentState: PropTypes.func,
   authenticity_token: PropTypes.string,
   available_workflows: PropTypes.array,
+  jurisdiction_paths: PropTypes.object,
+  updateAssignedUsers: PropTypes.func,
 };
 
 export default Identification;

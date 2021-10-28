@@ -6,7 +6,6 @@ import moment from 'moment';
 import _ from 'lodash';
 
 import PublicHealthManagement from './PublicHealthManagement';
-import confirmDialog from '../../util/ConfirmDialog';
 import DateInput from '../../util/DateInput';
 import InfoTooltip from '../../util/InfoTooltip';
 import { countryOptions } from '../../../data/countryOptions';
@@ -16,22 +15,35 @@ class ExposureInformation extends React.Component {
     super(props);
     this.state = {
       ...this.props,
-      current: this.props.currentState,
+      current: { ...this.props.currentState },
       errors: {},
       modified: {},
-      sorted_jurisdiction_paths: _.values(this.props.jurisdiction_paths).sort((a, b) => a.localeCompare(b)),
-      originalJurisdictionId: this.props.currentState.patient.jurisdiction_id,
-      originalAssignedUser: this.props.currentState.patient.assigned_user,
+      originalAssignedUser: props.currentState.monitoring_infos[props.activeMonitoringInfoIndex]?.assigned_user,
     };
   }
 
   componentDidMount() {
-    this.updateStaticValidations();
+    if (!_.isEmpty(this.props.currentState.monitoring_infos)) {
+      this.updateStaticValidations();
+    }
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.currentState.isolation !== this.props.currentState.isolation) {
+    if (
+      prevProps.currentState.monitoring_infos[this.props.activeMonitoringInfoIndex]?.isolation !==
+      this.props.currentState.monitoring_infos[this.props.activeMonitoringInfoIndex]?.isolation
+    ) {
       this.updateStaticValidations(this.props.currentState.isolation);
+    }
+
+    const newProps = this.props.currentState.monitoring_infos;
+    if (Object.keys(newProps).length !== Object.keys(this.state.current.monitoring_infos).length) {
+      let current = this.state.current;
+      let modified = this.state.modified;
+      this.setState({
+        current: { ...current, monitoring_infos: { ...newProps } },
+        modified: { ...modified, monitoring_infos: { ...newProps } },
+      });
     }
   }
 
@@ -39,21 +51,22 @@ class ExposureInformation extends React.Component {
     let value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     let current = this.state.current;
     let modified = this.state.modified;
+    let currentMonitoringInfo = current.monitoring_infos;
+    currentMonitoringInfo[this.props.activeMonitoringInfoIndex][event.target.id] = value;
+    let modifiedMonitoringInfo = modified.monitoring_infos;
+    modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex][event.target.id] = value;
+
     if (event?.target?.id && event.target.id === 'continuous_exposure') {
       // clear out LDE if CE is turned on and populate it with previous LDE if CE is turned off
-      const lde = value ? null : this.props.patient.last_date_of_exposure;
-      current.patient.last_date_of_exposure = lde;
-      if (modified.patient) {
-        modified.patient.last_date_of_exposure = lde;
-      } else {
-        modified = { patient: { last_date_of_exposure: lde } };
-      }
-      this.updateExposureValidations({ ...current.patient, [event.target.id]: value });
+      const lde = value ? null : this.props.currentState.monitoring_infos[this.props.activeMonitoringInfoIndex]['last_date_of_exposure'];
+      currentMonitoringInfo[this.props.activeMonitoringInfoIndex]['last_date_of_exposure'] = lde;
+      modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex]['last_date_of_exposure'] = lde;
+      this.updateExposureValidations(currentMonitoringInfo[this.props.activeMonitoringInfoIndex]);
     }
     this.setState(
       {
-        current: { ...current, patient: { ...current.patient, [event.target.id]: value } },
-        modified: { ...modified, patient: { ...modified.patient, [event.target.id]: value } },
+        current: { ...current, monitoring_infos: currentMonitoringInfo },
+        modified: { ...modified, monitoring_infos: modifiedMonitoringInfo },
       },
       () => {
         this.props.setEnrollmentState({ ...this.state.modified });
@@ -64,17 +77,21 @@ class ExposureInformation extends React.Component {
   handleLDEChange = date => {
     let current = this.state.current;
     let modified = this.state.modified;
+    let currentMonitoringInfo = current.monitoring_infos;
+    currentMonitoringInfo[this.props.activeMonitoringInfoIndex]['last_date_of_exposure'] = date;
+    let modifiedMonitoringInfo = modified.monitoring_infos;
+    modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex]['last_date_of_exposure'] = date;
 
     // turn off CE if LDE is populated
     if (date) {
-      current.patient.continuous_exposure = false;
-      modified = { patient: { ...modified.patient, continuous_exposure: false } };
+      currentMonitoringInfo[this.props.activeMonitoringInfoIndex]['continuous_exposure'] = false;
+      modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex]['continuous_exposure'] = false;
     }
-    this.updateExposureValidations({ ...current.patient, last_date_of_exposure: date });
+    this.updateExposureValidations(currentMonitoringInfo[this.props.activeMonitoringInfoIndex]);
     this.setState(
       {
-        current: { ...current, patient: { ...current.patient, last_date_of_exposure: date } },
-        modified: { ...modified, patient: { ...modified.patient, last_date_of_exposure: date } },
+        current: { ...current, monitoring_infos: currentMonitoringInfo },
+        modified: { ...modified, monitoring_infos: modifiedMonitoringInfo },
       },
       () => {
         this.props.setEnrollmentState({ ...this.state.modified });
@@ -85,10 +102,15 @@ class ExposureInformation extends React.Component {
   handlePublicHealthManagementChange = (value, field) => {
     let current = this.state.current;
     let modified = this.state.modified;
+    let currentMonitoringInfo = current.monitoring_infos;
+    currentMonitoringInfo[this.props.activeMonitoringInfoIndex][`${field}`] = value;
+    let modifiedMonitoringInfo = modified.monitoring_infos;
+    modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex][`${field}`] = value;
+
     this.setState(
       {
-        current: { ...current, patient: { ...current.patient, [field]: value } },
-        modified: { ...modified, patient: { ...modified.patient, [field]: value } },
+        current: { ...current, monitoring_infos: currentMonitoringInfo },
+        modified: { ...modified, monitoring_infos: modifiedMonitoringInfo },
       },
       () => {
         this.props.setEnrollmentState({ ...this.state.modified });
@@ -96,26 +118,26 @@ class ExposureInformation extends React.Component {
     );
   };
 
-  handlePropagatedFieldChange = event => {
-    const current = this.state.current;
-    const modified = this.state.modified;
-    this.setState(
-      {
-        current: { ...current, propagatedFields: { ...current.propagatedFields, [event.target.name]: event.target.checked } },
-        modified: { ...modified, propagatedFields: { ...current.propagatedFields, [event.target.name]: event.target.checked } },
-      },
-      () => {
-        this.props.setEnrollmentState({ ...this.state.modified });
-      }
-    );
-  };
+  // handlePropagatedFieldChange = event => {
+  //   const current = this.state.current;
+  //   const modified = this.state.modified;
+  //   this.setState(
+  //     {
+  //       current: { ...current, propagatedFields: { ...current.propagatedFields, [event.target.name]: event.target.checked } },
+  //       modified: { ...modified, propagatedFields: { ...current.propagatedFields, [event.target.name]: event.target.checked } },
+  //     },
+  //     () => {
+  //       this.props.setEnrollmentState({ ...this.state.modified });
+  //     }
+  //   );
+  // };
 
   updateStaticValidations = () => {
-    this.updateExposureValidations(this.props.patient);
+    this.updateExposureValidations(this.props.currentState.monitoring_infos[this.props.activeMonitoringInfoIndex]);
   };
 
-  updateExposureValidations = patient => {
-    if (!patient.last_date_of_exposure && !patient.continuous_exposure && !this.props.currentState.isolation) {
+  updateExposureValidations = monitoring_info => {
+    if (!monitoring_info.last_date_of_exposure && !monitoring_info.continuous_exposure && !monitoring_info.isolation) {
       schema = yup.object().shape({
         ...staticValidations,
         last_date_of_exposure: yup
@@ -125,13 +147,13 @@ class ExposureInformation extends React.Component {
           .nullable(),
         continuous_exposure: yup.bool().nullable(),
       });
-    } else if (!patient.last_date_of_exposure && patient.continuous_exposure) {
+    } else if (!monitoring_info.last_date_of_exposure && monitoring_info.continuous_exposure) {
       schema = yup.object().shape({
         ...staticValidations,
         last_date_of_exposure: yup.date('Date must correspond to the "mm/dd/yyyy" format.').oneOf([null, undefined]).nullable(),
         continuous_exposure: yup.bool().oneOf([true]).nullable(),
       });
-    } else if (patient.last_date_of_exposure && !patient.continuous_exposure) {
+    } else if (monitoring_info.last_date_of_exposure && !monitoring_info.continuous_exposure) {
       schema = yup.object().shape({
         ...staticValidations,
         last_date_of_exposure: yup
@@ -162,34 +184,11 @@ class ExposureInformation extends React.Component {
   validate = callback => {
     let self = this;
     schema
-      .validate(this.state.current.patient, { abortEarly: false })
+      .validate(this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex], { abortEarly: false })
       .then(() => {
         // No validation issues? Invoke callback (move to next step)
-        self.setState({ errors: {} }, async () => {
-          if (self.state.current.patient.jurisdiction_id !== self.state.originalJurisdictionId) {
-            // If we set it back to the last saved value no need to confirm.
-            if (self.state.current.patient.jurisdiction_id === self.state.selected_jurisdiction_id) {
-              callback();
-              return;
-            }
-
-            const originalJurisdictionPath = self.props.jurisdiction_paths[self.state.originalJurisdictionId];
-            const newJurisdictionPath = self.props.jurisdiction_paths[self.state.current.patient.jurisdiction_id];
-            const message = `You are about to change the Assigned Jurisdiction from ${originalJurisdictionPath} to ${newJurisdictionPath}. Are you sure you want to do this?`;
-            const options = { title: 'Confirm Jurisdiction Change' };
-
-            if (self.state.current.patient.assigned_user && self.state.current.patient.assigned_user === self.state.originalAssignedUser) {
-              options.additionalNote = 'Please also consider removing or updating the Assigned User if it is no longer applicable.';
-            }
-
-            if (await confirmDialog(message, options)) {
-              self.setState({ selected_jurisdiction_id: self.state.current.patient.jurisdiction_id });
-              callback();
-            }
-          } else {
-            self.setState({ selected_jurisdiction_id: self.state.current.patient.jurisdiction_id });
-            callback();
-          }
+        self.setState({ errors: {} }, () => {
+          callback();
         });
       })
       .catch(err => {
@@ -222,7 +221,7 @@ class ExposureInformation extends React.Component {
             <DateInput
               id="last_date_of_exposure"
               aria-label="Last Date of Exposure"
-              date={this.state.current.patient.last_date_of_exposure}
+              date={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.last_date_of_exposure}
               minDate={'2020-01-01'}
               maxDate={moment().add(30, 'days').format('YYYY-MM-DD')}
               onChange={this.handleLDEChange}
@@ -248,7 +247,7 @@ class ExposureInformation extends React.Component {
               isInvalid={this.state.errors['potential_exposure_location']}
               size="lg"
               className="form-square"
-              value={this.state.current.patient.potential_exposure_location || ''}
+              value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.potential_exposure_location || ''}
               onChange={this.handleChange}
             />
             <Form.Control.Feedback className="d-block" type="invalid">
@@ -269,7 +268,7 @@ class ExposureInformation extends React.Component {
               size="lg"
               className="form-square"
               aria-label="Potential Exposure Country Select"
-              value={this.state.current.patient.potential_exposure_country || ''}
+              value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.potential_exposure_country || ''}
               onChange={this.handleChange}>
               <option></option>
               {countryOptions.map((country, index) => (
@@ -287,7 +286,7 @@ class ExposureInformation extends React.Component {
                 label={`CONTINUOUS EXPOSURE${schema?.fields?.continuous_exposure?._whitelist?.list?.has(true) ? ' *' : ''}`}
                 id="continuous_exposure"
                 className="ml-1 d-inline"
-                checked={!!this.state.current.patient.continuous_exposure}
+                checked={!!this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.continuous_exposure}
                 onChange={this.handleChange}
               />
               <InfoTooltip tooltipTextKey="continuousExposure" location="right"></InfoTooltip>
@@ -301,7 +300,7 @@ class ExposureInformation extends React.Component {
               type="switch"
               id="contact_of_known_case"
               label="CLOSE CONTACT WITH A KNOWN CASE"
-              checked={this.state.current.patient.contact_of_known_case || false}
+              checked={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.contact_of_known_case || false}
               onChange={this.handleChange}
             />
           </Form.Group>
@@ -311,7 +310,7 @@ class ExposureInformation extends React.Component {
               className="form-square"
               id="contact_of_known_case_id"
               placeholder="enter case ID"
-              value={this.state.current.patient.contact_of_known_case_id || ''}
+              value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.contact_of_known_case_id || ''}
               onChange={this.handleChange}
               aria-label="Enter Case Id"
             />
@@ -327,7 +326,7 @@ class ExposureInformation extends React.Component {
               type="switch"
               id="travel_to_affected_country_or_area"
               label="TRAVEL FROM AFFECTED COUNTRY OR AREA"
-              checked={this.state.current.patient.travel_to_affected_country_or_area || false}
+              checked={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.travel_to_affected_country_or_area || false}
               onChange={this.handleChange}
             />
           </Form.Group>
@@ -339,7 +338,7 @@ class ExposureInformation extends React.Component {
               type="switch"
               id="was_in_health_care_facility_with_known_cases"
               label="WAS IN HEALTHCARE FACILITY WITH KNOWN CASES"
-              checked={this.state.current.patient.was_in_health_care_facility_with_known_cases || false}
+              checked={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.was_in_health_care_facility_with_known_cases || false}
               onChange={this.handleChange}
             />
           </Form.Group>
@@ -349,7 +348,9 @@ class ExposureInformation extends React.Component {
               className="form-square"
               id="was_in_health_care_facility_with_known_cases_facility_name"
               placeholder="enter facility name"
-              value={this.state.current.patient.was_in_health_care_facility_with_known_cases_facility_name || ''}
+              value={
+                this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.was_in_health_care_facility_with_known_cases_facility_name || ''
+              }
               onChange={this.handleChange}
               aria-label="Enter Facility Name"
             />
@@ -365,7 +366,7 @@ class ExposureInformation extends React.Component {
               type="switch"
               id="laboratory_personnel"
               label="LABORATORY PERSONNEL"
-              checked={this.state.current.patient.laboratory_personnel || false}
+              checked={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.laboratory_personnel || false}
               onChange={this.handleChange}
             />
           </Form.Group>
@@ -375,7 +376,7 @@ class ExposureInformation extends React.Component {
               className="form-square"
               id="laboratory_personnel_facility_name"
               placeholder="enter facility name"
-              value={this.state.current.patient.laboratory_personnel_facility_name || ''}
+              value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.laboratory_personnel_facility_name || ''}
               onChange={this.handleChange}
               aria-label="Enter Laboratory Facility Name"
             />
@@ -391,7 +392,7 @@ class ExposureInformation extends React.Component {
               type="switch"
               id="healthcare_personnel"
               label="HEALTHCARE PERSONNEL"
-              checked={this.state.current.patient.healthcare_personnel || false}
+              checked={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.healthcare_personnel || false}
               onChange={this.handleChange}
             />
           </Form.Group>
@@ -401,7 +402,7 @@ class ExposureInformation extends React.Component {
               className="form-square"
               id="healthcare_personnel_facility_name"
               placeholder="enter facility name"
-              value={this.state.current.patient.healthcare_personnel_facility_name || ''}
+              value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.healthcare_personnel_facility_name || ''}
               onChange={this.handleChange}
               aria-label="Enter Healthcare Facility Name"
             />
@@ -417,7 +418,7 @@ class ExposureInformation extends React.Component {
               type="switch"
               id="crew_on_passenger_or_cargo_flight"
               label="CREW ON PASSENGER OR CARGO FLIGHT"
-              checked={this.state.current.patient.crew_on_passenger_or_cargo_flight || false}
+              checked={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.crew_on_passenger_or_cargo_flight || false}
               onChange={this.handleChange}
             />
           </Form.Group>
@@ -429,7 +430,7 @@ class ExposureInformation extends React.Component {
               type="switch"
               id="member_of_a_common_exposure_cohort"
               label="MEMBER OF A COMMON EXPOSURE COHORT"
-              checked={this.state.current.patient.member_of_a_common_exposure_cohort || false}
+              checked={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.member_of_a_common_exposure_cohort || false}
               onChange={this.handleChange}
             />
           </Form.Group>
@@ -439,7 +440,7 @@ class ExposureInformation extends React.Component {
               className="form-square"
               id="member_of_a_common_exposure_cohort_type"
               placeholder="enter description"
-              value={this.state.current.patient.member_of_a_common_exposure_cohort_type || ''}
+              value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.member_of_a_common_exposure_cohort_type || ''}
               onChange={this.handleChange}
               aria-label="Enter Cohort Description"
             />
@@ -448,7 +449,7 @@ class ExposureInformation extends React.Component {
             </Form.Control.Feedback>
           </Form.Group>
         </Form.Row>
-        {!this.props.currentState.isolation && (
+        {!this.props.currentState.monitoring_infos[this.props.activeMonitoringInfoIndex]?.isolation && (
           <Form.Row>
             <Form.Group as={Col} md="24" controlId="exposure_notes" className="pt-3 mb-2">
               <Form.Label className="input-label">NOTES{schema?.fields?.exposure_notes?._exclusive?.required && ' *'}</Form.Label>
@@ -460,10 +461,12 @@ class ExposureInformation extends React.Component {
                 className="form-square"
                 placeholder="enter additional information about monitoree’s potential exposure"
                 maxLength="2000"
-                value={this.state.current.patient.exposure_notes || ''}
+                value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.exposure_notes || ''}
                 onChange={this.handleChange}
               />
-              <div className="character-limit-text">{2000 - (this.state.current.patient.exposure_notes || '').length} characters remaining</div>
+              <div className="character-limit-text">
+                {2000 - (this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.exposure_notes || '').length} characters remaining
+              </div>
               <Form.Control.Feedback className="d-block" type="invalid">
                 {this.state.errors['exposure_notes']}
               </Form.Control.Feedback>
@@ -485,18 +488,16 @@ class ExposureInformation extends React.Component {
               <Form.Row className="pb-3 h-100">
                 <Form.Group as={Col} className="my-auto">
                   {this.renderExposureFields()}
-                  {!this.props.currentState.isolation && (
+                  {!this.props.currentState.monitoring_infos[this.props.activeMonitoringInfoIndex]?.isolation && (
                     <PublicHealthManagement
                       currentState={this.state.current}
                       onChange={this.handlePublicHealthManagementChange}
                       onPropagatedFieldChange={this.handlePropagatedFieldChange}
-                      patient={this.props.patient}
                       has_dependents={this.props.has_dependents}
-                      jurisdiction_paths={this.props.jurisdiction_paths}
                       assigned_users={this.props.assigned_users}
+                      activeMonitoringInfoIndex={this.props.activeMonitoringInfoIndex}
                       schema={schema}
                       errors={this.state.errors}
-                      authenticity_token={this.props.authenticity_token}
                     />
                   )}
                 </Form.Group>
@@ -540,7 +541,6 @@ const staticValidations = {
   healthcare_personnel: yup.boolean().nullable(),
   exposure_risk_assessment: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
   monitoring_plan: yup.string().max(200, 'Max length exceeded, please limit to 200 characters.').nullable(),
-  jurisdiction_id: yup.number().positive('Please enter a valid Assigned Jurisdiction.').required(),
   assigned_user: yup.number().positive('Please enter a valid Assigned User').nullable(),
   exposure_notes: yup.string().max(2000, 'Max length exceeded, please limit to 2000 characters.').nullable(),
 };
@@ -548,17 +548,16 @@ const staticValidations = {
 var schema = yup.object().shape(staticValidations);
 
 ExposureInformation.propTypes = {
+  activeMonitoringInfoIndex: PropTypes.number,
   currentState: PropTypes.object,
   setEnrollmentState: PropTypes.func,
   previous: PropTypes.func,
   next: PropTypes.func,
   patient: PropTypes.object,
   has_dependents: PropTypes.bool,
-  jurisdiction_paths: PropTypes.object,
   assigned_users: PropTypes.array,
   showPreviousButton: PropTypes.bool,
   continuous_exposure_enabled: PropTypes.bool,
-  authenticity_token: PropTypes.string,
 };
 
 export default ExposureInformation;

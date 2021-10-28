@@ -14,14 +14,30 @@ class AdditionalPlannedTravel extends React.Component {
     this.state = { ...this.props, current: { ...this.props.currentState }, modified: {}, errors: {} };
   }
 
+  componentDidUpdate() {
+    const newProps = this.props.currentState.monitoring_infos;
+    if (Object.keys(newProps).length !== Object.keys(this.state.current.monitoring_infos).length) {
+      let current = this.state.current;
+      let modified = this.state.modified;
+      this.setState({
+        current: { ...current, monitoring_infos: { ...newProps } },
+        modified: { ...modified, monitoring_infos: { ...newProps } },
+      });
+    }
+  }
+
   handleChange = event => {
     let value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     let current = this.state.current;
     let modified = this.state.modified;
+    let currentMonitoringInfo = current.monitoring_infos;
+    currentMonitoringInfo[this.props.activeMonitoringInfoIndex][event.target.id] = value;
+    let modifiedMonitoringInfo = modified.monitoring_infos;
+    modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex][event.target.id] = value;
     this.setState(
       {
-        current: { ...current, patient: { ...current.patient, [event.target.id]: value } },
-        modified: { ...modified, patient: { ...modified.patient, [event.target.id]: value } },
+        current: { ...current, monitoring_infos: { ...currentMonitoringInfo } },
+        modified: { ...modified, monitoring_infos: { ...modifiedMonitoringInfo } },
       },
       () => {
         this.props.setEnrollmentState({ ...this.state.modified });
@@ -32,10 +48,14 @@ class AdditionalPlannedTravel extends React.Component {
   handleDateChange = (field, date) => {
     let current = this.state.current;
     let modified = this.state.modified;
+    let currentMonitoringInfo = current.monitoring_infos;
+    currentMonitoringInfo[this.props.activeMonitoringInfoIndex][`${field}`] = date;
+    let modifiedMonitoringInfo = modified.monitoring_infos;
+    modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex][`${field}`] = date;
     this.setState(
       {
-        current: { ...current, patient: { ...current.patient, [field]: date } },
-        modified: { ...modified, patient: { ...modified.patient, [field]: date } },
+        current: { ...current, monitoring_infos: { ...currentMonitoringInfo } },
+        modified: { ...modified, monitoring_infos: { ...modifiedMonitoringInfo } },
       },
       () => {
         this.props.setEnrollmentState({ ...this.state.modified });
@@ -45,7 +65,7 @@ class AdditionalPlannedTravel extends React.Component {
 
   validate = callback => {
     schema
-      .validate(this.state.current.patient, { abortEarly: false })
+      .validate(this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex], { abortEarly: false })
       .then(() => {
         // No validation issues? Invoke callback (move to next step)
         this.setState({ errors: {} }, () => {
@@ -80,7 +100,7 @@ class AdditionalPlannedTravel extends React.Component {
                     as="select"
                     size="lg"
                     className="form-square"
-                    value={this.state.current.patient.additional_planned_travel_type || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_type || ''}
                     onChange={this.handleChange}>
                     <option></option>
                     <option>Domestic</option>
@@ -98,37 +118,39 @@ class AdditionalPlannedTravel extends React.Component {
                     isInvalid={this.state.errors['additional_planned_travel_destination']}
                     size="lg"
                     className="form-square"
-                    value={this.state.current.patient.additional_planned_travel_destination || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_destination || ''}
                     onChange={this.handleChange}
                   />
                   <Form.Control.Feedback className="d-block" type="invalid">
                     {this.state.errors['additional_planned_travel_destination']}
                   </Form.Control.Feedback>
                 </Form.Group>
-                {this.state.current.patient.additional_planned_travel_type && this.state.current.patient.additional_planned_travel_type === 'International' && (
-                  <Form.Group as={Col} md="8" controlId="additional_planned_travel_destination_country">
-                    <Form.Label className="input-label">
-                      DESTINATION COUNTRY{schema?.fields?.additional_planned_travel_destination_country?._exclusive?.required && ' *'}
-                    </Form.Label>
-                    <Form.Control
-                      isInvalid={this.state.errors['additional_planned_travel_destination_country']}
-                      as="select"
-                      size="lg"
-                      className="form-square"
-                      value={this.state.current.patient.additional_planned_travel_destination_country || ''}
-                      onChange={this.handleChange}>
-                      <option></option>
-                      {countryOptions.map((country, index) => (
-                        <option key={`country-${index}`}>{country}</option>
-                      ))}
-                    </Form.Control>
-                    <Form.Control.Feedback className="d-block" type="invalid">
-                      {this.state.errors['additional_planned_travel_destination_country']}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                )}
+                {this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_type &&
+                  this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_type === 'International' && (
+                    <Form.Group as={Col} md="8" controlId="additional_planned_travel_destination_country">
+                      <Form.Label className="input-label">
+                        DESTINATION COUNTRY{schema?.fields?.additional_planned_travel_destination_country?._exclusive?.required && ' *'}
+                      </Form.Label>
+                      <Form.Control
+                        isInvalid={this.state.errors['additional_planned_travel_destination_country']}
+                        as="select"
+                        size="lg"
+                        className="form-square"
+                        value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_destination_country || ''}
+                        onChange={this.handleChange}>
+                        <option></option>
+                        {countryOptions.map((country, index) => (
+                          <option key={`country-${index}`}>{country}</option>
+                        ))}
+                      </Form.Control>
+                      <Form.Control.Feedback className="d-block" type="invalid">
+                        {this.state.errors['additional_planned_travel_destination_country']}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  )}
                 {!(
-                  this.state.current.patient.additional_planned_travel_type && this.state.current.patient.additional_planned_travel_type === 'International'
+                  this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_type &&
+                  this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_type === 'International'
                 ) && (
                   <Form.Group as={Col} md="8" controlId="additional_planned_travel_destination_state">
                     <Form.Label className="input-label">
@@ -140,7 +162,7 @@ class AdditionalPlannedTravel extends React.Component {
                       size="lg"
                       className="form-square"
                       placeholder="Please enter state..."
-                      value={this.state.current.patient.additional_planned_travel_destination_state || ''}
+                      value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_destination_state || ''}
                       onChange={this.handleChange}>
                       <option></option>
                       {stateOptions.map((state, index) => (
@@ -164,7 +186,7 @@ class AdditionalPlannedTravel extends React.Component {
                     isInvalid={this.state.errors['additional_planned_travel_port_of_departure']}
                     size="lg"
                     className="form-square"
-                    value={this.state.current.patient.additional_planned_travel_port_of_departure || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_port_of_departure || ''}
                     onChange={this.handleChange}
                   />
                   <Form.Control.Feedback className="d-block" type="invalid">
@@ -177,7 +199,7 @@ class AdditionalPlannedTravel extends React.Component {
                   </Form.Label>
                   <DateInput
                     id="additional_planned_travel_start_date"
-                    date={this.state.current.patient.additional_planned_travel_start_date}
+                    date={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_start_date}
                     minDate={'2020-01-01'}
                     maxDate={moment().add(30, 'days').format('YYYY-MM-DD')}
                     onChange={date => this.handleDateChange('additional_planned_travel_start_date', date)}
@@ -195,7 +217,7 @@ class AdditionalPlannedTravel extends React.Component {
                   <Form.Label className="input-label">END DATE{schema?.fields?.additional_planned_travel_end_date?._exclusive?.required && ' *'}</Form.Label>
                   <DateInput
                     id="additional_planned_travel_end_date"
-                    date={this.state.current.patient.additional_planned_travel_end_date}
+                    date={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_end_date}
                     minDate={'2020-01-01'}
                     maxDate={moment().add(30, 'days').format('YYYY-MM-DD')}
                     onChange={date => this.handleDateChange('additional_planned_travel_end_date', date)}
@@ -223,7 +245,7 @@ class AdditionalPlannedTravel extends React.Component {
                     size="lg"
                     className="form-square"
                     placeholder="enter additional information about monitoree's planned travel (e.g. additional destinations, planned activities/social interactions, etc...)"
-                    value={this.state.current.patient.additional_planned_travel_related_notes || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.additional_planned_travel_related_notes || ''}
                     onChange={this.handleChange}
                   />
                   <Form.Control.Feedback className="d-block" type="invalid">
@@ -273,6 +295,7 @@ const schema = yup.object().shape({
 });
 
 AdditionalPlannedTravel.propTypes = {
+  activeMonitoringInfoIndex: PropTypes.number,
   currentState: PropTypes.object,
   setEnrollmentState: PropTypes.func,
   previous: PropTypes.func,

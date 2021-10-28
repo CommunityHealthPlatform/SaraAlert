@@ -23,23 +23,25 @@ import { navQueryParam } from '../../utils/Navigation';
 
 const PNF = libphonenumber.PhoneNumberFormat;
 const phoneUtil = libphonenumber.PhoneNumberUtil.getInstance();
+const MAX_STEPS = 8;
 
 class Enrollment extends React.Component {
   constructor(props) {
-    const maxSteps = props.patient.isolation ? 7 : 6;
     super(props);
     this.state = {
-      index: props.enrollment_step != undefined ? props.enrollment_step : props.edit_mode ? maxSteps : 0,
-      lastIndex: props.enrollment_step != undefined ? maxSteps : null,
+      index: props.enrollment_step != undefined ? props.enrollment_step : props.edit_mode ? MAX_STEPS : 0,
+      lastIndex: props.enrollment_step != undefined ? MAX_STEPS : null,
       direction: null,
       review_mode: false,
       enrollmentState: {
         patient: pickBy(props.patient, identity),
         propagatedFields: {},
-        // isolation: !!props.patient.isolation,
         blocked_sms: props.blocked_sms,
+        monitoring_infos: {},
         // first_positive_lab: props.first_positive_lab,
       },
+      activeMonitoringInfoIndex: null,
+      assigned_users: props.assigned_users,
     };
   }
 
@@ -55,12 +57,33 @@ class Enrollment extends React.Component {
       enrollmentState: {
         patient: { ...currentEnrollmentState.patient, ...enrollmentState.patient },
         propagatedFields: { ...currentEnrollmentState.propagatedFields, ...enrollmentState.propagatedFields },
-        isolation: Object.prototype.hasOwnProperty.call(enrollmentState, 'isolation') ? !!enrollmentState.isolation : currentEnrollmentState.isolation,
         blocked_sms: enrollmentState.blocked_sms,
-        first_positive_lab: enrollmentState.first_positive_lab,
+        // first_positive_lab: enrollmentState.first_positive_lab,
+        monitoring_infos: { ...currentEnrollmentState.monitoring_infos, ...enrollmentState.monitoring_infos },
       },
     });
   }, 1000);
+
+  setMonitoringInfoIndex = index => {
+    this.setState({ activeMonitoringInfoIndex: index });
+  };
+
+  updateAssignedUsers = jurisdictionId => {
+    axios.defaults.headers.common['X-CSRF-Token'] = this.props.authenticity_token;
+    axios
+      .post(window.BASE_PATH + '/jurisdictions/assigned_users', {
+        query: {
+          jurisdiction: jurisdictionId,
+          scope: 'exact',
+        },
+      })
+      .catch(() => {})
+      .then(response => {
+        if (response?.data?.assigned_users) {
+          this.setState({ assigned_users: response.data.assigned_users });
+        }
+      });
+  };
 
   handleConfirmDuplicate = async (data, groupMember, message, reenableButtons, confirmText) => {
     if (await confirmDialog(confirmText)) {
@@ -102,7 +125,7 @@ class Enrollment extends React.Component {
     let data = new Object({
       patient: this.props.parent_id ? this.state.enrollmentState.patient : _.pick(this.state.enrollmentState.patient, diffKeys),
       propagated_fields: this.state.enrollmentState.propagatedFields,
-      monitoring_infos: {}
+      monitoring_infos: this.state.enrollmentState.monitoring_infos,
     });
 
     data.patient.primary_telephone = data.patient.primary_telephone
@@ -133,7 +156,7 @@ class Enrollment extends React.Component {
     }
     data['bypass_duplicate'] = false;
 
-    console.log(data)
+    console.log(data);
     // axios({
     //   method: this.props.edit_mode ? 'patch' : 'post',
     //   url: window.BASE_PATH + (this.props.edit_mode ? '/patients/' + this.props.patient.id : '/patients'),
@@ -186,8 +209,11 @@ class Enrollment extends React.Component {
     window.scroll(0, 0);
     let index = this.state.index;
     let lastIndex = this.state.lastIndex;
-    let delta = this.state.enrollmentState.patient.isolation && 4 === index ? 2 : 1; // number of enrollment steps to skip (1 unless in isolation skipping exposure info on initial enrollment)
-    let maxIndex = this.state.enrollmentState.patient.isolation ? 7 : 6; // max number of enrollment steps in the carosel (6 for exposure and 7 for isolation)
+    let delta =
+      (this.state.enrollmentState.monitoring_infos[this.state.activeMonitoringInfoIndex]?.isolation && index === 5) ||
+      (!this.state.enrollmentState.monitoring_infos[this.state.activeMonitoringInfoIndex]?.isolation && index === 6)
+        ? 2
+        : 1; // number of enrollment steps to skip (1 unless in isolation skipping exposure info on initial enrollment)
 
     if (lastIndex) {
       this.setState({ index: lastIndex, lastIndex: null });
@@ -196,7 +222,7 @@ class Enrollment extends React.Component {
         direction: 'next',
         index: index + delta,
         lastIndex: null,
-        review_mode: index + delta === maxIndex,
+        review_mode: index + delta === MAX_STEPS,
       });
     }
   };
@@ -204,32 +230,31 @@ class Enrollment extends React.Component {
   previous = () => {
     window.scroll(0, 0);
     let index = this.state.index;
-    let delta = this.state.enrollmentState.patient.isolation && index === 6 ? 2 : 1;
+    let delta = this.state.enrollmentState.monitoring_infos[this.state.activeMonitoringInfoIndex]?.isolation && index === 7 ? 2 : 1;
     this.setState({ direction: 'prev', index: index - delta, lastIndex: null }); // number of enrollment steps to skip (1 unless in isolation skipping exposure info on initial enrollment)
   };
 
-  goto = targetIndex => {
+  goto = (targetIndex, ignoreLastIndex) => {
     window.scroll(0, 0);
     let index = this.state.index;
     if (targetIndex > index) {
-      this.setState({ direction: 'next', index: targetIndex, lastIndex: index });
+      this.setState({ direction: 'next', index: targetIndex, lastIndex: ignoreLastIndex ? null : index });
     } else if (targetIndex < index) {
-      this.setState({ direction: 'prev', index: targetIndex, lastIndex: index });
+      this.setState({ direction: 'prev', index: targetIndex, lastIndex: ignoreLastIndex ? null : index });
     }
   };
 
   review = () => {
     window.scroll(0, 0);
     let index = this.state.index;
-    // if (targetIndex > index) {
-      this.setState({ direction: 'next', index: this.state.enrollmentState.patient.isolation ? 8 : 7, lastIndex: index });
-    // } else if (targetIndex < index) {
-    //   this.setState({ direction: 'prev', index: targetIndex, lastIndex: index });
-    // }
+    this.setState({
+      direction: 'next',
+      index: MAX_STEPS,
+      lastIndex: index,
+    });
   };
 
   render() {
-    console.log(this.props.available_monitoring_programs)
     return (
       <React.Fragment>
         <Carousel
@@ -244,11 +269,13 @@ class Enrollment extends React.Component {
             <Identification
               goto={this.goto}
               next={this.next}
+              updateAssignedUsers={this.updateAssignedUsers}
               setEnrollmentState={this.setEnrollmentState}
               currentState={this.state.enrollmentState}
               race_options={this.props.race_options}
+              jurisdiction_paths={this.props.jurisdiction_paths}
+              has_dependents={this.props.has_dependents}
               authenticity_token={this.props.authenticity_token}
-              available_workflows={this.props.available_workflows}
             />
           </Carousel.Item>
           <Carousel.Item>
@@ -273,10 +300,15 @@ class Enrollment extends React.Component {
             />
           </Carousel.Item>
           <Carousel.Item>
-            <MonitoringProgram 
-            next={this.next}
-            currentState={this.state.enrollmentState}
-            setEnrollmentState={this.setEnrollmentState} />
+            <MonitoringProgram
+              next={this.next}
+              currentState={this.state.enrollmentState}
+              setEnrollmentState={this.setEnrollmentState}
+              activeMonitoringInfoIndex={this.state.activeMonitoringInfoIndex}
+              setMonitoringInfoIndex={this.setMonitoringInfoIndex}
+              available_monitoring_programs={this.props.available_monitoring_programs}
+              available_workflows={this.props.available_workflows}
+            />
           </Carousel.Item>
           <Carousel.Item>
             <Arrival
@@ -285,6 +317,7 @@ class Enrollment extends React.Component {
               previous={this.previous}
               next={this.next}
               showPreviousButton={!this.props.edit_mode && !this.state.review_mode}
+              activeMonitoringInfoIndex={this.state.activeMonitoringInfoIndex}
             />
           </Carousel.Item>
           <Carousel.Item>
@@ -294,6 +327,7 @@ class Enrollment extends React.Component {
               previous={this.previous}
               next={this.next}
               showPreviousButton={!this.props.edit_mode && !this.state.review_mode}
+              activeMonitoringInfoIndex={this.state.activeMonitoringInfoIndex}
             />
           </Carousel.Item>
           <Carousel.Item>
@@ -304,43 +338,41 @@ class Enrollment extends React.Component {
               next={this.next}
               patient={this.props.patient}
               has_dependents={this.props.has_dependents}
-              jurisdiction_paths={this.props.jurisdiction_paths}
-              assigned_users={this.props.assigned_users}
+              assigned_users={this.state.assigned_users}
               first_positive_lab={this.props.first_positive_lab}
               showPreviousButton={!this.props.edit_mode && !this.state.review_mode}
               symptomatic_assessments_exist={this.props.symptomatic_assessments_exist}
               continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               edit_mode={this.props.edit_mode}
-              authenticity_token={this.props.authenticity_token}
+              activeMonitoringInfoIndex={this.state.activeMonitoringInfoIndex}
             />
           </Carousel.Item>
-          {this.state.enrollmentState.patient.isolation && (
-            <Carousel.Item>
-              <CaseInformation
-                currentState={this.state.enrollmentState}
-                setEnrollmentState={this.setEnrollmentState}
-                previous={this.previous}
-                next={this.next}
-                patient={this.props.patient}
-                has_dependents={this.props.has_dependents}
-                jurisdiction_paths={this.props.jurisdiction_paths}
-                assigned_users={this.props.assigned_users}
-                first_positive_lab={this.props.first_positive_lab}
-                showPreviousButton={!this.props.edit_mode && !this.state.review_mode}
-                authenticity_token={this.props.authenticity_token}
-              />
-            </Carousel.Item>
-          )}
+          <Carousel.Item>
+            <CaseInformation
+              currentState={this.state.enrollmentState}
+              setEnrollmentState={this.setEnrollmentState}
+              previous={this.previous}
+              next={this.next}
+              patient={this.props.patient}
+              has_dependents={this.props.has_dependents}
+              assigned_users={this.state.assigned_users}
+              first_positive_lab={this.props.first_positive_lab}
+              showPreviousButton={!this.props.edit_mode && !this.state.review_mode}
+              activeMonitoringInfoIndex={this.state.activeMonitoringInfoIndex}
+            />
+          </Carousel.Item>
           <Carousel.Item>
             <Review
               currentState={this.state.enrollmentState}
               previous={this.previous}
               goto={this.goto}
               submit={this.submit}
+              setMonitoringInfoIndex={this.setMonitoringInfoIndex}
               canAddGroup={this.props.can_add_group}
               jurisdiction_paths={this.props.jurisdiction_paths}
               authenticity_token={this.props.authenticity_token}
               workflow={this.props.workflow}
+              available_monitoring_programs={this.props.available_monitoring_programs}
             />
           </Carousel.Item>
         </Carousel>
@@ -369,6 +401,7 @@ Enrollment.propTypes = {
   symptomatic_assessments_exist: PropTypes.bool,
   workflow: PropTypes.string,
   available_workflows: PropTypes.array,
+  available_monitoring_programs: PropTypes.array,
   continuous_exposure_enabled: PropTypes.bool,
 };
 

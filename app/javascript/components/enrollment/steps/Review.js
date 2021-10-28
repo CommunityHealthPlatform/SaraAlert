@@ -1,5 +1,6 @@
 import React from 'react';
 import { PropTypes } from 'prop-types';
+import _ from 'lodash';
 import { Card, Button, Modal } from 'react-bootstrap';
 
 import Patient from '../../patient/Patient';
@@ -26,6 +27,10 @@ class Review extends React.Component {
     this.setState({
       showGroupAddNotification: !current,
     });
+  };
+
+  totalMonitoringPrograms = () => {
+    return _.isEmpty(this.props.currentState.monitoring_infos) ? 0 : Object.keys(this.props.currentState.monitoring_infos).length;
   };
 
   createModal() {
@@ -75,10 +80,18 @@ class Review extends React.Component {
               headingLevel={2}
             />
             {this.props.submit && (
-              <Button variant="primary" size="lg" className="btn-square mb-4" onClick={() => { this.props.goto(3) }}> 
-              {/* disabled={this.state.disabled} onClick={this.submit}> */}
+              <Button
+                variant="primary"
+                size="lg"
+                className="btn-square mb-4"
+                disabled={this.state.disabled || this.totalMonitoringPrograms() === this.props.available_monitoring_programs.length}
+                onClick={() => {
+                  this.props.goto(3, true);
+                  this.props.setMonitoringInfoIndex(null);
+                }}>
                 Add Monitoring Program
               </Button>
+              // ADD TOOLTIP
             )}
             {this.props.submit && (
               <Button
@@ -91,9 +104,15 @@ class Review extends React.Component {
                 }}>
                 Cancel
               </Button>
+              // ADD TOOLTIP
             )}
             {this.props.submit && (
-              <Button variant="primary" size="lg" className="float-right btn-square px-5 mr-4" disabled={this.state.disabled} onClick={this.submit}>
+              <Button
+                variant="primary"
+                size="lg"
+                className="float-right btn-square px-5 mr-4"
+                disabled={this.state.disabled || this.totalMonitoringPrograms() === 0}
+                onClick={this.submit}>
                 Finish
               </Button>
             )}
@@ -102,10 +121,11 @@ class Review extends React.Component {
                 variant="primary"
                 size="lg"
                 className="float-right btn-square px-5 mr-4"
-                disabled={this.state.disabled}
+                disabled={this.state.disabled || this.totalMonitoringPrograms() === 0}
                 onClick={this.toggleGroupAddNotification}>
                 Finish and Add a Household Member
               </Button>
+              // ADD TOOLTIP
             )}
           </Card.Body>
         </Card>
@@ -120,10 +140,12 @@ Review.propTypes = {
   previous: PropTypes.func,
   goto: PropTypes.func,
   submit: PropTypes.func,
+  setMonitoringInfoIndex: PropTypes.func,
   canAddGroup: PropTypes.bool,
   jurisdiction_paths: PropTypes.object,
   authenticity_token: PropTypes.string,
   workflow: PropTypes.string,
+  available_monitoring_programs: PropTypes.array,
 };
 
 export default Review;

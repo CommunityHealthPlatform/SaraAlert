@@ -12,14 +12,30 @@ class Arrival extends React.Component {
     this.state = { ...this.props, current: { ...this.props.currentState }, errors: {}, modified: {} };
   }
 
+  componentDidUpdate() {
+    const newProps = this.props.currentState.monitoring_infos;
+    if (Object.keys(newProps).length !== Object.keys(this.state.current.monitoring_infos).length) {
+      let current = this.state.current;
+      let modified = this.state.modified;
+      this.setState({
+        current: { ...current, monitoring_infos: { ...newProps } },
+        modified: { ...modified, monitoring_infos: { ...newProps } },
+      });
+    }
+  }
+
   handleChange = event => {
     let value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     let current = this.state.current;
     let modified = this.state.modified;
+    let currentMonitoringInfo = current.monitoring_infos;
+    currentMonitoringInfo[this.props.activeMonitoringInfoIndex][event.target.id] = value;
+    let modifiedMonitoringInfo = modified.monitoring_infos;
+    modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex][event.target.id] = value;
     this.setState(
       {
-        current: { ...current, patient: { ...current.patient, [event.target.id]: value } },
-        modified: { ...modified, patient: { ...modified.patient, [event.target.id]: value } },
+        current: { ...current, monitoring_infos: currentMonitoringInfo },
+        modified: { ...modified, monitoring_infos: modifiedMonitoringInfo },
       },
       () => {
         this.props.setEnrollmentState({ ...this.state.modified });
@@ -30,10 +46,14 @@ class Arrival extends React.Component {
   handleDateChange = (field, date) => {
     let current = this.state.current;
     let modified = this.state.modified;
+    let currentMonitoringInfo = current.monitoring_infos;
+    currentMonitoringInfo[this.props.activeMonitoringInfoIndex][`${field}`] = date;
+    let modifiedMonitoringInfo = modified.monitoring_infos;
+    modifiedMonitoringInfo[this.props.activeMonitoringInfoIndex][`${field}`] = date;
     this.setState(
       {
-        current: { ...current, patient: { ...current.patient, [field]: date } },
-        modified: { ...modified, patient: { ...modified.patient, [field]: date } },
+        current: { ...current, monitoring_infos: { ...currentMonitoringInfo } },
+        modified: { ...modified, monitoring_infos: { ...modifiedMonitoringInfo } },
       },
       () => {
         this.props.setEnrollmentState({ ...this.state.modified });
@@ -44,7 +64,7 @@ class Arrival extends React.Component {
   validate = callback => {
     let self = this;
     schema
-      .validate(this.state.current.patient, { abortEarly: false })
+      .validate(this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex], { abortEarly: false })
       .then(() => {
         // No validation issues? Invoke callback (move to next step)
         self.setState({ errors: {} }, () => {
@@ -78,7 +98,7 @@ class Arrival extends React.Component {
                     isInvalid={this.state.errors['port_of_origin']}
                     size="lg"
                     className="form-square"
-                    value={this.state.current.patient.port_of_origin || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.port_of_origin || ''}
                     onChange={this.handleChange}
                   />
                   <Form.Control.Feedback className="d-block" type="invalid">
@@ -89,7 +109,7 @@ class Arrival extends React.Component {
                   <Form.Label className="input-label">DATE OF DEPARTURE{schema?.fields?.date_of_departure?._exclusive?.required && ' *'}</Form.Label>
                   <DateInput
                     id="date_of_departure"
-                    date={this.state.current.patient.date_of_departure}
+                    date={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.date_of_departure}
                     minDate={'2020-01-01'}
                     maxDate={moment().add(30, 'days').format('YYYY-MM-DD')}
                     onChange={date => this.handleDateChange('date_of_departure', date)}
@@ -113,7 +133,7 @@ class Arrival extends React.Component {
                     isInvalid={this.state.errors['flight_or_vessel_number']}
                     size="lg"
                     className="form-square"
-                    value={this.state.current.patient.flight_or_vessel_number || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.flight_or_vessel_number || ''}
                     onChange={this.handleChange}
                   />
                   <Form.Control.Feedback className="d-block" type="invalid">
@@ -126,7 +146,7 @@ class Arrival extends React.Component {
                     isInvalid={this.state.errors['flight_or_vessel_carrier']}
                     size="lg"
                     className="form-square"
-                    value={this.state.current.patient.flight_or_vessel_carrier || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.flight_or_vessel_carrier || ''}
                     onChange={this.handleChange}
                   />
                   <Form.Control.Feedback className="d-block" type="invalid">
@@ -141,7 +161,7 @@ class Arrival extends React.Component {
                     isInvalid={this.state.errors['port_of_entry_into_usa']}
                     size="lg"
                     className="form-square"
-                    value={this.state.current.patient.port_of_entry_into_usa || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.port_of_entry_into_usa || ''}
                     onChange={this.handleChange}
                   />
                   <Form.Control.Feedback className="d-block" type="invalid">
@@ -152,7 +172,7 @@ class Arrival extends React.Component {
                   <Form.Label className="input-label">DATE OF ARRIVAL{schema?.fields?.date_of_arrival?._exclusive?.required && ' *'}</Form.Label>
                   <DateInput
                     id="date_of_arrival"
-                    date={this.state.current.patient.date_of_arrival}
+                    date={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.date_of_arrival}
                     minDate={'2020-01-01'}
                     maxDate={moment().add(30, 'days').format('YYYY-MM-DD')}
                     onChange={date => this.handleDateChange('date_of_arrival', date)}
@@ -175,7 +195,7 @@ class Arrival extends React.Component {
                     as="select"
                     size="lg"
                     className="form-square"
-                    value={this.state.current.patient.source_of_report || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.source_of_report || ''}
                     onChange={this.handleChange}>
                     <option></option>
                     <option>Health Screening</option>
@@ -189,7 +209,7 @@ class Arrival extends React.Component {
                     {this.state.errors['source_of_report']}
                   </Form.Control.Feedback>
                 </Form.Group>
-                {this.state.current.patient.source_of_report === 'Other' && (
+                {this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.source_of_report === 'Other' && (
                   <Form.Group as={Col} md="8" controlId="source_of_report_specify">
                     <Form.Label className="input-label">
                       SOURCE OF REPORT (SPECIFY){schema?.fields?.source_of_report_specify?._exclusive?.required && ' *'}
@@ -198,7 +218,7 @@ class Arrival extends React.Component {
                       isInvalid={this.state.errors['source_of_report_specify']}
                       size="lg"
                       className="form-square"
-                      value={this.state.current.patient.source_of_report_specify || ''}
+                      value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.source_of_report_specify || ''}
                       onChange={this.handleChange}
                     />
                     <Form.Control.Feedback className="d-block" type="invalid">
@@ -218,7 +238,7 @@ class Arrival extends React.Component {
                     size="lg"
                     className="form-square"
                     placeholder="enter additional information about monitoree’s travel history (e.g. visited farm, sick relative, original country departed from, etc.)"
-                    value={this.state.current.patient.travel_related_notes || ''}
+                    value={this.state.current.monitoring_infos[this.props.activeMonitoringInfoIndex]?.travel_related_notes || ''}
                     onChange={this.handleChange}
                   />
                   <Form.Control.Feedback className="d-block" type="invalid">
@@ -269,6 +289,7 @@ const schema = yup.object().shape({
 });
 
 Arrival.propTypes = {
+  activeMonitoringInfoIndex: PropTypes.number,
   currentState: PropTypes.object,
   setEnrollmentState: PropTypes.func,
   previous: PropTypes.func,
