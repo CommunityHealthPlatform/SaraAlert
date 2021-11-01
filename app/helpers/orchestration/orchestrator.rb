@@ -157,4 +157,14 @@ module Orchestration::Orchestrator
   def playbook_label(playbook)
     PLAYBOOKS.dig((playbook.nil? ? default_playbook : playbook), :label)
   end
+
+  # Return the reporting period (minutes) for the specified playbook (symbol)
+  def reporting_period(playbook)
+    system_configuration(playbook, :reporting_period_minutes)
+  end
+
+  # Return the monitoring period (days) for the specified playbook (symbol)
+  def monitoring_period(playbook)
+    system_configuration(playbook, :monitoring_period_days)
+  end
 end

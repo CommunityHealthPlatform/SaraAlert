@@ -8,37 +8,7 @@ class Patient < ApplicationRecord
   include ValidationHelper
   include ActiveModel::Validations
   include FhirHelper
-
-  # for scopes
-  @period = if true # (enrolled_plan == "COVID")
-              ADMIN_OPTIONS['covid_monitoring_period_days']
-            else # if (enrolled_plan == "Ebola")
-              ADMIN_OPTIONS['ebola_monitoring_period_days']
-            end
-
-  @reporting_period = if true # (enrolled_plan == "COVID")
-                        ADMIN_OPTIONS['covid_reporting_period_minutes']
-                      else # if (enrolled_plan == "Ebola")
-                        ADMIN_OPTIONS['test_reporting_period_minutes']
-                      end
-
-  # for defs
-  def period
-    # return ADMIN_OPTIONS['ebola_monitoring_period_days']
-    if last_name == 'Crist82' # (enrolled_plan == "COVID")
-      ADMIN_OPTIONS['covid_monitoring_period_days']
-    else # if (enrolled_plan == "Ebola")
-      ADMIN_OPTIONS['ebola_monitoring_period_days']
-    end
-  end
-
-  def reporting_period
-    if true
-      ADMIN_OPTIONS['covid_reporting_period_minutes']
-    else # if (enrolled_plan == "Ebola")
-      ADMIN_OPTIONS['test_reporting_period_minutes']
-    end
-  end
+  include Orchestration::Orchestrator
 
   columns.each do |column|
     case column.type
@@ -178,14 +148,14 @@ class Patient < ApplicationRecord
   end
 
   # Patients who are eligible for reminders
-  scope :reminder_eligible, lambda {
+  scope :reminder_eligible, lambda { |reporting_period|
     where(purged: false)
       .where(pause_notifications: false)
       .where('patients.id = patients.responder_id')
       .where('latest_assessment_at < ? OR latest_assessment_at IS NULL', Time.now.in_time_zone('Eastern Time (US & Canada)').beginning_of_day)
       .has_usable_preferred_contact_method
       .within_preferred_contact_time
-      .reminder_not_sent_recently
+      .reminder_not_sent_recently(reporting_period)
   }
 
   # Patients who are eligible for reminders
@@ -195,17 +165,17 @@ class Patient < ApplicationRecord
   #   who isn't in a household is eligible on their own.
   # - Everything within the OR is checking if the HoH has any DEPENDENTS (excluding self)
   #   that would make the HoH eligible to receive notifications for them.
-  scope :better_reminder_eligible, lambda {
+  scope :better_reminder_eligible, lambda { |monitoring_period, reporting_period|
     joins(:dependents)
       .monitoring_open
       .within_preferred_contact_time
-      .has_not_reported_recently
-      .is_being_monitored
+      .has_not_reported_recently(reporting_period)
+      .is_being_monitored(monitoring_period)
       .has_usable_preferred_contact_method
       .where('patients.id = patients.responder_id')
       .where(pause_notifications: false)
-      .reminder_not_sent_recently
-      .or(has_eligible_dependents)
+      .reminder_not_sent_recently(reporting_period_minutes)
+      .or(has_eligible_dependents(monitoring_period))
   }
 
   # Pateints should be reminded to report once within the reporting period.
@@ -215,7 +185,7 @@ class Patient < ApplicationRecord
   # Example: 1 day reporting period => was patient last reminder before midnight today?
   # Example: 2 day reporting period => was patient last reminder before midnight yesterday?
   # Example: 7 day reporting period => was patient last reminder before midnight 6 days ago?
-  scope :reminder_not_sent_recently, lambda {
+  scope :reminder_not_sent_recently, lambda { |reporting_period|
     where(
       # Converting to a timezone, then casting to date effectively gives us
       # the start of the day in that timezone to make comparisons with.
@@ -224,7 +194,7 @@ class Patient < ApplicationRecord
       '    DATE(CONVERT_TZ(patients.last_assessment_reminder_sent, "UTC", patients.time_zone)),'\
       '    INTERVAL ? DAY'\
       ') < CONVERT_TZ(?, "UTC", patients.time_zone)',
-      (@reporting_period / 1440).to_i,
+      (reporting_period / 1440).to_i,
       Time.now.getlocal('-00:00')
     )
   }
@@ -254,7 +224,7 @@ class Patient < ApplicationRecord
   #   patient last date of exposure is on or after (today - monitoring_period_days)
   #   OR
   #   patient last date of exposure is null and created at of exposure is on or after (today - monitoring_period_days)
-  scope :has_eligible_dependents, lambda {
+  scope :has_eligible_dependents, lambda { |monitoring_period|
     joins(:dependents)
       .where(purged: false)
       .where(head_of_household: true)
@@ -281,9 +251,9 @@ class Patient < ApplicationRecord
         true,
         true,
         Time.now.getlocal('-00:00'),
-        @period,
+        monitoring_period,
         Time.now.getlocal('-00:00'),
-        @period
+        monitoring_period
       )
       .within_preferred_contact_time
       .reminder_not_sent_recently
@@ -295,7 +265,7 @@ class Patient < ApplicationRecord
   # - last date of exposure is on or after (today - monitoring_period_days)
   #   OR
   #   last date of exposure is null and created at of exposure is on or after (today - monitoring_period_days)
-  scope :is_being_monitored, lambda {
+  scope :is_being_monitored, lambda { |monitoring_period|
     where(
       'patients.isolation = ? '\
       'OR patients.continuous_exposure = ? '\
@@ -307,9 +277,9 @@ class Patient < ApplicationRecord
       true,
       true,
       Time.now.getlocal('-00:00'),
-      @period,
+      monitoring_period,
       Time.now.getlocal('-00:00'),
-      @period
+      monitoring_period
     )
   }
 
@@ -317,7 +287,7 @@ class Patient < ApplicationRecord
   # - last assessment is null
   # - latest assessment date is before the beginning of the day in patient local
   #   time for (time now - reporting_period_minutes).beginning of day
-  scope :has_not_reported_recently, lambda {
+  scope :has_not_reported_recently, lambda { |reporting_period|
     where(
       # Converting to a timezone, then casting to date effectively gives us
       # the start of the day in that timezone to make comparisons with.
@@ -329,7 +299,7 @@ class Patient < ApplicationRecord
       # Example: 1 day reporting period => was patient last assessment before midnight today?
       # Example: 2 day reporting period => was patient last assessment before midnight yesterday?
       # Example: 7 day reporting period => was patient last assessment before midnight 6 days ago?
-      (@reporting_period / 1440).to_i,
+      (reporting_period / 1440).to_i,
       Time.now.getlocal('-00:00')
     )
   }
@@ -422,36 +392,36 @@ class Patient < ApplicationRecord
   }
 
   # Individuals who have reported recently and are not symptomatic (includes patients in both exposure & isolation workflows)
-  scope :asymptomatic, lambda {
+  scope :asymptomatic, lambda { |reporting_period|
     where(monitoring: true)
       .where(purged: false)
       .where(public_health_action: 'None')
       .where(symptom_onset: nil)
-      .where('latest_assessment_at >= ?', @reporting_period.minutes.ago)
+      .where('latest_assessment_at >= ?', reporting_period.minutes.ago)
       .or(
         where(monitoring: true)
         .where(purged: false)
         .where(public_health_action: 'None')
         .where(symptom_onset: nil)
-        .where('patients.created_at >= ?', @reporting_period.minutes.ago)
+        .where('patients.created_at >= ?', reporting_period.minutes.ago)
       )
   }
 
   # Non reporting asymptomatic individuals (includes patients in both exposure & isolation workflows)
-  scope :non_reporting, lambda {
+  scope :non_reporting, lambda { |reporting_period|
     where(monitoring: true)
       .where(purged: false)
       .where(public_health_action: 'None')
       .where(symptom_onset: nil)
       .where(latest_assessment_at: nil)
-      .where('patients.created_at < ?', @reporting_period.minutes.ago)
+      .where('patients.created_at < ?', reporting_period.minutes.ago)
       .or(
         where(monitoring: true)
         .where(purged: false)
         .where(public_health_action: 'None')
         .where(symptom_onset: nil)
-        .where('latest_assessment_at < ?', @reporting_period.minutes.ago)
-        .where('patients.created_at < ?', @reporting_period.minutes.ago)
+        .where('latest_assessment_at < ?', reporting_period.minutes.ago)
+        .where('patients.created_at < ?', reporting_period.minutes.ago)
       )
   }
 
@@ -484,13 +454,13 @@ class Patient < ApplicationRecord
   }
 
   # Non reporting asymptomatic individuals (exposure workflow only)
-  scope :exposure_non_reporting, lambda {
-    where(isolation: false).non_reporting
+  scope :exposure_non_reporting, lambda { |reporting_period|
+    where(isolation: false).non_reporting(reporting_period)
   }
 
   # Individuals who have reported recently and are not symptomatic (exposure workflow only)
-  scope :exposure_asymptomatic, lambda {
-    where(isolation: false).asymptomatic
+  scope :exposure_asymptomatic, lambda { |reporting_period|
+    where(isolation: false).asymptomatic(reporting_period)
   }
 
   # Individuals that meet the asymptomatic recovery definition (isolation workflow only)
@@ -500,7 +470,7 @@ class Patient < ApplicationRecord
       .where(isolation: true)
       .where(symptom_onset: nil)
       .where.not(latest_assessment_at: nil)
-      .where('first_positive_lab_at < ?', 10.days.ago)
+      .where('first_positive_lab_at < ?', 10.days.ago) # TODO: 10 should come from the playbook
       .where('extended_isolation IS NULL OR extended_isolation < ?', Date.today)
   }
 
@@ -509,14 +479,14 @@ class Patient < ApplicationRecord
     where(monitoring: true)
       .where(purged: false)
       .where(isolation: true)
-      .where('symptom_onset <= ?', 10.days.ago)
+      .where('symptom_onset <= ?', 10.days.ago) # TODO: 10 should come from the playbook
       .where(latest_fever_or_fever_reducer_at: nil)
       .where('extended_isolation IS NULL OR extended_isolation < ?', Date.today)
       .or(
         where(monitoring: true)
         .where(purged: false)
         .where(isolation: true)
-        .where('symptom_onset <= ?', 10.days.ago)
+        .where('symptom_onset <= ?', 10.days.ago) # TODO: 10 should come from the playbook
         .where('latest_fever_or_fever_reducer_at < ?', 24.hours.ago)
         .where('extended_isolation IS NULL OR extended_isolation < ?', Date.today)
       )
@@ -554,36 +524,36 @@ class Patient < ApplicationRecord
   }
 
   # Individuals not meeting review but are reporting (isolation workflow only)
-  scope :isolation_reporting, lambda {
+  scope :isolation_reporting, lambda { |reporting_period|
     where.not(id: Patient.unscoped.isolation_requiring_review)
          .where(monitoring: true)
          .where(purged: false)
          .where(isolation: true)
-         .where('latest_assessment_at >= ?', @reporting_period.minutes.ago)
+         .where('latest_assessment_at >= ?', reporting_period.minutes.ago)
          .or(
            where.not(id: Patient.unscoped.isolation_requiring_review)
            .where(monitoring: true)
            .where(purged: false)
            .where(isolation: true)
-           .where('patients.created_at >= ?', @reporting_period.minutes.ago)
+           .where('patients.created_at >= ?', reporting_period.minutes.ago)
          )
   }
 
   # Individuals not meeting review and are not reporting (isolation workflow only)
-  scope :isolation_non_reporting, lambda {
+  scope :isolation_non_reporting, lambda { |reporting_period|
     where.not(id: Patient.unscoped.isolation_requiring_review)
          .where(monitoring: true)
          .where(purged: false)
          .where(isolation: true)
          .where(latest_assessment_at: nil)
-         .where('patients.created_at < ?', @reporting_period.minutes.ago)
+         .where('patients.created_at < ?', reporting_period.minutes.ago)
          .or(
            where.not(id: Patient.unscoped.isolation_requiring_review)
            .where(monitoring: true)
            .where(purged: false)
            .where(isolation: true)
-           .where('latest_assessment_at < ?', @reporting_period.minutes.ago)
-           .where('patients.created_at < ?', @reporting_period.minutes.ago)
+           .where('latest_assessment_at < ?', reporting_period.minutes.ago)
+           .where('patients.created_at < ?', reporting_period.minutes.ago)
          )
   }
 
@@ -606,28 +576,28 @@ class Patient < ApplicationRecord
   }
 
   # All individuals with the given monitoring status
-  scope :monitoring_status, lambda { |monitoring_status|
+  scope :monitoring_status, lambda { |_monitoring_period, reporting_period|
     case monitoring_status
     when 'Symptomatic'
       symptomatic
     when 'Non-Reporting'
-      non_reporting
+      non_reporting(reporting_period)
     when 'Asymptomatic'
-      asymptomatic
+      asymptomatic(reporting_period)
     when 'Exposure Symptomatic'
       exposure_symptomatic
     when 'Exposure Non-Reporting'
       exposure_non_reporting
     when 'Exposure Asymptomatic'
-      exposure_asymptomatic
+      exposure_asymptomatic(reporting_period)
     when 'Exposure PUI'
       exposure_under_investigation
     when 'Isolation Requiring Review'
       isolation_requiring_review
     when 'Isolation Non-Reporting'
-      isolation_non_reporting
+      isolation_non_reporting(reporting_period)
     when 'Isolation Reporting'
-      isolation_reporting
+      isolation_reporting(reporting_period)
     end
   }
 
@@ -724,7 +694,7 @@ class Patient < ApplicationRecord
   # - last exposure date is on or after (today - 'monitoring_period_days') in patient local time
   #    OR
   # - last exposure date is null and created date is on or after (today - 'monitoring_period_days') in patient local time
-  scope :end_of_monitoring_period, lambda {
+  scope :end_of_monitoring_period, lambda { |monitoring_period|
     where(continuous_exposure: false)
       .where(
         '('\
@@ -736,9 +706,9 @@ class Patient < ApplicationRecord
         '  DATE_ADD(DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone)), INTERVAL ? DAY)'\
         '    <= DATE(CONVERT_TZ(?, "UTC", patients.time_zone))'\
         ')',
-        @period,
+        monitoring_period,
         Time.now.getlocal('-00:00'),
-        @period,
+        monitoring_period,
         Time.now.getlocal('-00:00')
       )
   }
@@ -756,15 +726,15 @@ class Patient < ApplicationRecord
   #  OR
   #
   #  - non-reporting in isolation workflow (see explanation below)
-  scope :close_eligible, lambda { |reason = nil|
-    base_scope = exposure_asymptomatic
+  scope :close_eligible, lambda { |monitoring_period, reporting_period, reason = nil|
+    base_scope = exposure_asymptomatic(reporting_period)
                  .submitted_assessment_today
-                 .end_of_monitoring_period
+                 .end_of_monitoring_period(monitoring_period)
 
     # If extended isolation date is set on a patient in isolation, then they must be at least two
     # days PAST the extended isolation date to be eligible for closure. This gives those patients
     # a chance to be moved back to the RRR line list if they are eligible for that.
-    no_recent_activity_isolation = isolation_non_reporting
+    no_recent_activity_isolation = isolation_non_reporting(reporting_period)
                                    .where(
                                      'patients.extended_isolation IS NULL'\
                                      ' OR DATE(CONVERT_TZ(?, "UTC", patients.time_zone)) >= patients.extended_isolation',
@@ -776,9 +746,9 @@ class Patient < ApplicationRecord
     #
     # To be eligible, the patient must not have continuous_exposure enabled and it must be
     # past their last date of monitoring.
-    no_recent_activity_exposure = exposure_non_reporting
+    no_recent_activity_exposure = exposure_non_reporting(reporting_period)
                                   .where('updated_at <= ?', 30.days.ago)
-                                  .end_of_monitoring_period
+                                  .end_of_monitoring_period(monitoring_period)
     no_recent_activity = no_recent_activity_isolation.or(no_recent_activity_exposure)
 
     case reason
@@ -789,9 +759,9 @@ class Patient < ApplicationRecord
     when :no_recent_activity
       no_recent_activity
     when :enrolled_last_day_monitoring_period
-      base_scope.enrolled_last_day_monitoring_period
+      base_scope.enrolled_last_day_monitoring_period(monitoring_period)
     when :enrolled_past_monitioring_period
-      base_scope.enrolled_past_monitoring_period
+      base_scope.enrolled_past_monitoring_period(monitoring_period)
     else
       throw Exception.new('Invalid reason provided to close_eligible scope!')
     end
@@ -801,12 +771,12 @@ class Patient < ApplicationRecord
   # - `last_date_of_exposure` is NOT NULL
   #    AND
   # - `last_date_of_exposure` is more than `monitoring_period_days` days ago
-  scope :enrolled_past_monitoring_period, lambda {
+  scope :enrolled_past_monitoring_period, lambda { |monitoring_period|
     where.not(last_date_of_exposure: nil)
          .where(
            'DATE_ADD(DATE(patients.last_date_of_exposure), INTERVAL ? DAY)'\
            ' < DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone))',
-           @period
+           monitoring_period
          )
   }
 
@@ -814,12 +784,12 @@ class Patient < ApplicationRecord
   # - `last_date_of_exposure` is NOT NULL
   #    AND
   # - `last_date_of_exposure` + `monitoring_period_days` equals the `created_at` date
-  scope :enrolled_last_day_monitoring_period, lambda {
+  scope :enrolled_last_day_monitoring_period, lambda { |monitoring_period|
     where.not(last_date_of_exposure: nil)
          .where(
            'DATE_ADD(DATE(patients.last_date_of_exposure), INTERVAL ? DAY)'\
            ' = DATE(CONVERT_TZ(patients.created_at, "UTC", patients.time_zone))',
-           @period
+           monitoring_period
          )
   }
 
@@ -973,21 +943,21 @@ class Patient < ApplicationRecord
   #    - within monitoring period based on LDE
   #     OR
   #    - within monitoring period based on creation date if no LDE specified
-  def active_dependents
-    monitoring_days_ago = period.days.ago.beginning_of_day
+  def active_dependents(monitoring_period)
+    monitoring_days_ago = monitoring_period.days.ago.beginning_of_day
     dependents.where(purged: false, monitoring: true)
               .where('isolation = ? OR continuous_exposure = ? OR last_date_of_exposure >= ? OR (last_date_of_exposure IS NULL AND created_at >= ?)',
                      true, true, monitoring_days_ago, monitoring_days_ago)
   end
 
   # Get all dependents (excluding self if id = responder_id) that are being monitored
-  def active_dependents_exclude_self
-    active_dependents.where.not(id: id)
+  def active_dependents_exclude_self(monitoring_period)
+    active_dependents(monitoring_period).where.not(id: id)
   end
 
   # Get all dependents and always include self even if self is not active
-  def active_dependents_and_self
-    ([self] + active_dependents).uniq
+  def active_dependents_and_self(monitoring_period)
+    ([self] + active_dependents(monitoring_period)).uniq
   end
 
   # Get this patient's dependents excluding itself
@@ -1001,12 +971,12 @@ class Patient < ApplicationRecord
   end
 
   # Single place for calculating the end of monitoring date for this subject.
-  def end_of_monitoring
+  def end_of_monitoring(monitoring_period)
     return 'Continuous Exposure' if continuous_exposure
-    return (last_date_of_exposure + period.days)&.to_s if last_date_of_exposure.present?
+    return (last_date_of_exposure + monitoring_period.days)&.to_s if last_date_of_exposure.present?
 
     # Check for created_at is necessary here because custom as_json is automatically called when enrolling a new patient, which calls this method indirectly.
-    return (created_at.to_date + period.days)&.to_s if created_at.present?
+    return (created_at.to_date + monitoring_period.days)&.to_s if created_at.present?
   end
 
   # Date when patient is expected to be purged (without any formatting)
@@ -1054,7 +1024,7 @@ class Patient < ApplicationRecord
   end
 
   # Send a daily assessment to this monitoree (if currently eligible).
-  def send_assessment
+  def send_assessment(monitoring_period)
     # Return UNLESS:
     # - in exposure: NOT closed AND within monitoring period OR
     # - in isolation: NOT closed (as patients on RRR linelist should receive notifications) OR
@@ -1064,10 +1034,10 @@ class Patient < ApplicationRecord
     # so we also have to check that someone receiving messages is not past they're monitoring period unless they're  in isolation,
     # continuous exposure, or have active dependents.
     start_of_exposure = last_date_of_exposure || created_at
-    return unless (monitoring && start_of_exposure >= period.days.ago.beginning_of_day) ||
+    return unless (monitoring && start_of_exposure >= monitoring_period.days.ago.beginning_of_day) ||
                   (monitoring && isolation) ||
                   (monitoring && continuous_exposure) ||
-                  active_dependents_exclude_self.exists?
+                  active_dependents_exclude_self(monitoring_period).exists?
 
     # Check last_assessment_reminder_sent before enqueueing to cover potential race condition of multiple reports
     # being sent out for the same monitoree.
@@ -1135,9 +1105,9 @@ class Patient < ApplicationRecord
 
   # Determine if this patient is eligible for receiving daily report messages; return
   # a boolean result to switch on, and a tailored message useful for user interfaces.
-  def report_eligibility
+  def report_eligibility(monitoring_period, reporting_period)
     report_cutoff_time = Time.now.getlocal('-04:00').beginning_of_day
-    reporting_period = (period + 1).days.ago
+    reporting_period = (reporting_period + 1).days.ago
     eligible = true
     sent = false
     reported = false
@@ -1160,7 +1130,7 @@ class Patient < ApplicationRecord
     end
 
     # Can't send messages to monitorees that are on the closed line list and have no active dependents.
-    if !monitoring && active_dependents.empty?
+    if !monitoring && active_dependents(monitoring_period).empty?
       eligible = false
 
       # If this person has dependents (is a HoH)
@@ -1185,7 +1155,7 @@ class Patient < ApplicationRecord
     unless isolation
       # Monitoring period has elapsed
       start_of_exposure = last_date_of_exposure || created_at
-      no_active_dependents = !active_dependents_exclude_self.exists?
+      no_active_dependents = !active_dependents_exclude_self(monitoring_period).exists?
       if start_of_exposure < reporting_period && !continuous_exposure && no_active_dependents
         eligible = false
         messages << { message: "Monitoree\'s monitoring period has elapsed and continuous exposure is not enabled", datetime: nil }

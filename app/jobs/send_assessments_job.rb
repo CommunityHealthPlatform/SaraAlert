@@ -2,10 +2,15 @@
 
 # SendAssessmentsJob: sends assessment reminder to patients
 class SendAssessmentsJob < ApplicationJob
+  include Orchestration::Orchestrator
   queue_as :mailers
 
+  def reporting_period_minutes
+    system_configuration(ADMIN_OPTIONS['playbook_name'], :reporting_period_minutes)
+  end
+
   def perform(*_args)
-    patient_ids = Patient.reminder_eligible.pluck(:id)
+    patient_ids = Patient.reminder_eligible(reporting_period_minutes).pluck(:id)
     eligible = patient_ids.size
 
     # Check what the max thread pool is for the DB since that is the limiting factor

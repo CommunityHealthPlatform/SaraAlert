@@ -2,6 +2,7 @@
 
 # Helper methods for the linelist and full history details
 module PatientDetailsHelper # rubocop:todo Metrics/ModuleLength
+  include Orchestration::Orchestrator
   # If preferred contact time is X,
   # then valid contact hours in patient's local timezone are Y.
   # 'Morning'   => 0800 - 1200
@@ -14,21 +15,24 @@ module PatientDetailsHelper # rubocop:todo Metrics/ModuleLength
   UNSPECIFIED_CONTACT_WINDOW = (12..16).freeze
   CUSTOM_CONTACT_OPTIONS = ('0'..'23').to_a.freeze
 
+  def reporting_period_minutes
+    system_configuration(ADMIN_OPTIONS['playbook_name'], :reporting_period_minutes)
+  end
+
+  def monitoring_period_days
+    system_configuration(ADMIN_OPTIONS['playbook_name'], :monitoring_period_days)
+  end
+
   # Current patient status
   def status
-    @reporting_period = if true # (enrolled_plan == "COVID")
-                          ADMIN_OPTIONS['covid_reporting_period_minutes']
-                        else # if (enrolled_plan == "Ebola")
-                          ADMIN_OPTIONS['test_reporting_period_minutes']
-                        end
     return :purged if purged
     return :closed unless monitoring
 
     unless isolation
       return :exposure_under_investigation if public_health_action != 'None'
       return :exposure_symptomatic unless symptom_onset.nil?
-      return :exposure_asymptomatic if (!latest_assessment_at.nil? && latest_assessment_at >= @reporting_period.minutes.ago) ||
-                                       (!created_at.nil? && created_at >= @reporting_period.minutes.ago)
+      return :exposure_asymptomatic if (!latest_assessment_at.nil? && latest_assessment_at >= reporting_period_minutes.minutes.ago) ||
+                                       (!created_at.nil? && created_at >= reporting_period_minutes.minutes.ago)
 
       return :exposure_non_reporting
     end
@@ -39,8 +43,8 @@ module PatientDetailsHelper # rubocop:todo Metrics/ModuleLength
                                              !symptom_onset.nil? && symptom_onset <= 10.days.ago && (!extended_isolation || extended_isolation < Date.today)
     return :isolation_test_based if !latest_assessment_at.nil? && (latest_fever_or_fever_reducer_at.nil? || latest_fever_or_fever_reducer_at < 24.hours.ago) &&
                                     negative_lab_count >= 2 && (!extended_isolation || extended_isolation < Date.today)
-    return :isolation_reporting if (!latest_assessment_at.nil? && latest_assessment_at >= @reporting_period.minutes.ago) ||
-                                   (!created_at.nil? && created_at >= @reporting_period.minutes.ago)
+    return :isolation_reporting if (!latest_assessment_at.nil? && latest_assessment_at >= reporting_period_minutes.minutes.ago) ||
+                                   (!created_at.nil? && created_at >= reporting_period_minutes.minutes.ago)
 
     :isolation_non_reporting
   end
@@ -53,7 +57,7 @@ module PatientDetailsHelper # rubocop:todo Metrics/ModuleLength
   # Information about this subject (that is useful in a linelist)
   def linelist
     {
-      end_of_monitoring: (continuous_exposure ? 'Continuous Exposure' : end_of_monitoring) || ''
+      end_of_monitoring: (continuous_exposure ? 'Continuous Exposure' : end_of_monitoring(monitoring_period_days)) || ''
     }
   end
 

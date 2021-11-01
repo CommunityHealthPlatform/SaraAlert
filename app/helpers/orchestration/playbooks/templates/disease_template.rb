@@ -232,6 +232,13 @@ module Orchestration::Playbooks::Templates::DiseaseTemplate # rubocop:todo Metri
           global: { label: 'Global Dashboard', icon: 'fa-globe' }
         }
       }
+    },
+    system: {
+      # Define primary, i.e., default, workflow to present on dashboard
+      primary_workflow: :exposure,
+      continuous_exposure_enabled: true,
+      reporting_period_minutes: 1440,
+      monitoring_period_days: 14
     }
   }.freeze
 end

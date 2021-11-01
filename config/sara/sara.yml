@@ -8,17 +8,17 @@ base_path: ''
 playbook_name: <%= ENV["ACTIVE_PLAYBOOK"] || 'covid_19' %>
 
 # How many days an enrolled monitoree should be monitored
-covid_monitoring_period_days: <%= ENV["COVID_MONITORING_PERIOD_DAYS"] || 14 %>
-ebola_monitoring_period_days: <%= ENV["EBOLA_MONITORING_PERIOD_DAYS"] || 7 %>
+# covid_monitoring_period_days: <%= ENV["COVID_MONITORING_PERIOD_DAYS"] || 14 %>
+# ebola_monitoring_period_days: <%= ENV["EBOLA_MONITORING_PERIOD_DAYS"] || 7 %>
 
 # How long a monitoree should be in isolation and considered non-reporting before we halt daily reports
 isolation_non_reporting_max_days: <%= ENV["SARA_ALERT_ISOLATION_NON_REPORING_MAX"] || 7 %>
 
 # How many minutes in a reporting period (hint: 1440 mins for 24 hours)
 reporting_period_minutes: <%= ENV["SARA_ALERT_REPORTING_PERIOD_MINUTES"] || 1440 %>
-covid_reporting_period_minutes: <%= ENV["COVID_SARA_ALERT_REPORTING_PERIOD_MINUTES"] || 1440 %>
-ebola_reporting_period_minutes: <%= ENV["EBOLA_SARA_ALERT_REPORTING_PERIOD_MINUTES"] || 1440 %>
-test_reporting_period_minutes: <%= ENV["test_SARA_ALERT_REPORTING_PERIOD_MINUTES"] || 2880 %>
+# covid_reporting_period_minutes: <%= ENV["COVID_SARA_ALERT_REPORTING_PERIOD_MINUTES"] || 1440 %>
+# ebola_reporting_period_minutes: <%= ENV["EBOLA_SARA_ALERT_REPORTING_PERIOD_MINUTES"] || 1440 %>
+# test_reporting_period_minutes: <%= ENV["test_SARA_ALERT_REPORTING_PERIOD_MINUTES"] || 2880 %>
 
 # How many minutes after a closed record last_update it can be purged
 purgeable_after: <%= ENV["SARA_ALERT_PURGEABLE_AFTER_MINUTES"] || 20160 %>

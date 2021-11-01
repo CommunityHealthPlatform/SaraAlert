@@ -67,7 +67,9 @@ module Orchestration::Playbooks::Covid19Playbook
     system: {
       # Define primary, i.e., default, workflow to present on dashboard
       primary_workflow: :exposure,
-      continuous_exposure_enabled: true
+      continuous_exposure_enabled: true,
+      reporting_period_minutes: 1440,
+      monitoring_period_days: 14
     }
   }.freeze
 end

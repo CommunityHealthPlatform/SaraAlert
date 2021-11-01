@@ -117,6 +117,4 @@ class Jurisdiction < ApplicationRecord
     end
     bool_symptom_labels.join(', ')
   end
-
-
 end

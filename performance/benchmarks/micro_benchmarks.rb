@@ -30,7 +30,7 @@ micro_results << benchmark(
   mode: :real,
   setup: proc { Timecop.travel(Time.now.utc.change(hour: 18)) },
   teardown: proc { Timecop.return }
-) { Patient.reminder_eligible.count }
+) { Patient.reminder_eligible(1440).count }
 
 divider
 
@@ -104,7 +104,7 @@ micro_results << benchmark(
     )
     # rubocop:enable Rails/SkipsModelValidations
   }
-) { Patient.close_eligible.count }
+) { Patient.close_eligible(14.days).count }
 
 divider
 

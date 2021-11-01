@@ -5,7 +5,12 @@ require 'test_case'
 # IMPORTANT NOTE ON CHANGES TO Time.now CALLS IN THIS FILE
 # Updated Time.now to Time.now.getlocal for Rails/TimeZone because Time.now defaulted to a zone. In this case it was the developer machine or CI/CD server zone.
 class ClosePatientsJobTest < ActiveSupport::TestCase
+  include Orchestration::Orchestrator
+
   def setup
+    @playbook = default_playbook
+    @reporting_period_minutes = system_configuration(@playbook, :reporting_period_minutes)
+    @monitoring_period_days = system_configuration(@playbook, :monitoring_period_days)
     ADMIN_OPTIONS['job_run_email'] = 'test@test.com'
     ENV['TWILLIO_STUDIO_FLOW'] = 'TEST'
     ActionMailer::Base.deliveries.clear
@@ -60,16 +65,11 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                      latest_assessment_at: Time.now.getlocal,
                      last_date_of_exposure: 20.days.ago)
 
-    # the LDOE will need to be updated to account for longer monitoring periods
-    @period = if true # (patient.enrolled_plan == "COVID")
-                ADMIN_OPTIONS['covid_monitoring_period_days']
-              else
-                ADMIN_OPTIONS['ebola_monitoring_period_days']
-              end
     ClosePatientsJob.perform_now
     updated_patient = Patient.find_by(id: patient.id)
     assert_equal(updated_patient.histories.last.history_type, History::HISTORY_TYPES[:record_automatically_closed])
-    assert_histories_contain(patient, "Monitoree closed by the system. Reason: Enrolled more than #{@period} days after last date of exposure (system)")
+    assert_histories_contain(patient,
+                             "Monitoree closed by the system. Reason: Enrolled more than #{@monitoring_period_days} days after last date of exposure (system)")
   end
 
   test 'creates correct monitoring reason when record has normally completed monitoring period' do
@@ -101,15 +101,11 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                      created_at: Time.now.getlocal)
 
     # the LDOE will need to be updated to account for longer monitoring periods
-    @period = if true # (patient.enrolled_plan == "COVID")
-                ADMIN_OPTIONS['covid_monitoring_period_days']
-              else
-                ADMIN_OPTIONS['ebola_monitoring_period_days']
-              end
     ClosePatientsJob.perform_now
     updated_patient = Patient.find_by(id: patient.id)
-    assert_equal(updated_patient.monitoring_reason, "Enrolled more than #{@period} days after last date of exposure (system)")
-    assert_histories_contain(patient, "Monitoree closed by the system. Reason: Enrolled more than #{@period} days after last date of exposure (system)")
+    assert_equal(updated_patient.monitoring_reason, "Enrolled more than #{@monitoring_period_days} days after last date of exposure (system)")
+    assert_histories_contain(patient,
+                             "Monitoree closed by the system. Reason: Enrolled more than #{@monitoring_period_days} days after last date of exposure (system)")
   end
 
   test 'creates correct monitoring reason when record was enrolled on their last day of monitoring' do
@@ -123,8 +119,8 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                      last_date_of_exposure: 14.days.ago,
                      created_at: Time.now.getlocal)
     patient.update(last_date_of_exposure: patient.curr_date_in_timezone.to_date - 14.days)
-    assert_not_nil Patient.enrolled_last_day_monitoring_period.find_by(id: patient.id)
-    assert_not_nil Patient.close_eligible(:enrolled_last_day_monitoring_period).find_by(id: patient.id)
+    assert_not_nil Patient.enrolled_last_day_monitoring_period(@monitoring_period_days).find_by(id: patient.id)
+    assert_not_nil Patient.close_eligible(Patient.enrolled_last_day_monitoring_period(@monitoring_period_days)).find_by(id: patient.id)
     ClosePatientsJob.perform_now
     updated_patient = Patient.find_by(id: patient.id)
     assert_equal(updated_patient.monitoring_reason, 'Enrolled on last day of monitoring period (system)')
@@ -175,15 +171,11 @@ class ClosePatientsJobTest < ActiveSupport::TestCase
                      preferred_contact_method: 'E-mailed Web Link')
 
     # the LDOE will need to be updated to account for longer monitoring periods
-    @period = if true # (patient.enrolled_plan == "COVID")
-                ADMIN_OPTIONS['covid_monitoring_period_days']
-              else
-                ADMIN_OPTIONS['ebola_monitoring_period_days']
-              end
     patient.jurisdiction.update(send_close: false)
     ClosePatientsJob.perform_now
     assert_equal(ActionMailer::Base.deliveries.count, 1)
-    assert_histories_contain(patient, "Monitoree closed by the system. Reason: Enrolled more than #{@period} days after last date of exposure (system)")
+    assert_histories_contain(patient,
+                             "Monitoree closed by the system. Reason: Enrolled more than #{@monitoring_period_days} days after last date of exposure (system)")
   end
 
   ['Telephone call', 'Opt-out', 'Unknown', nil, ''].each do |preferred_contact_method|

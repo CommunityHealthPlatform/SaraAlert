@@ -2,30 +2,33 @@
 
 # ClosePatientsJob: closes patient records based on criteria
 class ClosePatientsJob < ApplicationJob
-  def period
-    if true # (enrolled_plan == "COVID")
-      ADMIN_OPTIONS['covid_monitoring_period_days']
-    else
-      ADMIN_OPTIONS['ebola_monitoring_period_days']
-    end
+  def reporting_period_minutes
+    system_configuration(ADMIN_OPTIONS['playbook_name'], :reporting_period_minutes)
+  end
+
+  def monitoring_period_days
+    system_configuration(ADMIN_OPTIONS['playbook_name'], :monitoring_period_days)
   end
   queue_as :default
 
   def perform(*_args)
+    # need to do this for all workflows
+
     # This preloads all jurisdiction send_close so that they can be fetched
     # quickly while the job is iterating through patients.
     juris_send_close = Jurisdiction.pluck(:id, :send_close).to_h
 
     # Gather patients in groups of criteria
-    enrolled_past_monitioring_period = Patient.close_eligible(:enrolled_past_monitioring_period)
-    enrolled_last_day_monitoring_period = Patient.close_eligible(:enrolled_last_day_monitoring_period)
-    no_recent_activity = Patient.close_eligible(:no_recent_activity)
-    completed_monitoring = Patient.close_eligible(:completed_monitoring)
+    # these values should come from playbooks
+    enrolled_past_monitioring_period = Patient.close_eligible(Patient.enrolled_past_monitioring_period(monitoring_period_days))
+    enrolled_last_day_monitoring_period = Patient.close_eligible(Patient.enrolled_last_day_monitoring_period(monitoring_period_days))
+    no_recent_activity = Patient.close_eligible(Patient.no_recent_activity(monitoring_period_days))
+    completed_monitoring = Patient.close_eligible(Patient.completed_monitoring(monitoring_period_days))
     # Close patients using the scopes that have not been executed yet.
-    monitoring_period = period
     results = combine_batch_results(
       [
-        perform_batch(enrolled_past_monitioring_period, "Enrolled more than #{monitoring_period} days after last date of exposure (system)", juris_send_close),
+        perform_batch(enrolled_past_monitioring_period, "Enrolled more than #{monitoring_period_days} days after last date of exposure (system)",
+                      juris_send_close),
         perform_batch(enrolled_last_day_monitoring_period, 'Enrolled on last day of monitoring period (system)', juris_send_close),
         perform_batch(no_recent_activity, 'No record activity for 30 days (system)', juris_send_close),
         perform_batch(completed_monitoring, 'Completed Monitoring (system)', juris_send_close, completed_message: true)

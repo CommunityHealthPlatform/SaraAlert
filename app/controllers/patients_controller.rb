@@ -172,25 +172,27 @@ class PatientsController < ApplicationController
 
     patient.monitoring_infos = []
     # Generate monitoring info
-    params.require(:monitoring_infos).each do | monitoring_program, monitoring_info | 
+    params.require(:monitoring_infos).each do |monitoring_program, _monitoring_info|
       # For now assume monitoring_program is id
       mp = MonitoringProgram.find(monitoring_program)
-      next if mp.nil? 
+      next if mp.nil?
 
       # Assume that we can't enroll patient in monitoring program that we're not monitoring for and target jurisdiction isn't monitoring for
-      matches = JurisdictionMonitoringProgram.where(:jurisdiction_id => [current_user.jurisdiction.id, patient.jurisdiction.id])
-                                     .where(:monitoring_program_id => monitoring_program).count
-            
+      matches = JurisdictionMonitoringProgram.where(jurisdiction_id: [current_user.jurisdiction.id, patient.jurisdiction.id])
+                                             .where(monitoring_program_id: monitoring_program).count
 
-      render(json: { message: "Monitoree cannot be enrolled in monitoring program." }, status: 400) && return unless matches == (patient.jurisdiction.id == current_user.jurisdiction.id ? 1 : 2)
+      unless matches == (patient.jurisdiction.id == current_user.jurisdiction.id ? 1 : 2)
+        render(json: { message: 'Monitoree cannot be enrolled in monitoring program.' },
+               status: 400) && return
+      end
 
       # Otherwise we'll make a new monitoring info object and attach it to the patient
       mi = MonitoringInfo.new(monitoring_info_allowed_params(monitoring_program))
       mi.monitoring_program = mp
       patient.monitoring_infos << mi
-    end 
+    end
 
-    render(json: { message: "Monitoree must be enrolled in a valid monitoring program." }, status: 400 ) && return if patient.monitoring_infos.empty?
+    render(json: { message: 'Monitoree must be enrolled in a valid monitoring program.' }, status: 400) && return if patient.monitoring_infos.empty?
 
     # Attempt to save and continue; else if failed redirect to index
     render(json: patient.errors, status: 422) && return unless patient.save
@@ -855,7 +857,7 @@ class PatientsController < ApplicationController
     render json: patients
   end
 
-   # TODO: Noted that this is a duplicate
+  # TODO: Noted that this is a duplicate
   def patient_allowed_params
     params.require(:patient).permit(
       :user_defined_id_statelocal,

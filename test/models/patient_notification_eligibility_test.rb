@@ -29,14 +29,14 @@ class PatientNotificationEligibilityTest < ActiveSupport::TestCase
   end
 
   def assert_eligible(patient)
-    scope_eligible = !Patient.better_reminder_eligible.find_by(id: patient.id).nil?
+    scope_eligible = !Patient.better_reminder_eligible(1440).find_by(id: patient.id).nil?
     puts patient.report_eligibility unless scope_eligible
     puts "\nFailing scope eligible test with: #{format_patient_str(patient)}" unless scope_eligible
     assert scope_eligible
   end
 
   def assert_ineligible(patient)
-    scope_eligible = !Patient.better_reminder_eligible.find_by(id: patient.id).nil?
+    scope_eligible = !Patient.better_reminder_eligible(1440).find_by(id: patient.id).nil?
     puts patient.report_eligibility if scope_eligible
     puts "\nFailing scope ineligible test with: #{format_patient_str(patient)}" if scope_eligible
     assert_not scope_eligible
