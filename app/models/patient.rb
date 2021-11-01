@@ -949,6 +949,13 @@ class Patient < ApplicationRecord
                      true, true, monitoring_days_ago, monitoring_days_ago)
   end
 
+    def active_dependents_with_monitoring_programs
+    monitoring_days_ago = ADMIN_OPTIONS['monitoring_period_days'].days.ago.beginning_of_day
+    dependents.where(purged: false, monitoring: true)
+              .where('isolation = ? OR continuous_exposure = ? OR last_date_of_exposure >= ? OR (last_date_of_exposure IS NULL AND created_at >= ?)',
+                     true, true, monitoring_days_ago, monitoring_days_ago)
+  end
+
   # Get all dependents (excluding self if id = responder_id) that are being monitored
   def active_dependents_exclude_self
     active_dependents.where.not(id: id)

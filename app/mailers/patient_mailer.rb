@@ -8,11 +8,17 @@ class PatientMailer < ApplicationMailer
     # Should not be sending enrollment email if no valid email
     return if patient&.email.blank?
 
+
+
     # Gather patients and jurisdictions
     # patient.dependents includes the patient themselves if patient.id = patient.responder_id (which should be the case)
     @patients = patient.active_dependents.uniq.map do |dependent|
-      { patient: dependent, jurisdiction_unique_id: Jurisdiction.find_by_id(dependent.jurisdiction_id).unique_identifier }
+      { patient: dependent,
+        jurisdiction_unique_id: Jurisdiction.find_by_id(dependent.jurisdiction_id).unique_identifier,
+        monitoring_programs: MonitoringInfo.joins(:monitoring_program).select('monitoring_programs.*').where(patient_id: dependent.id) }
     end
+
+
     @lang = patient.select_language
     @contact_info = patient.jurisdiction.contact_info
     mail(to: patient.email&.strip, subject: I18n.t('assessments.html.email.enrollment.subject', locale: @lang)) do |format|

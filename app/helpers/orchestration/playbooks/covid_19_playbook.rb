@@ -55,8 +55,10 @@ module Orchestration::Playbooks::Covid19Playbook
     general: {
       base: INFECTIOUS[:general], custom_options: {
         patient_page_sections: {
-          type: 'base',
-          config: {}
+          type: 'subset',
+          config: {
+            set: %i[history]
+          }
         },
         monitoring_dashboard_buttons: {
           type: 'base',

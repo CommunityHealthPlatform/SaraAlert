@@ -157,52 +157,52 @@ class Enrollment extends React.Component {
     data['bypass_duplicate'] = false;
 
     console.log(data);
-    // axios({
-    //   method: this.props.edit_mode ? 'patch' : 'post',
-    //   url: window.BASE_PATH + (this.props.edit_mode ? '/patients/' + this.props.patient.id : '/patients'),
-    //   data: data,
-    // })
-    //   .then(response => {
-    //     if (response.data && response.data.is_duplicate) {
-    //       const dupFieldData = response.data.duplicate_field_data;
-    //       const patientType = this.state.enrollmentState.patient.isolation ? 'case' : 'monitoree';
+    axios({
+      method: this.props.edit_mode ? 'patch' : 'post',
+      url: window.BASE_PATH + (this.props.edit_mode ? '/patients/' + this.props.patient.id : '/patients'),
+      data: data,
+    })
+      .then(response => {
+        if (response.data && response.data.is_duplicate) {
+          const dupFieldData = response.data.duplicate_field_data;
+          const patientType = this.state.enrollmentState.patient.isolation ? 'case' : 'monitoree';
 
-    //       let text = `This ${patientType} already appears to exist in the system! `;
+          let text = `This ${patientType} already appears to exist in the system! `;
 
-    //       if (dupFieldData) {
-    //         // Format matching fields and associated counts for text display
-    //         for (const fieldData of dupFieldData) {
-    //           text += `There ${fieldData.count > 1 ? `are ${fieldData.count} records` : 'is 1 record'}  with matching values in the following field(s): `;
-    //           let field;
-    //           for (let i = 0; i < fieldData.fields.length; i++) {
-    //             // parseInt() to satisfy eslint-security
-    //             field = fieldData.fields[parseInt(i)];
-    //             if (fieldData.fields.length > 1) {
-    //               text += i == fieldData.fields.length - 1 ? `and ${field}. ` : `${field}, `;
-    //             } else {
-    //               text += `${field}. `;
-    //             }
-    //           }
-    //         }
-    //       }
-    //       text += ` Are you sure you want to enroll this ${patientType}?`;
+          if (dupFieldData) {
+            // Format matching fields and associated counts for text display
+            for (const fieldData of dupFieldData) {
+              text += `There ${fieldData.count > 1 ? `are ${fieldData.count} records` : 'is 1 record'}  with matching values in the following field(s): `;
+              let field;
+              for (let i = 0; i < fieldData.fields.length; i++) {
+                // parseInt() to satisfy eslint-security
+                field = fieldData.fields[parseInt(i)];
+                if (fieldData.fields.length > 1) {
+                  text += i == fieldData.fields.length - 1 ? `and ${field}. ` : `${field}, `;
+                } else {
+                  text += `${field}. `;
+                }
+              }
+            }
+          }
+          text += ` Are you sure you want to enroll this ${patientType}?`;
 
-    //       // Duplicate, ask if want to continue with create
-    //       this.handleConfirmDuplicate(data, groupMember, message, reenableButtons, text);
-    //     } else {
-    //       // Success, inform user and redirect to home
-    //       toast.success(message, {
-    //         onClose: () =>
-    //           (location.href =
-    //             `${window.BASE_PATH}/patients/` +
-    //             (groupMember ? `${response['data']['responder_id']}/group` : response['data']['id']) +
-    //             navQueryParam(this.props.workflow, true)),
-    //       });
-    //     }
-    //   })
-    //   .catch(err => {
-    //     reportError(err);
-    //   });
+          // Duplicate, ask if want to continue with create
+          this.handleConfirmDuplicate(data, groupMember, message, reenableButtons, text);
+        } else {
+          // Success, inform user and redirect to home
+          toast.success(message, {
+            onClose: () =>
+              (location.href =
+                `${window.BASE_PATH}/patients/` +
+                (groupMember ? `${response['data']['responder_id']}/group` : response['data']['id']) +
+                navQueryParam(this.props.workflow, true)),
+          });
+        }
+      })
+      .catch(err => {
+        reportError(err);
+      });
   };
 
   next = () => {
