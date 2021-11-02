@@ -57,11 +57,20 @@ class Patient extends React.Component {
    * @param {String} section - title of the monitoree details section
    * @param {Number} enrollmentStep - the number of the step for the section within the enrollment wizard
    */
-  renderEditLink(section, enrollmentStep) {
+  renderEditLink(section, enrollmentStep, monitoringInfoIndex) {
     let sectionId = `edit-${section.replace(/\s+/g, '_').toLowerCase()}-btn`;
     if (this.props.goto) {
       return (
-        <Button variant="link" id={sectionId} className="edit-link p-0" onClick={() => this.props.goto(enrollmentStep)} aria-label={`Edit ${section}`}>
+        // TO DO: SET ACTIVE MONITORING INFO
+        <Button
+          variant="link"
+          id={sectionId}
+          className="edit-link p-0"
+          onClick={() => {
+            this.props.goto(enrollmentStep);
+            this.props.setMonitoringInfoIndex(monitoringInfoIndex || null);
+          }}
+          aria-label={`Edit ${section}`}>
           Edit
         </Button>
       );
@@ -112,28 +121,6 @@ class Patient extends React.Component {
       this.props.details.foreign_monitored_address_state ||
       this.props.details.foreign_monitored_address_zip ||
       this.props.details.foreign_monitored_address_county;
-    const showArrivalSection =
-      this.props.details.port_of_origin ||
-      this.props.details.date_of_departure ||
-      this.props.details.flight_or_vessel_carrier ||
-      this.props.details.flight_or_vessel_number ||
-      this.props.details.port_of_entry_into_usa ||
-      this.props.details.date_of_arrival;
-    const showPlannedTravel =
-      this.props.details.additional_planned_travel_type ||
-      this.props.details.additional_planned_travel_destination_country ||
-      this.props.details.additional_planned_travel_destination_state ||
-      this.props.details.additional_planned_travel_port_of_departure ||
-      this.props.details.additional_planned_travel_start_date ||
-      this.props.details.additional_planned_travel_end_date;
-    const showRiskFactors =
-      this.props.details.contact_of_known_case ||
-      this.props.details.member_of_a_common_exposure_cohort ||
-      this.props.details.travel_to_affected_country_or_area ||
-      this.props.details.was_in_health_care_facility_with_known_cases ||
-      this.props.details.laboratory_personnel ||
-      this.props.details.healthcare_personnel ||
-      this.props.details.crew_on_passenger_or_cargo_flight;
 
     return (
       <React.Fragment>
@@ -168,9 +155,6 @@ class Patient extends React.Component {
                   <span className="d-none d-md-inline">Assigned</span> Jurisdiction:
                 </b>{' '}
                 {this.props.jurisdiction_paths[this.props.details.jurisdiction_id] || '--'}
-              </div>
-              <div id="assigned-user">
-                <b>Assigned User:</b> {this.props.details.assigned_user || '--'}
               </div>
             </div>
           </Col>
@@ -304,7 +288,7 @@ class Patient extends React.Component {
         <Collapse in={this.state.expanded}>
           <div>
             <Row>
-              <Col id="address" lg={14} xl={12} className="col-xxxl-10">
+              <Col id="address" lg={12}>
                 <div className="section-header">
                   <Heading level={rootHeaderLevel + 1} className="section-title">
                     Address
@@ -416,271 +400,303 @@ class Patient extends React.Component {
                   </Row>
                 )}
               </Col>
-              {/* <Col lg={10} xl={12} className="col-xxxl-14">
-                <Row>
-                  <Col id="arrival-information" xl={24} className="col-xxxl-12">
-                    <div className="section-header">
-                      <Heading level={rootHeaderLevel + 1} className="section-title">
-                        Arrival Information
-                      </Heading>
-                      {this.renderEditLink('Arrival Information', 3)}
-                    </div>
-                    {!(showArrivalSection || this.props.details.travel_related_notes) && <div className="none-text">None</div>}
-                    {showArrivalSection && (
-                      <Row>
-                        <Col md={12} lg={24} xl={12} className="item-group">
-                          <p className="subsection-title">Departed</p>
-                          <div>
-                            <b>Port of Origin:</b> <span>{this.props.details.port_of_origin || '--'}</span>
-                          </div>
-                          <div>
-                            <b>Date of Departure:</b>{' '}
-                            <span>
-                              {this.props.details.date_of_departure ? moment(this.props.details.date_of_departure, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}
-                            </span>
-                          </div>
-                        </Col>
-                        <Col md={12} lg={24} xl={12} className="item-group">
-                          <p className="subsection-title">Arrival</p>
-                          <div>
-                            <b>Port of Entry:</b> <span>{this.props.details.port_of_entry_into_usa || '--'}</span>
-                          </div>
-                          <div>
-                            <b>Date of Arrival:</b>{' '}
-                            <span>
-                              {this.props.details.date_of_arrival ? moment(this.props.details.date_of_arrival, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}
-                            </span>
-                          </div>
-                        </Col>
-                        <Col className="item-group">
-                          <div>
-                            <b>Carrier:</b> <span>{this.props.details.flight_or_vessel_carrier || '--'}</span>
-                          </div>
-                          <div>
-                            <b>Flight or Vessel #:</b> <span>{this.props.details.flight_or_vessel_number || '--'}</span>
-                          </div>
-                        </Col>
-                      </Row>
-                    )}
-                    {this.props.details.travel_related_notes && (
-                      <div className="notes-section">
-                        <p className="subsection-title">Notes</p>
-                        {this.props.details.travel_related_notes.length < 400 && <div className="notes-text">{this.props.details.travel_related_notes}</div>}
-                        {this.props.details.travel_related_notes.length >= 400 && (
-                          <React.Fragment>
-                            <div className="notes-text">
-                              {this.state.expandArrivalNotes
-                                ? this.props.details.travel_related_notes
-                                : this.props.details.travel_related_notes.slice(0, 400) + ' ...'}
-                            </div>
-                            <Button
-                              variant="link"
-                              className="notes-button p-0"
-                              onClick={() => this.setState({ expandArrivalNotes: !this.state.expandArrivalNotes })}>
-                              {this.state.expandArrivalNotes ? '(Collapse)' : '(View all)'}
-                            </Button>
-                          </React.Fragment>
-                        )}
-                      </div>
-                    )}
-                  </Col>
-                  <Col id="planned-travel" xl={24} className="col-xxxl-12">
-                    <div className="section-header">
-                      <Heading level={rootHeaderLevel + 1} className="section-title">
-                        <span className="d-none d-lg-inline d-xl-none d-xxl-inline">Additional </span>Planned Travel
-                      </Heading>
-                      {this.renderEditLink('Planned Travel', 4)}
-                    </div>
-                    {!(showPlannedTravel || this.props.details.additional_planned_travel_related_notes) && <div className="none-text">None</div>}
-                    {showPlannedTravel && (
-                      <div className="item-group">
-                        <div>
-                          <b>Type:</b> <span>{this.props.details.additional_planned_travel_type || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Place:</b>{' '}
-                          <span>
-                            {this.props.details.additional_planned_travel_destination_country}
-                            {this.props.details.additional_planned_travel_destination_state}
-                            {!this.props.details.additional_planned_travel_destination_country &&
-                              !this.props.details.additional_planned_travel_destination_state &&
-                              '--'}
-                          </span>
-                        </div>
-                        <div>
-                          <b>Port of Departure:</b> <span>{this.props.details.additional_planned_travel_port_of_departure || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Start Date:</b>{' '}
-                          <span>
-                            {this.props.details.additional_planned_travel_start_date
-                              ? moment(this.props.details.additional_planned_travel_start_date, 'YYYY-MM-DD').format('MM/DD/YYYY')
-                              : '--'}
-                          </span>
-                        </div>
-                        <div>
-                          <b>End Date:</b>{' '}
-                          <span>
-                            {this.props.details.additional_planned_travel_end_date
-                              ? moment(this.props.details.additional_planned_travel_end_date, 'YYYY-MM-DD').format('MM/DD/YYYY')
-                              : '--'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {this.props.details.additional_planned_travel_related_notes && (
-                      <div className="notes-section">
-                        <p className="subsection-title">Notes</p>
-                        {this.props.details.additional_planned_travel_related_notes.length < 400 && (
-                          <div className="notes-text">{this.props.details.additional_planned_travel_related_notes}</div>
-                        )}
-                        {this.props.details.additional_planned_travel_related_notes.length >= 400 && (
-                          <React.Fragment>
-                            <div className="notes-text">
-                              {this.state.expandPlannedTravelNotes
-                                ? this.props.details.additional_planned_travel_related_notes
-                                : this.props.details.additional_planned_travel_related_notes.slice(0, 400) + ' ...'}
-                            </div>
-                            <Button
-                              variant="link"
-                              className="notes-button p-0"
-                              onClick={() => this.setState({ expandPlannedTravelNotes: !this.state.expandPlannedTravelNotes })}>
-                              {this.state.expandPlannedTravelNotes ? '(Collapse)' : '(View all)'}
-                            </Button>
-                          </React.Fragment>
-                        )}
-                      </div>
-                    )}
-                  </Col>
-                </Row>
-              </Col> */}
             </Row>
-            {/* <Row>
-              <Col id="potential-exposure-information" md={14} xl={12} className={this.props.details.isolation ? 'col-xxxl-8' : 'col-xxxl-10'}>
-                <div className="section-header">
-                  <Heading level={rootHeaderLevel + 1} className="section-title">
-                    Potential Exposure<span className="d-none d-lg-inline"> Information</span>
-                  </Heading>
-                  {this.renderEditLink('Potential Exposure Information', 5)}
-                </div>
-                <div className="item-group">
-                  <div>
-                    <b>Last Date of Exposure:</b>{' '}
-                    <span>
-                      {this.props.details.last_date_of_exposure ? moment(this.props.details.last_date_of_exposure, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}
-                    </span>
-                  </div>
-                  <div>
-                    <b>Exposure Location:</b> <span>{this.props.details.potential_exposure_location || '--'}</span>
-                  </div>
-                  <div>
-                    <b>Exposure Country:</b> <span>{this.props.details.potential_exposure_country || '--'}</span>
-                  </div>
-                </div>
-                <p className="subsection-title">Risk Factors</p>
-                {!showRiskFactors && <div className="none-text">None specified</div>}
-                {showRiskFactors && (
-                  <ul className="risk-factors">
-                    {this.props.details.contact_of_known_case && (
-                      <li>
-                        <span className="risk-factor">Close Contact with a Known Case</span>
-                        {this.props.details.contact_of_known_case_id && <span className="risk-val">{this.props.details.contact_of_known_case_id}</span>}
-                      </li>
-                    )}
-                    {this.props.details.member_of_a_common_exposure_cohort && (
-                      <li>
-                        <span className="risk-factor">Member of a Common Exposure Cohort</span>
-                        {this.props.details.member_of_a_common_exposure_cohort_type && (
-                          <span className="risk-val">{this.props.details.member_of_a_common_exposure_cohort_type}</span>
+            {!_.isEmpty(this.props.monitoring_infos) &&
+              Object.keys(this.props.monitoring_infos).map(id => {
+                const mpInfo = this.props.available_monitoring_programs.find(mp => String(mp.id) === id);
+                const mpDetails = this.props.monitoring_infos[id];
+                const showArrivalSection =
+                  mpDetails.port_of_origin ||
+                  mpDetails.date_of_departure ||
+                  mpDetails.flight_or_vessel_carrier ||
+                  mpDetails.flight_or_vessel_number ||
+                  mpDetails.port_of_entry_into_usa ||
+                  mpDetails.date_of_arrival;
+                const showPlannedTravel =
+                  mpDetails.additional_planned_travel_type ||
+                  mpDetails.additional_planned_travel_destination_country ||
+                  mpDetails.additional_planned_travel_destination_state ||
+                  mpDetails.additional_planned_travel_port_of_departure ||
+                  mpDetails.additional_planned_travel_start_date ||
+                  mpDetails.additional_planned_travel_end_date;
+                const showRiskFactors =
+                  mpDetails.contact_of_known_case ||
+                  mpDetails.member_of_a_common_exposure_cohort ||
+                  mpDetails.travel_to_affected_country_or_area ||
+                  mpDetails.was_in_health_care_facility_with_known_cases ||
+                  mpDetails.laboratory_personnel ||
+                  mpDetails.healthcare_personnel ||
+                  mpDetails.crew_on_passenger_or_cargo_flight;
+
+                return (
+                  <React.Fragment key={id}>
+                    <Row id="monitoree-details-header" className="my-2">
+                      <Col sm={12}>
+                        <Heading level={rootHeaderLevel} className="secondary-title">
+                          <span className="pr-2">{mpInfo.label}</span>
+                        </Heading>
+                      </Col>
+                      <Col sm={12}>
+                        <div className="jurisdiction-user-box float-right">
+                          <div id="assigned-user">
+                            <b>Assigned User:</b> {mpDetails.assigned_user || '--'}
+                          </div>
+                        </div>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col id="arrival-information" xl={24} className="col-xxxl-12">
+                        <div className="section-header">
+                          <Heading level={rootHeaderLevel + 1} className="section-title">
+                            Arrival Information
+                          </Heading>
+                          {this.renderEditLink('Arrival Information', 4, mpInfo.id)}
+                        </div>
+                        {!(showArrivalSection || mpDetails.travel_related_notes) && <div className="none-text">None</div>}
+                        {showArrivalSection && (
+                          <Row>
+                            <Col md={12} lg={24} xl={12} className="item-group">
+                              <p className="subsection-title">Departed</p>
+                              <div>
+                                <b>Port of Origin:</b> <span>{mpDetails.port_of_origin || '--'}</span>
+                              </div>
+                              <div>
+                                <b>Date of Departure:</b>{' '}
+                                <span>{mpDetails.date_of_departure ? moment(mpDetails.date_of_departure, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}</span>
+                              </div>
+                            </Col>
+                            <Col md={12} lg={24} xl={12} className="item-group">
+                              <p className="subsection-title">Arrival</p>
+                              <div>
+                                <b>Port of Entry:</b> <span>{mpDetails.port_of_entry_into_usa || '--'}</span>
+                              </div>
+                              <div>
+                                <b>Date of Arrival:</b>{' '}
+                                <span>{mpDetails.date_of_arrival ? moment(mpDetails.date_of_arrival, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}</span>
+                              </div>
+                            </Col>
+                            <Col className="item-group">
+                              <div>
+                                <b>Carrier:</b> <span>{mpDetails.flight_or_vessel_carrier || '--'}</span>
+                              </div>
+                              <div>
+                                <b>Flight or Vessel #:</b> <span>{mpDetails.flight_or_vessel_number || '--'}</span>
+                              </div>
+                            </Col>
+                          </Row>
                         )}
-                      </li>
-                    )}
-                    {this.props.details.travel_to_affected_country_or_area && (
-                      <li>
-                        <span className="risk-factor">Travel from Affected Country or Area</span>
-                      </li>
-                    )}
-                    {this.props.details.was_in_health_care_facility_with_known_cases && (
-                      <li>
-                        <span className="risk-factor">Was in Healthcare Facility with Known Cases</span>
-                        {this.props.details.was_in_health_care_facility_with_known_cases_facility_name && (
-                          <span className="risk-val">{this.props.details.was_in_health_care_facility_with_known_cases_facility_name}</span>
+                        {mpDetails.travel_related_notes && (
+                          <div className="notes-section">
+                            <p className="subsection-title">Notes</p>
+                            {mpDetails.travel_related_notes.length < 400 && <div className="notes-text">{mpDetails.travel_related_notes}</div>}
+                            {mpDetails.travel_related_notes.length >= 400 && (
+                              <React.Fragment>
+                                <div className="notes-text">
+                                  {this.state.expandArrivalNotes ? mpDetails.travel_related_notes : mpDetails.travel_related_notes.slice(0, 400) + ' ...'}
+                                </div>
+                                <Button
+                                  variant="link"
+                                  className="notes-button p-0"
+                                  onClick={() => this.setState({ expandArrivalNotes: !this.state.expandArrivalNotes })}>
+                                  {this.state.expandArrivalNotes ? '(Collapse)' : '(View all)'}
+                                </Button>
+                              </React.Fragment>
+                            )}
+                          </div>
                         )}
-                      </li>
-                    )}
-                    {this.props.details.laboratory_personnel && (
-                      <li>
-                        <span className="risk-factor">Laboratory Personnel</span>
-                        {this.props.details.laboratory_personnel_facility_name && (
-                          <span className="risk-val">{this.props.details.laboratory_personnel_facility_name}</span>
+                      </Col>
+                      <Col id="planned-travel" xl={24} className="col-xxxl-12">
+                        <div className="section-header">
+                          <Heading level={rootHeaderLevel + 1} className="section-title">
+                            <span className="d-none d-lg-inline d-xl-none d-xxl-inline">Additional </span>Planned Travel
+                          </Heading>
+                          {this.renderEditLink('Planned Travel', 5, mpInfo.id)}
+                        </div>
+                        {!(showPlannedTravel || mpDetails.additional_planned_travel_related_notes) && <div className="none-text">None</div>}
+                        {showPlannedTravel && (
+                          <div className="item-group">
+                            <div>
+                              <b>Type:</b> <span>{mpDetails.additional_planned_travel_type || '--'}</span>
+                            </div>
+                            <div>
+                              <b>Place:</b>{' '}
+                              <span>
+                                {mpDetails.additional_planned_travel_destination_country}
+                                {mpDetails.additional_planned_travel_destination_state}
+                                {!mpDetails.additional_planned_travel_destination_country && !mpDetails.additional_planned_travel_destination_state && '--'}
+                              </span>
+                            </div>
+                            <div>
+                              <b>Port of Departure:</b> <span>{mpDetails.additional_planned_travel_port_of_departure || '--'}</span>
+                            </div>
+                            <div>
+                              <b>Start Date:</b>{' '}
+                              <span>
+                                {mpDetails.additional_planned_travel_start_date
+                                  ? moment(mpDetails.additional_planned_travel_start_date, 'YYYY-MM-DD').format('MM/DD/YYYY')
+                                  : '--'}
+                              </span>
+                            </div>
+                            <div>
+                              <b>End Date:</b>{' '}
+                              <span>
+                                {mpDetails.additional_planned_travel_end_date
+                                  ? moment(mpDetails.additional_planned_travel_end_date, 'YYYY-MM-DD').format('MM/DD/YYYY')
+                                  : '--'}
+                              </span>
+                            </div>
+                          </div>
                         )}
-                      </li>
-                    )}
-                    {this.props.details.healthcare_personnel && (
-                      <li>
-                        <span className="risk-factor">Healthcare Personnel</span>
-                        {this.props.details.healthcare_personnel_facility_name && (
-                          <span className="risk-val">{this.props.details.healthcare_personnel_facility_name}</span>
+                        {mpDetails.additional_planned_travel_related_notes && (
+                          <div className="notes-section">
+                            <p className="subsection-title">Notes</p>
+                            {mpDetails.additional_planned_travel_related_notes.length < 400 && (
+                              <div className="notes-text">{mpDetails.additional_planned_travel_related_notes}</div>
+                            )}
+                            {mpDetails.additional_planned_travel_related_notes.length >= 400 && (
+                              <React.Fragment>
+                                <div className="notes-text">
+                                  {this.state.expandPlannedTravelNotes
+                                    ? mpDetails.additional_planned_travel_related_notes
+                                    : mpDetails.additional_planned_travel_related_notes.slice(0, 400) + ' ...'}
+                                </div>
+                                <Button
+                                  variant="link"
+                                  className="notes-button p-0"
+                                  onClick={() => this.setState({ expandPlannedTravelNotes: !this.state.expandPlannedTravelNotes })}>
+                                  {this.state.expandPlannedTravelNotes ? '(Collapse)' : '(View all)'}
+                                </Button>
+                              </React.Fragment>
+                            )}
+                          </div>
                         )}
-                      </li>
-                    )}
-                    {this.props.details.crew_on_passenger_or_cargo_flight && (
-                      <li>
-                        <span className="risk-factor">Crew on Passenger or Cargo Flight</span>
-                      </li>
-                    )}
-                  </ul>
-                )}
-              </Col>
-              {this.props.details.isolation && (
-                <Col id="case-information" md={10} xl={12} className="col-xxxl-8">
-                  <div className="section-header">
-                    <Heading level={rootHeaderLevel + 1} className="section-title">
-                      Case Information
-                    </Heading>
-                    {this.renderEditLink('Case Information', 6)}
-                  </div>
-                  <div className="item-group">
-                    <div>
-                      <b>Case Status: </b>
-                      <span>{this.props.details.case_status || '--'}</span>
-                    </div>
-                    {this.props.details.first_positive_lab_at && (
-                      <div>
-                        <b>First Positive Lab Collected: </b>
-                        <span>{moment(this.props.details.first_positive_lab_at, 'YYYY-MM-DD').format('MM/DD/YYYY')}</span>
-                      </div>
-                    )}
-                    <div>
-                      <b>Symptom Onset: </b>
-                      <span>{this.props.details.symptom_onset ? moment(this.props.details.symptom_onset, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}</span>
-                    </div>
-                  </div>
-                </Col>
-              )}
-              <Col id="exposure-notes" md={10} xl={12} className="notes-section col-xxxl-8">
-                <div className="section-header">
-                  <Heading level={rootHeaderLevel + 1} className="section-title">
-                    Notes
-                  </Heading>
-                  {this.renderEditLink('Edit Notes', this.props.details.isolation ? 6 : 5)}
-                </div>
-                {!this.props.details.exposure_notes && <div className="none-text">None</div>}
-                {this.props.details.exposure_notes && this.props.details.exposure_notes.length < 400 && (
-                  <div className="notes-text">{this.props.details.exposure_notes}</div>
-                )}
-                {this.props.details.exposure_notes && this.props.details.exposure_notes.length >= 400 && (
-                  <React.Fragment>
-                    <div className="notes-text">
-                      {this.state.expandNotes ? this.props.details.exposure_notes : this.props.details.exposure_notes.slice(0, 400) + ' ...'}
-                    </div>
-                    <Button variant="link" className="notes-button p-0" onClick={() => this.setState({ expandNotes: !this.state.expandNotes })}>
-                      {this.state.expandNotes ? '(Collapse)' : '(View all)'}
-                    </Button>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col id="potential-exposure-information" md={14} xl={12} className={mpDetails.isolation ? 'col-xxxl-8' : 'col-xxxl-10'}>
+                        <div className="section-header">
+                          <Heading level={rootHeaderLevel + 1} className="section-title">
+                            Potential Exposure<span className="d-none d-lg-inline"> Information</span>
+                          </Heading>
+                          {this.renderEditLink('Potential Exposure Information', 6, mpInfo.id)}
+                        </div>
+                        <div className="item-group">
+                          <div>
+                            <b>Last Date of Exposure:</b>{' '}
+                            <span>{mpDetails.last_date_of_exposure ? moment(mpDetails.last_date_of_exposure, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}</span>
+                          </div>
+                          <div>
+                            <b>Exposure Location:</b> <span>{mpDetails.potential_exposure_location || '--'}</span>
+                          </div>
+                          <div>
+                            <b>Exposure Country:</b> <span>{mpDetails.potential_exposure_country || '--'}</span>
+                          </div>
+                        </div>
+                        <p className="subsection-title">Risk Factors</p>
+                        {!showRiskFactors && <div className="none-text">None specified</div>}
+                        {showRiskFactors && (
+                          <ul className="risk-factors">
+                            {mpDetails.contact_of_known_case && (
+                              <li>
+                                <span className="risk-factor">Close Contact with a Known Case</span>
+                                {mpDetails.contact_of_known_case_id && <span className="risk-val">{mpDetails.contact_of_known_case_id}</span>}
+                              </li>
+                            )}
+                            {mpDetails.member_of_a_common_exposure_cohort && (
+                              <li>
+                                <span className="risk-factor">Member of a Common Exposure Cohort</span>
+                                {mpDetails.member_of_a_common_exposure_cohort_type && (
+                                  <span className="risk-val">{mpDetails.member_of_a_common_exposure_cohort_type}</span>
+                                )}
+                              </li>
+                            )}
+                            {mpDetails.travel_to_affected_country_or_area && (
+                              <li>
+                                <span className="risk-factor">Travel from Affected Country or Area</span>
+                              </li>
+                            )}
+                            {mpDetails.was_in_health_care_facility_with_known_cases && (
+                              <li>
+                                <span className="risk-factor">Was in Healthcare Facility with Known Cases</span>
+                                {mpDetails.was_in_health_care_facility_with_known_cases_facility_name && (
+                                  <span className="risk-val">{mpDetails.was_in_health_care_facility_with_known_cases_facility_name}</span>
+                                )}
+                              </li>
+                            )}
+                            {mpDetails.laboratory_personnel && (
+                              <li>
+                                <span className="risk-factor">Laboratory Personnel</span>
+                                {mpDetails.laboratory_personnel_facility_name && (
+                                  <span className="risk-val">{mpDetails.laboratory_personnel_facility_name}</span>
+                                )}
+                              </li>
+                            )}
+                            {mpDetails.healthcare_personnel && (
+                              <li>
+                                <span className="risk-factor">Healthcare Personnel</span>
+                                {mpDetails.healthcare_personnel_facility_name && (
+                                  <span className="risk-val">{mpDetails.healthcare_personnel_facility_name}</span>
+                                )}
+                              </li>
+                            )}
+                            {mpDetails.crew_on_passenger_or_cargo_flight && (
+                              <li>
+                                <span className="risk-factor">Crew on Passenger or Cargo Flight</span>
+                              </li>
+                            )}
+                          </ul>
+                        )}
+                      </Col>
+                      {mpDetails.isolation && (
+                        <Col id="case-information" md={10} xl={12} className="col-xxxl-8">
+                          <div className="section-header">
+                            <Heading level={rootHeaderLevel + 1} className="section-title">
+                              Case Information
+                            </Heading>
+                            {this.renderEditLink('Case Information', 7, mpInfo.id)}
+                          </div>
+                          <div className="item-group">
+                            <div>
+                              <b>Case Status: </b>
+                              <span>{mpDetails.case_status || '--'}</span>
+                            </div>
+                            {mpDetails.first_positive_lab_at && (
+                              <div>
+                                <b>First Positive Lab Collected: </b>
+                                <span>{moment(mpDetails.first_positive_lab_at, 'YYYY-MM-DD').format('MM/DD/YYYY')}</span>
+                              </div>
+                            )}
+                            <div>
+                              <b>Symptom Onset: </b>
+                              <span>{mpDetails.symptom_onset ? moment(mpDetails.symptom_onset, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}</span>
+                            </div>
+                          </div>
+                        </Col>
+                      )}
+                      <Col id="exposure-notes" md={10} xl={12} className="notes-section col-xxxl-8">
+                        <div className="section-header">
+                          <Heading level={rootHeaderLevel + 1} className="section-title">
+                            Notes
+                          </Heading>
+                          {this.renderEditLink('Edit Notes', mpDetails.isolation ? 7 : 6, mpInfo.id)}
+                        </div>
+                        {!mpDetails.exposure_notes && <div className="none-text">None</div>}
+                        {mpDetails.exposure_notes && mpDetails.exposure_notes.length < 400 && <div className="notes-text">{mpDetails.exposure_notes}</div>}
+                        {mpDetails.exposure_notes && mpDetails.exposure_notes.length >= 400 && (
+                          <React.Fragment>
+                            <div className="notes-text">
+                              {this.state.expandNotes ? mpDetails.exposure_notes : mpDetails.exposure_notes.slice(0, 400) + ' ...'}
+                            </div>
+                            <Button variant="link" className="notes-button p-0" onClick={() => this.setState({ expandNotes: !this.state.expandNotes })}>
+                              {this.state.expandNotes ? '(Collapse)' : '(View all)'}
+                            </Button>
+                          </React.Fragment>
+                        )}
+                      </Col>
+                    </Row>
                   </React.Fragment>
-                )}
-              </Col>
-            </Row> */}
+                );
+              })}
           </div>
         </Collapse>
         {this.state.showSetFlagModal && (

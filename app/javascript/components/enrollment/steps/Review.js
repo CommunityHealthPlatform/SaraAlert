@@ -2,6 +2,7 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import _ from 'lodash';
 import { Card, Button, Modal } from 'react-bootstrap';
+import ReactTooltip from 'react-tooltip';
 
 import Patient from '../../patient/Patient';
 
@@ -72,26 +73,37 @@ class Review extends React.Component {
           <Card.Body>
             <Patient
               goto={this.props.goto}
+              setMonitoringInfoIndex={this.props.setMonitoringInfoIndex}
               edit_mode={true}
               jurisdiction_paths={this.props.jurisdiction_paths}
               details={{ ...this.props.currentState.patient, blocked_sms: this.props.currentState.blocked_sms } || {}}
+              monitoring_infos={this.props.currentState.monitoring_infos}
+              available_monitoring_programs={this.props.available_monitoring_programs}
               authenticity_token={this.props.authenticity_token}
               workflow={this.props.workflow}
               headingLevel={2}
             />
             {this.props.submit && (
-              <Button
-                variant="primary"
-                size="lg"
-                className="btn-square mb-4"
-                disabled={this.state.disabled || this.totalMonitoringPrograms() === this.props.available_monitoring_programs.length}
-                onClick={() => {
-                  this.props.goto(3, true);
-                  this.props.setMonitoringInfoIndex(null);
-                }}>
-                Add Monitoring Program
-              </Button>
-              // ADD TOOLTIP
+              <React.Fragment>
+                <span data-for="enrollment-add-monitoring-program-btn" data-tip="">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="btn-square mb-4"
+                    disabled={this.state.disabled || this.totalMonitoringPrograms() === this.props.available_monitoring_programs.length}
+                    onClick={() => {
+                      this.props.goto(3, true);
+                      this.props.setMonitoringInfoIndex(null);
+                    }}>
+                    Add Monitoring Program
+                  </Button>
+                </span>
+                {this.totalMonitoringPrograms() === this.props.available_monitoring_programs.length && (
+                  <ReactTooltip id="enrollment-add-monitoring-program-btn" multiline={true} place="top" effect="solid" className="tooltip-container">
+                    You have enrolled in all available Monitoring Programs
+                  </ReactTooltip>
+                )}
+              </React.Fragment>
             )}
             {this.props.submit && (
               <Button
@@ -104,19 +116,27 @@ class Review extends React.Component {
                 }}>
                 Cancel
               </Button>
-              // ADD TOOLTIP
             )}
             {this.props.submit && (
-              <Button
-                variant="primary"
-                size="lg"
-                className="float-right btn-square px-5 mr-4"
-                disabled={this.state.disabled || this.totalMonitoringPrograms() === 0}
-                onClick={this.submit}>
-                Finish
-              </Button>
+              <React.Fragment>
+                <span data-for="enrollment-finish-btn" data-tip="">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="float-right btn-square px-5 mr-4"
+                    disabled={this.state.disabled || this.totalMonitoringPrograms() === 0}
+                    onClick={this.submit}>
+                    Finish
+                  </Button>
+                </span>
+                {this.totalMonitoringPrograms() === 0 && (
+                  <ReactTooltip id="enrollment-finish-btn" multiline={true} place="top" effect="solid" className="tooltip-container">
+                    You must enroll in at least one Monitoring Program
+                  </ReactTooltip>
+                )}
+              </React.Fragment>
             )}
-            {this.props.submit && this.props.currentState.patient.responder_id === this.props.currentState.patient.id && this.props.canAddGroup && (
+            {/* {this.props.submit && this.props.currentState.patient.responder_id === this.props.currentState.patient.id && this.props.canAddGroup && (
               <Button
                 variant="primary"
                 size="lg"
@@ -125,8 +145,7 @@ class Review extends React.Component {
                 onClick={this.toggleGroupAddNotification}>
                 Finish and Add a Household Member
               </Button>
-              // ADD TOOLTIP
-            )}
+            )} */}
           </Card.Body>
         </Card>
         {this.state.showGroupAddNotification && this.createModal()}
