@@ -182,12 +182,12 @@ Amazon S3 is the currently used method for object storage within Sara Alert. Bec
 
 Object storage is used by the monitoree exports feature.
 
-**Basic S3 Setup:**
+##### Basic S3 Setup
 1. Create a bucket for exports
 2. Create an IAM user with an associated access key
 3. Create a new permissions policy with the minimum required permissions for the S3 service of ListBucket, GetObject, DeleteObject, and PutObject and assign it to the user
 
-##### Building
+#### Building
 
 * Create a `certs/` directory in the root of the project
 
@@ -201,7 +201,7 @@ Building for staging requires the use of the `Production.Dockerfile` and `Nginx.
 * `docker build -f Production.Dockerfile --tag sara-alert:latest --build-arg cert="$(cat $CERT_PATH)" .`
 * `docker build -f Nginx.Dockerfile --tag sara-alert-nginx:latest --build-arg sara_alert_image=sara-alert:latest .`
 
-##### Deploying Staging
+#### Deploying Staging
 
 Deploying a staging server is done with `docker-compose.yml`, `docker-compose.prod.yml`, and the two images created in the previous section. Make sure the images are on the staging server or they can be pulled from a Docker registry to the staging server.
 
@@ -212,22 +212,24 @@ The `docker-compose.yml` file sets up three networks which route traffic between
 * `dt-net-enrollment`: Hosts the applications/services used for enrolling and monitoring.
 * `dt-net-assessment`: Hosts the application/services used by monitorees filling out assessments.
 * `dt-net-bridge`: Facilitates communication between the two other networks.
+* `svy-net-web`: Hosts the survey management software
+* `svy-net-db`: Backend network that hosts the database used by the survey management software
 
 This results in a 'split architecture' where multiple instances of the SaraAlert application are running. This approach attempts to reduces the amount of services that have access to the monitoree database.
 
-A key portion of this is the use of the Nginx reverse proxy container. The configuration (located at `./nginx.conf`) will route traffic from 'untrusted' users submitting assessments to the `dt-net-assessment` application while, at the same time, enrollers and epidemiologists are routed to the enrollment database.
+A key portion of this is the use of Nginx as a reverse proxy server. The configuration (located at `./nginx.conf`) will route traffic from 'untrusted' users submitting assessments to containers running in the `dt-net-assessment` network. Authenticated users, such as enrollers and epidemiologists are routed to components on `dt-net-enrollment`. Those accessing the survey software are routed onto the `svy-net-web` network.
 
 Below is a graphic depicting the services and applications present on each network:
-![SaraAlertDockerNetworks](https://user-images.githubusercontent.com/3009651/90296500-a7fc3200-de59-11ea-873b-f690c52509bc.png)
+![SaraAlertDockerNetworks](docs/images/docker-networks-and-services.png)
 
-**Environment Variable Setup**
+**Sara Alert Environment Variable Setup**
 
 To set up Sara Alert in a staging configuration, generate two environment variable files which correspond with the networks described above:
 
 * `.env-prod-assessment`
 * `.env-prod-enrollment`
 
-The content for these files can be based off of the `.env-prod-assessment-example` and `.env-prod-enrollment-example` files. It is important to note that `SARA_ALERT_REPORT_MODE` should be set to `false` for the enrollment file and `true` for the assessment file. `SHOW_DEMO_WARNING=true` should be set to warn users against uploading sensitive data to a test or demonstration instance of Sara Alert.
+The content for the first two files can be based off of the `.env-prod-assessment-example` and `.env-prod-enrollment-example` files. It is important to note that `SARA_ALERT_REPORT_MODE` should be set to `false` for the enrollment file and `true` for the assessment file. `SHOW_DEMO_WARNING=true` should be set to warn users against uploading sensitive data to a test or demonstration instance of Sara Alert.
 
 The `SECRET_KEY_BASE` and `MYSQL_PASSWORD` variables should be changed at the very least. These variables should also not be the same between both assessment and enrollment instances of the files.
 
@@ -259,11 +261,49 @@ The following environment variables need to be set on the enrollment instances, 
 * `AUTHY_API_KEY: <API key for Authy project>`
 * `TWILLIO_MESSAGING_SERVICE_SID=<SID of assigned messaging service>`
 
+**LimeSurvey Environment Variable Setup**
+
+Key-value pairs (*KEY=value*) of environment variables used by the containers that host LimeSurvey and its database are expected in a file, `survey-compose.env`. An example that can be used as a starting point is at `lime-conf.d/survey-compose.env.example`.
+
+Once complete, this file will be moved to the deployment directory described in the following sections.
+
+The principal variables that should be given values are presented in the following table.  See the example file for other optional variables.
+
+|Variable |Example Value |Reqd? |Description|
+|---|---|--|---|
+LIMESURVEY_DB_USER|root |No |Privileged database user; defaults to root
+LIMESURVEY_DB_PASSWORD |Str0ngPwv@l2here |Yes |Password of database root user; must match value in MYSQL_ROOT_PASSWORD in database container configuration
+LIMESURVEY_DB_NAME |limesurvey |No |Name of database created by LimeSurvey; defaults to limesurvey
+LIMESURVEY_ADMIN_USER| myadminname |Yes\* |Username for the LimeSurvey administrator created when LimeSurvey is first installed. For increased cybersecurity, use something other than admin. \*Required only the first time the container is run. Consider removing this line (and adming password line) after LimeSurvey is setup and working.
+LIMESURVEY_ADMIN_PASSWORD |709KTwu*^WHfx | Yes* |Password of the administrator user. This value is set every time the container is restarted! It will override any value set in the GUI. \*Required only the first time the container is run. Consider removing this line (and admin username line) after LimeSurvey is setup and working.
+LIMESURVEY_ADMIN_NAME |Lime Administrator |No |Full name of the Administrator; defaults to "Lime Administrator"
+LIMESURVEY_ADMIN_EMAIL| name@example.com |No | Email address of Administrator account; defaults to lime@lime.lime. Can be set using the GUI.
+MYSQL_ROOT_PASSWORD |Str0ngPwv@l2here |Yes |Password of database root user; must match value in LIMESURVEY_DB_PASSWORD in limesurvey container configuration
+
+
 **Container Dependencies**
 
-Create a directory for the deployment. Move both docker compose files and both environment variable files from the previous section into this folder. Within this deployment directory, create a subdirectory called `tls` and place your `.key` and `.crt` files for the webserver inside. Name the files `puma.key` and `puma.crt`. Ensure the `.crt` and `.key` files within the `tls` directory are at least `0x004` permissions so they can be read inside the container.
+Create a directory into which the deployment configuration files will be copied. Copy both docker compose files and the three environment variable files from the previous section (`.env-prod-assessment`, .`env-prod-enrollment`, and `survey-compose.env`) into this folder. Within this deployment directory, create a subdirectory called `tls` and place your web server private key and certificate (i.e., `.key` and `.crt` files inside. Rename the files to `puma.key` and `puma.crt`. Ensure the `.crt` and `.key` files within the `tls` directory are at least `0x004` permissions so they can be read inside the container.
 
-The Nginx configuration is also staged within the same directory. You will need to move the `nginx.conf` provided in the root of this repository into `~/tls/nginx.conf`.
+The Nginx configuration is also staged within the same directory. Copy the `nginx.conf` provided in the root of this repository to *<deployment_dir>*`/tls/nginx.conf`.
+
+Create a directory, `lime-runtime` inside the deployment folder. 
+
+The deployment folder content should look like the following:
+
+>>>
+* *deployment_folder*
+    * *lime-runtime*
+    * *tls*
+        * nginx.conf
+        * puma.crt
+        * puma.key
+    * .env-prod-assessment
+    * .env-prod-enrollment
+    * docker-compose.yml
+    * docker-compose.prod.yml
+    * survey-compose.yml
+>>>
 
 **Deployment**
 
@@ -291,6 +331,8 @@ Setup the demonstration accounts and population if desired:
 
 * `/usr/local/bin/docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e DISABLE_DATABASE_ENVIRONMENT_CHECK=true sara-alert-enrollment bin/bundle exec rake demo:setup`
 * `/usr/local/bin/docker-compose -f docker-compose.yml -f docker-compose.prod.yml run -e DISABLE_DATABASE_ENVIRONMENT_CHECK=true sara-alert-enrollment bin/bundle exec rake demo:populate`
+
+See the instructions in [lime-conf.d/README.md](lime-conf.d/README.md) for performing post-deployment configuration for LimeSurvey.
 
 The applications should be running on port 443 with Nginx proxying traffic between.
 
