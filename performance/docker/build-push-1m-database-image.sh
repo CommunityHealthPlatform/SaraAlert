@@ -34,12 +34,12 @@ docker rm saraalert-1m-database || true
 echo "Loading 1m database into container..."
 docker run --name saraalert-1m-database -e MYSQL_ROOT_PASSWORD=root -d ghcr.io/saraalert/saraalert-1m-database:latest
 sleep 30
-docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot -e"CREATE DATABASE disease_trakker_development"'
-docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot disease_trakker_development' < $1
+docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot -e"CREATE DATABASE glyph_development"'
+docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot glyph_development' < $1
 echo "Showing table information"
-docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot disease_trakker_development -e "show tables;"'
-docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot disease_trakker_development -e "SELECT COUNT(*) FROM patients;"'
-docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot disease_trakker_development -e "SELECT COUNT(*) FROM symptoms;"'
+docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot glyph_development -e "show tables;"'
+docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot glyph_development -e "SELECT COUNT(*) FROM patients;"'
+docker exec -i saraalert-1m-database sh -c 'exec mysql -uroot -proot glyph_development -e "SELECT COUNT(*) FROM symptoms;"'
 echo "Loaded 1m database into container."
 echo "Commiting new version of 1m database container..."
 docker commit saraalert-1m-database ghcr.io/saraalert/saraalert-1m-database:latest

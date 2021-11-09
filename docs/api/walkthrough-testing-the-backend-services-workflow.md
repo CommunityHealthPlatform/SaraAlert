@@ -1,22 +1,26 @@
 ---
 layout: default
-title: "Walkthrough: Testing the Backend Services Workflow"
+title: 'Walkthrough: Testing the Backend Services Workflow'
 parent: API
 nav_order: 6
 ---
-This page documents a set of steps to connect to the Sara Alert FHIR API using the SMART on FHIR Backend Services Workflow as described in  [Getting Started](api-getting-started#smart-on-fhir-backend-services-workflow).
+
+This page documents a set of steps to connect to the Sara Alert FHIR API using the SMART on FHIR Backend Services Workflow as described in [Getting Started](api-getting-started#smart-on-fhir-backend-services-workflow).
 
 **If you are testing against a local instance of Sara Alert, follow all of the instructions below. If you are testing against the demo server, ignore sections with (LOCAL TESTING ONLY), and note that some numbers in the list of instructions will be skipped.**
 
 ## Setup the Environment (LOCAL TESTING ONLY)
+
 If you are testing on the demo server, skip to the next section.
+
 <details>
 <summary>Expand only if testing on a LOCAL instance of Sara Alert</summary>
 <div markdown="1">
 
 **1.** Clone and run Sara Alert following the steps in the [README](https://github.com/SaraAlert/SaraAlert/blob/master/README.md) for local setup. Make sure to have the database, Redis, and Sidekiq running for the full experience. At a minimum, the database and Redis need to be running.
 
-**2.** Optionally, connect to the database to query some of the tables as we go through the workflow using `mysql --user=disease_trakker`
+**2.** Optionally, connect to the database to query some of the tables as we go through the workflow using `mysql --user=glyph`
+
 </div>
 </details>
 
@@ -27,6 +31,7 @@ If you are testing on the demo server, skip to the next section.
 ![mkjwk example](/SaraAlert/assets/images/mkjwk.png)
 
 Either keep this tool open with the generated values or save off all of the displayed values somewhere:
+
 - Public and Private Keypair
 - Public and Private Keypair Set
 - Public Key
@@ -35,15 +40,17 @@ Either keep this tool open with the generated values or save off all of the disp
 - Public Key (X.509 PEM Format)
 
 ## Register a New API Client Application (LOCAL TESTING ONLY)
+
 If you are testing on the demo server, skip to the next section.
 
 <details>
 <summary>Expand only if testing on a LOCAL instance of Sara Alert</summary>
 <div markdown="1">
 
-**4.** Run the `admin:create_oauth_app_for_backend_services_workflow` rake task to both create a new "shadow user" to be used by this new application when creating/updating records, and to create the new OAuth application as well. This rake task requires that you first set an environment variable called `API_FILE_PATH` to the path of a json file that contains needed data. 
+**4.** Run the `admin:create_oauth_app_for_backend_services_workflow` rake task to both create a new "shadow user" to be used by this new application when creating/updating records, and to create the new OAuth application as well. This rake task requires that you first set an environment variable called `API_FILE_PATH` to the path of a json file that contains needed data.
 
 For example, if there is a file named `api_data.json` that looks like the following:
+
 ```
 {
   "app_name": "test-m2m-app",
@@ -56,17 +63,21 @@ For example, if there is a file named `api_data.json` that looks like the follow
   "redirect_uri": "urn:ietf:wg:oauth:2.0:oob"
 }
 ```
+
 You can then set the environment variable:
+
 ```
 export API_FILE_PATH="path/to/api_data.json"
 ```
 
-and then run the rake task. 
+and then run the rake task.
+
 ```
 bundle exec rake admin:create_oauth_app_for_backend_services_workflow
 ```
 
 You will see the Client ID of the shadow user and OAuth Application as part of the output:
+
 ```
 Successfully created user with ID <GENERATED_USER_ID> and email testapp@example.com!
 Successfully created user with OAuth Application!
@@ -89,6 +100,7 @@ mysql> select * from oauth_applications;
 +----+-----------+--------------------+-----------------------+--------------------------------+-----------------------------------+--------------+----------------------------+----------------------------+---------------------+-----------------+
 2 rows in set (0.00 sec)
 ```
+
 </div>
 </details>
 
@@ -100,15 +112,16 @@ In the `Decoded` section, enter the following `HEADER`:
 
 ```json
 {
-  "alg":"RS384",
-  "kid":"<KID FROM PUBLIC KEY>",
-  "typ":"JWT"
+  "alg": "RS384",
+  "kid": "<KID FROM PUBLIC KEY>",
+  "typ": "JWT"
 }
 ```
 
 In the `PAYLOAD` section enter:
 
 If using DEMO server:
+
 ```javascript
 {
   "iss":"myTestApp", // Example value that should be replaced with your Client ID
@@ -132,6 +145,7 @@ If using DEMO server:
   "jti":"1599600191" // Must be a random unique identifier for this JWT
 }
 ```
+
 </div>
 </details>
 
@@ -156,6 +170,7 @@ We are going to use your JWT in the next step, Request an Access Token.
 REQUEST
 
 IF USING DEMO server:
+
 ```
 curl --location --request POST 'https://demo.saraalert.org/oauth/token' \
      --header 'Content-Type: application/x-www-form-urlencoded' \
@@ -179,12 +194,14 @@ curl --location --request POST 'http://localhost:3000/oauth/token' \
      --data-urlencode 'client_assertion=<JWT FROM STEP 6>' \
      --data-urlencode 'client_id=myTestApp'
 ```
+
 </div>
 </details>
 
 Make sure you use the proper `client_id` and `scope` that you registered in previous steps.
 
 RESPONSE
+
 ```
 {
     "access_token": "fXHoedJMq-mdf8cqQvw5a4AY7SOb92McbJvDzNSP5q4",
@@ -194,6 +211,7 @@ RESPONSE
     "created_at": 1599601092
 }
 ```
+
 We are going to use the `"access_token"` value in API requests.
 
 ## FHIR Requests
@@ -203,6 +221,7 @@ We are going to use the `"access_token"` value in API requests.
 REQUEST
 
 If using DEMO server:
+
 ```
 curl  --location --request GET 'https://demo.saraalert.org/fhir/r4/Patient/1' \
       --header 'Accept: application/fhir+json' \
@@ -218,6 +237,7 @@ curl  --location --request GET 'http://localhost:3000/fhir/r4/Patient/1' \
       --header 'Accept: application/fhir+json' \
       --header 'Authorization: Bearer fXHoedJMq-mdf8cqQvw5a4AY7SOb92McbJvDzNSP5q4'
 ```
+
 </div>
 </details>
 

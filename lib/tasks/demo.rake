@@ -151,7 +151,7 @@ namespace :demo do
 
     print 'Creating public health users...'
 
-    User.create(email: 'state1_epi@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH, jurisdiction: jurisdictions[:state_1], force_password_change: false, authy_enabled: false, authy_enforced: false, api_enabled: true, notes: Faker::GreekPhilosophers.quote)
+    User.create(email: 'state1_epi@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH, jurisdiction: jurisdictions[:state_1], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
     User.create(email: 'localS1C1_epi@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH, jurisdiction: jurisdictions[:county_1], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
     User.create(email: 'localS1C2_epi@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH, jurisdiction: jurisdictions[:county_2], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
     User.create(email: 'state2_epi@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH, jurisdiction: jurisdictions[:state_2], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
@@ -164,8 +164,8 @@ namespace :demo do
 
     print 'Creating public health enroller users...'
 
-    User.create(email: 'epi_enroller_all@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH_ENROLLER, jurisdiction: jurisdictions[:usa], force_password_change: false, authy_enabled: false, authy_enforced: false, api_enabled: true, notes: Faker::GreekPhilosophers.quote)
-    User.create(email: 'state1_epi_enroller@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH_ENROLLER, jurisdiction: jurisdictions[:state_1], force_password_change: false, authy_enabled: false, authy_enforced: false, api_enabled: true, notes: Faker::GreekPhilosophers.quote)
+    User.create(email: 'epi_enroller_all@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH_ENROLLER, jurisdiction: jurisdictions[:usa], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
+    User.create(email: 'state1_epi_enroller@example.com', password: '1234567ab!', role: Roles::PUBLIC_HEALTH_ENROLLER, jurisdiction: jurisdictions[:state_1], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
 
     puts ' done!'
 
@@ -191,8 +191,8 @@ namespace :demo do
 
     print 'Creating super users...'
 
-    User.create(email: 'usa_super_user@example.com', password: '1234567ab!', role: Roles::SUPER_USER, jurisdiction: jurisdictions[:usa], force_password_change: false, authy_enabled: false, authy_enforced: false, api_enabled: true, notes: Faker::GreekPhilosophers.quote)
-    User.create(email: 'state1_super_user@example.com', password: '1234567ab!', role: Roles::SUPER_USER, jurisdiction: jurisdictions[:state_1], force_password_change: false, authy_enabled: false, authy_enforced: false, api_enabled: true, notes: Faker::GreekPhilosophers.quote)
+    User.create(email: 'usa_super_user@example.com', password: '1234567ab!', role: Roles::SUPER_USER, jurisdiction: jurisdictions[:usa], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
+    User.create(email: 'state1_super_user@example.com', password: '1234567ab!', role: Roles::SUPER_USER, jurisdiction: jurisdictions[:state_1], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
 
     puts ' done!'
 
@@ -200,8 +200,8 @@ namespace :demo do
 
     print 'Creating contract tracer users...'
 
-    User.create(email: 'usa_contact_tracer@example.com', password: '1234567ab!', role: Roles::CONTACT_TRACER, jurisdiction: jurisdictions[:usa], force_password_change: false, authy_enabled: false, authy_enforced: false, api_enabled: true, notes: Faker::GreekPhilosophers.quote)
-    User.create(email: 'state1_contact_tracer@example.com', password: '1234567ab!', role: Roles::CONTACT_TRACER, jurisdiction: jurisdictions[:state_1], force_password_change: false, authy_enabled: false, authy_enforced: false, api_enabled: true, notes: Faker::GreekPhilosophers.quote)
+    User.create(email: 'usa_contact_tracer@example.com', password: '1234567ab!', role: Roles::CONTACT_TRACER, jurisdiction: jurisdictions[:usa], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
+    User.create(email: 'state1_contact_tracer@example.com', password: '1234567ab!', role: Roles::CONTACT_TRACER, jurisdiction: jurisdictions[:state_1], force_password_change: false, authy_enabled: false, authy_enforced: false, notes: Faker::GreekPhilosophers.quote)
 
     puts ' done!'
 

@@ -2,7 +2,7 @@ development:
   adapter: mysql2
   pool: 5
   timeout: 5000
-  database: disease_trakker_development
+  database: glyph_development
   host: '127.0.0.1'
   port: <%= ENV['CI_SQL_PORT'] %>
   username: root
@@ -12,7 +12,7 @@ test:
   adapter: mysql2
   pool: 5
   timeout: 5000
-  database: disease_trakker_test
+  database: glyph_test
   host: '127.0.0.1'
   port: <%= ENV['CI_SQL_PORT'] %>
   username: root

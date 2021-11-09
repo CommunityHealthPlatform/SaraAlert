@@ -2,7 +2,7 @@ test:
   adapter: mysql2
   pool: 5
   timeout: 5000
-  database: disease_trakker_test
+  database: glyph_test
   host: mysql
   username: runner
   password: ''
