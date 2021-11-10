@@ -33,7 +33,8 @@ table.dataTable tbody td {
   width: 1.75rem;
 }
 
-table.dataTable tbody td.select-checkbox:before, table.dataTable tbody td.select-checkbox:after,
+table.dataTable tbody td.select-checkbox:before,
+table.dataTable tbody td.select-checkbox:after,
 table.dataTable tbody th.select-checkbox:before,
 table.dataTable tbody th.select-checkbox:after {
   top: 50% !important;
@@ -42,20 +43,25 @@ table.dataTable tbody th.select-checkbox:after {
 table.dataTable tr.selected td.select-checkbox:after,
 table.dataTable tr.selected th.select-checkbox:after,
 table.dataTable tr th.select-checkbox.selected::after {
-  font: 90%/1.45em "Helvetica Neue", HelveticaNeue, Helvetica, Arial, sans-serif !important;
+  font: 90%/1.45em 'Helvetica Neue', HelveticaNeue, Helvetica, Arial, sans-serif !important;
   color: #333 !important;
 }
 
-table.dataTable tbody > tr.selected, table.dataTable tbody > tr > .selected {
+table.dataTable tbody > tr.selected,
+table.dataTable tbody > tr > .selected {
   background-color: rgba(90, 150, 194, 0.5) !important;
 }
 
-table.dataTable tbody tr.selected a, table.dataTable tbody th.selected a, table.dataTable tbody td.selected a {
+table.dataTable tbody tr.selected a,
+table.dataTable tbody th.selected a,
+table.dataTable tbody td.selected a {
   color: #226891 !important;
 }
 
-table.dataTable tbody tr.selected, table.dataTable tbody th.selected, table.dataTable tbody td.selected {
-	color: black !important;
+table.dataTable tbody tr.selected,
+table.dataTable tbody th.selected,
+table.dataTable tbody td.selected {
+  color: black !important;
 }
 
 // Select All - Add standard checkbox to header
@@ -83,7 +89,7 @@ table.dataTable thead th.select-checkbox:before {
   border-radius: 3px;
 }
 
-table.dataTable tr th.select-checkbox.selected::after  {
+table.dataTable tr th.select-checkbox.selected::after {
   content: '\2714';
   margin-top: -11px;
   margin-left: -4px;
@@ -92,21 +98,21 @@ table.dataTable tr th.select-checkbox.selected::after  {
 }
 
 div.dataTables_wrapper div.dataTables_info {
-	padding-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 button.dt-button {
   color: #fff;
-	background-color: #226891;
-	border-color: #226891;
+  background-color: #226891;
+  border-color: #226891;
 }
 
 button.dt-button:hover {
   color: #fff;
-	background-color: #1b5272;
-	border-color: #184a68;
+  background-color: #1b5272;
+  border-color: #184a68;
 }
 
 div.dataTables_wrapper div.dataTables_info {
-	margin-bottom: 8px !important;
+  margin-bottom: 8px !important;
 }

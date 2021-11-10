@@ -11,7 +11,8 @@
   width: 100%;
   margin-bottom: 20px;
 
-  th, td {
+  th,
+  td {
     padding: 3px 5px;
   }
 
@@ -21,11 +22,11 @@
 
   .header {
     font-weight: 600;
-    font-size: .9em;
+    font-size: 0.9em;
   }
 
   .sub-header {
-    font-size: .9em;
+    font-size: 0.9em;
 
     &.indent {
       padding-left: 40px;
@@ -41,7 +42,8 @@
       padding-right: 12px;
     }
 
-    tr th:last-child, td:last-child {
+    tr th:last-child,
+    td:last-child {
       background-color: #eee;
     }
   }
@@ -90,7 +92,7 @@
 
   .row-secondary {
     & td:nth-child(2) {
-        background-color: $table-row-secondary;
+      background-color: $table-row-secondary;
     }
 
     &:hover {
@@ -104,12 +106,13 @@
 
   .row-striped-light {
     background-color: #fff;
-  
+
     .total-column {
       background-color: #eee;
     }
 
-    th, td {
+    th,
+    td {
       padding: 8px 15px;
 
       &:last-child {
@@ -117,17 +120,18 @@
       }
     }
   }
-  
+
   .row-striped-dark {
     background-color: #eee;
-  
+
     .total-column {
       background-color: #ddd;
     }
 
-    th, td {
+    th,
+    td {
       padding: 8px 15px;
-      
+
       &:last-child {
         padding-right: 5px;
       }
@@ -158,7 +162,7 @@
   }
 
   .percentage {
-    font-size: .8rem;
+    font-size: 0.8rem;
     color: #555;
     text-align: right;
     width: 65px;
@@ -177,17 +181,16 @@
       min-width: 7em;
     }
 
-    tr>td:first-child {
+    tr > td:first-child {
       width: 80%;
     }
   }
 }
 
 .info-text {
-  font-size: .8rem;
+  font-size: 0.8rem;
   font-weight: 500;
 }
-
 
 /* SWITCH STYLING */
 
@@ -206,7 +209,6 @@
   }
 }
 
-
 /* GRAPH STYLING */
 
 .analytics-chart-borders {
@@ -216,15 +218,14 @@
 }
 
 .recharts-custom-tick {
-  font-size: .9rem;
+  font-size: 0.9rem;
 }
-
 
 /* MAP STYLING */
 
 .geographic-summary-header {
   font-weight: bold;
-  border-bottom: 4px solid rgb(28,84,126);
+  border-bottom: 4px solid rgb(28, 84, 126);
   font-size: 18px;
 }
 

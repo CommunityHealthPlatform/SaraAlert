@@ -68,7 +68,8 @@
   font-size: 0.9em;
 }
 
-.admin-table, .patients-table {
+.admin-table,
+.patients-table {
   tbody tr:hover {
     background-color: #ddd;
     td {
@@ -80,13 +81,15 @@
 .selected-row {
   background-color: #d4e7f7 !important;
 
-  td, th {
+  td,
+  th {
     border: 1px solid white;
   }
 
   &:hover {
-    td, th {
-      background-color: #bcdcf5 ;
+    td,
+    th {
+      background-color: #bcdcf5;
     }
   }
 }

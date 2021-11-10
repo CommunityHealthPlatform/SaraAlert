@@ -8,7 +8,7 @@
   z-index: 1;
   position: absolute;
   left: 0.75rem;
-  top: 0.40rem;
+  top: 0.4rem;
   color: $datepicker-gray;
   font-size: 14pt;
 }
@@ -108,7 +108,7 @@
 }
 
 .react-datepicker-popper {
-  z-index: 100 !important
+  z-index: 100 !important;
 }
 
 // Hide the timepicker, because we don't need it and it can only do 12 hour time

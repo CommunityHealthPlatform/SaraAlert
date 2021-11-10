@@ -64,7 +64,8 @@
   flex-grow: 1;
 }
 
-.item-group, .notes-section {
+.item-group,
+.notes-section {
   margin-bottom: 1rem;
 }
 
@@ -95,12 +96,12 @@
 
 .chevron-opened {
   transform: rotate(-90deg);
-  transition: transform .3s;
+  transition: transform 0.3s;
 }
 
 .chevron-closed {
   transform: rotate(90deg);
-  transition: transform .3s;
+  transition: transform 0.3s;
 }
 
 .reports-actions-title {
@@ -109,7 +110,7 @@
 
 .edit-text {
   color: #707070 !important;
-  font-size: .9em;
+  font-size: 0.9em;
 }
 
 .follow-up-flag-box {
@@ -120,5 +121,5 @@
 }
 
 .flag-note {
-  font-size: .95rem;
+  font-size: 0.95rem;
 }

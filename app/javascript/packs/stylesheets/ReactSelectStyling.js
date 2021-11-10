@@ -14,7 +14,7 @@ const cursorPointerStyleLg = {
 
 const vaccineModalSelectStyling = {
   menu: base => ({ ...base, zIndex: 9999 }),
-  option: base => ({ ...base, minHeight: 30, cursor: 'pointer' })
+  option: base => ({ ...base, minHeight: 30, cursor: 'pointer' }),
 };
 
 const preferredContactTimeSelectStyling = {
@@ -30,10 +30,13 @@ const bootstrapSelectTheme = (theme, size) => {
   return {
     ...theme,
     borderRadius: 0,
-    spacing: size === 'lg' ? {
-      ...theme.spacing,
-      controlHeight: '3rem',
-    } : theme.spacing,
+    spacing:
+      size === 'lg'
+        ? {
+            ...theme.spacing,
+            controlHeight: '3rem',
+          }
+        : theme.spacing,
   };
 };
 

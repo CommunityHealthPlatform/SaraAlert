@@ -3,17 +3,17 @@
     .nav-link {
       border-top-left-radius: 0 !important;
       border-top-right-radius: 0 !important;
-  
+
       &:hover {
-        border-color:#b5b5b5;
-        background-color:white;
+        border-color: #b5b5b5;
+        background-color: white;
       }
-  
+
       .small-tab {
         display: none !important;
       }
     }
-  
+
     .nav-item:last-child {
       margin-left: auto;
     }
@@ -21,16 +21,16 @@
 }
 
 /* styling for global dashboard navbar on smaller screens only */
-@media only screen and (max-width : 1082px) {
+@media only screen and (max-width: 1082px) {
   .global-dashboard {
     .nav-tabs {
       .nav-link {
         width: 230px;
         border: 1px #dee2e6 solid;
-        margin-bottom: -.05px;
+        margin-bottom: -0.05px;
 
         &:hover {
-          border-color:#606060;
+          border-color: #606060;
         }
 
         &.active {
@@ -38,7 +38,7 @@
         }
 
         .badge {
-          float: right !important
+          float: right !important;
         }
       }
     }
@@ -50,16 +50,16 @@
 }
 
 /* styling for exposure dashboard navbar on smaller screens only */
-@media only screen and (max-width : 1310px) {
+@media only screen and (max-width: 1310px) {
   .exposure-dashboard {
     .nav-tabs {
       .nav-link {
         width: 230px;
         border: 1px #dee2e6 solid;
-        margin-bottom: -.05px;
+        margin-bottom: -0.05px;
 
         &:hover {
-          border-color:#606060;
+          border-color: #606060;
         }
 
         &.active {
@@ -79,16 +79,16 @@
 }
 
 /* styling for isolation dashboard navbar on smaller screens only */
-@media only screen and (max-width : 1240px) {
+@media only screen and (max-width: 1240px) {
   .isolation-dashboard {
     .nav-tabs {
       .nav-link {
         width: 230px;
         border: 1px #dee2e6 solid;
-        margin-bottom: -.05px;
+        margin-bottom: -0.05px;
 
         &:hover {
-          border-color:#606060;
+          border-color: #606060;
         }
 
         &.active {
@@ -96,7 +96,7 @@
         }
 
         .badge {
-          float: right !important
+          float: right !important;
         }
 
         .small-tab {
