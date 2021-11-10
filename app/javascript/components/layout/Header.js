@@ -7,27 +7,17 @@ class Header extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeKey: this.getActiveTabKey(),
+      activeKey: window.location.pathname,
     };
   }
-
-  /**
-   * Finds the "activeKey" for the nav bar based on current path.
-   */
-  getActiveTabKey = () => {
-    // Active tab should still be the tab for the monitoring dashboards when viewing the isolation workflow
-    if (window.location.pathname.includes('/public_health/')) {
-      return `${window.BASE_PATH}/public_health`;
-    }
-    return window.location.pathname;
-  };
 
   render() {
     return (
       <React.Fragment>
         <Navbar bg={this.props.show_demo_warning ? 'danger' : 'primary'} variant="dark" expand="lg" className={this.props.show_demo_warning ? '' : 'mb-3'}>
           <Navbar.Brand className="header-brand-text" href={`${window.BASE_PATH}/`}>
-            Sara Alert<small className="nav-version ml-1">{this.props.version}</small>
+            GLYPH
+            <small className="nav-version ml-1">{this.props.version}</small>
           </Navbar.Brand>
           {this.props.current_user && (
             <React.Fragment>
@@ -41,8 +31,8 @@ class Header extends React.Component {
                 )}
                 {this.props.current_user?.can_see_monitoring_dashboards_tab && (
                   <Nav.Link
-                    className={`${this.state.activeKey === '/public_health' ? 'nav-link-active' : 'nav-link-inactive'} py-0 ml-3`}
-                    href={`${window.BASE_PATH}/public_health`}>
+                    className={`${this.state.activeKey === '/dashboard' ? 'nav-link-active' : 'nav-link-inactive'} py-0 ml-3`}
+                    href={`${window.BASE_PATH}/dashboard`}>
                     <i className="fas fa-table fa-fw mr-2"></i>Monitoring Dashboards
                   </Nav.Link>
                 )}
@@ -53,13 +43,6 @@ class Header extends React.Component {
                     <i className="fas fa-user-cog fa-fw mr-2"></i>Admin Panel
                   </Nav.Link>
                 )}
-                {this.props.current_user?.can_see_analytics_tab && (
-                  <Nav.Link
-                    className={`${this.state.activeKey === '/analytics' ? 'nav-link-active' : 'nav-link-inactive'} py-0 ml-3`}
-                    href={`${window.BASE_PATH}/analytics`}>
-                    <i className="fas fa-chart-pie fa-fw mr-2"></i>Analytics
-                  </Nav.Link>
-                )}
               </Nav>
               <Form inline className="ml-auto">
                 <Navbar.Text className="text-white py-0 px-3">
@@ -67,7 +50,7 @@ class Header extends React.Component {
                   {this.props.current_user?.email} ({this.props.current_user?.role?.split('_')?.map(_.capitalize)?.join(' ')})
                 </Navbar.Text>
                 <a className="w-border-right"></a>
-                <div className="dropdown">
+                {/* <div className="dropdown">
                   <Nav.Link
                     className="text-white py-0"
                     id="helpMenuButton"
@@ -90,8 +73,8 @@ class Header extends React.Component {
                     </a>
                   </div>
                 </div>
-                <a className="w-border-right"></a>
-                {this.props.current_user?.is_usa_admin && (
+                <a className="w-border-right"></a> */}
+                {/* {this.props.current_user?.is_usa_admin && (
                   <React.Fragment>
                     <Nav.Link className="text-white py-0" href={`${window.BASE_PATH}/oauth/applications`}>
                       <i className="fas fa-share-alt fa-fw mr-2"></i>API
@@ -102,7 +85,7 @@ class Header extends React.Component {
                     </Nav.Link>
                     <a className="w-border-right"></a>
                   </React.Fragment>
-                )}
+                )} */}
                 <Nav.Link className="text-white py-0" href={`${window.BASE_PATH}/users/sign_out`} data-method="DELETE">
                   <i className="fas fa-sign-out-alt fa-fw mr-2"></i>Logout
                 </Nav.Link>
