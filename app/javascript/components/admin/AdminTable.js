@@ -24,7 +24,6 @@ class AdminTable extends React.Component {
           { label: 'Jurisdiction', field: 'jurisdiction_path', isSortable: true },
           { label: 'Role', field: 'role_title', isSortable: false },
           { label: 'Status', field: 'is_locked', isSortable: false, options: { true: 'Locked', false: 'Unlocked' } },
-          { label: 'API Enabled', field: 'is_api_enabled', isSortable: false, options: { true: 'Yes', false: 'No' } },
           { label: '2FA Enabled', field: 'is_2fa_enabled', isSortable: false, options: { true: 'Yes', false: 'No' } },
           { label: 'Failed Login Attempts', field: 'num_failed_logins', isSortable: true },
           { label: 'Notes', field: 'notes', isSortable: false, filter: this.renderNotes, className: 'col-long-text-field' },
@@ -326,7 +325,6 @@ class AdminTable extends React.Component {
       email: data.email,
       jurisdiction: this.state.jurisdiction_paths[data.jurisdiction_path],
       role_title: data.roleTitle,
-      is_api_enabled: data.isAPIEnabled,
       notes: data.notes,
     };
 
@@ -369,7 +367,6 @@ class AdminTable extends React.Component {
       email: data.email,
       jurisdiction: this.state.jurisdiction_paths[data.jurisdiction_path],
       role_title: data.roleTitle,
-      is_api_enabled: data.isAPIEnabled,
       is_locked: data.isLocked,
       notes: data.notes,
     };
@@ -526,7 +523,6 @@ class AdminTable extends React.Component {
           return {
             ...userData,
             notes: removeFormulaStart(userData.notes).toString(),
-            is_api_enabled: userData.is_api_enabled.toString(),
             is_2fa_enabled: userData.is_2fa_enabled.toString(),
             is_locked: userData.is_locked.toString(),
           };

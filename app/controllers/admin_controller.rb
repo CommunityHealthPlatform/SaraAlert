@@ -41,7 +41,7 @@ class AdminController < ApplicationController
     # NOTE: Does not include API proxy users as those are not managed by anyone other than USA admins and cannot be accessed by real users
     users = User.where(is_api_proxy: false, jurisdiction_id: current_user.jurisdiction.subtree_ids)
                 .joins(:jurisdiction)
-                .select('users.id, users.email, users.api_enabled, users.locked_at, users.authy_id,
+                .select('users.id, users.email, users.locked_at, users.authy_id,
                         users.failed_attempts, users.role, users.notes, jurisdictions.path')
 
     # Filter by search text
@@ -67,7 +67,6 @@ class AdminController < ApplicationController
         jurisdiction_path: user.path || '',
         role_title: user.role.titleize,
         is_locked: !user.locked_at.nil? || false,
-        is_api_enabled: user[:api_enabled] || false,
         is_2fa_enabled: !user.authy_id.nil? || false,
         num_failed_logins: user.failed_attempts,
         notes: user.notes
@@ -115,7 +114,7 @@ class AdminController < ApplicationController
   def create_user
     redirect_to(root_url) && return unless current_user.can_access_admin_panel?
 
-    permitted_params = params[:admin].permit(:email, :jurisdiction, :role_title, :is_api_enabled, :notes)
+    permitted_params = params[:admin].permit(:email, :jurisdiction, :role_title, :notes)
     email = permitted_params[:email]
     return head :bad_request if email.nil? || email.blank?
 
@@ -138,9 +137,6 @@ class AdminController < ApplicationController
     allowed_jurisdictions = current_user.jurisdiction.subtree.pluck(:id)
     return head :bad_request unless allowed_jurisdictions.include?(jurisdiction)
 
-    is_api_enabled = permitted_params[:is_api_enabled]
-    return head :bad_request unless [true, false].include? is_api_enabled
-
     # Generate initial password for user
     password = User.rand_gen
 
@@ -151,7 +147,6 @@ class AdminController < ApplicationController
       password: password,
       jurisdiction: Jurisdiction.find_by_id(jurisdiction),
       force_password_change: true,
-      api_enabled: is_api_enabled,
       role: role,
       notes: notes
     )
@@ -163,7 +158,7 @@ class AdminController < ApplicationController
   def edit_user
     redirect_to(root_url) && return unless current_user.can_access_admin_panel?
 
-    permitted_params = params[:admin].permit(:id, :email, :jurisdiction, :role_title, :is_api_enabled, :is_locked, :notes)
+    permitted_params = params[:admin].permit(:id, :email, :jurisdiction, :role_title, :is_locked, :notes)
 
     id = permitted_params[:id]
     user_ids = User.pluck(:id)
@@ -189,9 +184,6 @@ class AdminController < ApplicationController
     allowed_jurisdictions = current_user.jurisdiction.subtree.pluck(:id)
     return head :bad_request unless allowed_jurisdictions.include?(jurisdiction)
 
-    is_api_enabled = permitted_params[:is_api_enabled]
-    return head :bad_request unless [true, false].include? is_api_enabled
-
     is_locked = permitted_params[:is_locked]
     return head :bad_request unless [true, false].include? is_locked
 
@@ -213,7 +205,7 @@ class AdminController < ApplicationController
     user.jurisdiction = Jurisdiction.find_by_id(jurisdiction)
 
     # Update API access
-    user.update!(api_enabled: is_api_enabled, role: role)
+    user.update!(role: role)
 
     # Update locked status
     if user.locked_at.nil? && is_locked

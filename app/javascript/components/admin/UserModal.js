@@ -121,17 +121,6 @@ class UserModal extends React.Component {
                 />
               </Form.Group>
             )}
-            <Form.Group>
-              <Form.Label>API Access</Form.Label>
-              <Form.Check
-                id="access-input"
-                name="access"
-                type="switch"
-                checked={this.state.isAPIEnabled}
-                label={this.state.isAPIEnabled ? 'Enabled' : 'Disabled'}
-                onChange={this.handleAPIAccessChange}
-              />
-            </Form.Group>
             <Form.Group controlId="notes">
               <Form.Label>Notes</Form.Label>
               <InputGroup>
