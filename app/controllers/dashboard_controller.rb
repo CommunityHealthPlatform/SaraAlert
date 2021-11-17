@@ -2,6 +2,5 @@
 
 # DashboardController: Actions associated with presenting dasbhoards
 class DashboardController < ApplicationController
-    def dashboard
-    end
+  def dashboard; end
 end

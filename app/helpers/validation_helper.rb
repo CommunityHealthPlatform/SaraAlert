@@ -88,7 +88,6 @@ module ValidationHelper # rubocop:todo Metrics/ModuleLength
     ]
   }.freeze
 
-
   TIME_OPTIONS = {
     Morning: 'Morning',
     Afternoon: 'Afternoon',

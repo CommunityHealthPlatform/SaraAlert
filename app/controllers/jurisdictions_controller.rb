@@ -2,7 +2,6 @@
 
 # JurisdictionsController: handles all subject actions
 class JurisdictionsController < ApplicationController
-
   before_action :authenticate_user!
   before_action :authenticate_user_role
 
