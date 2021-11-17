@@ -1,1 +1,4 @@
 eng:
+  email:
+    shared:
+      greeting: 'Dear %{name},'
