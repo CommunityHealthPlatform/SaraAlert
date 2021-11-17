@@ -127,7 +127,7 @@ jobs:
         with:
           name: screenshots
           path: tmp/screenshots/
-    compile-test-coverage:
+  compile-test-coverage:
     name: Display Test Coverage Results
     needs: [test-system-admin]
     runs-on: ubuntu-18.04
