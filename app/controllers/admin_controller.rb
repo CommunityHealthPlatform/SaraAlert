@@ -284,16 +284,14 @@ class AdminController < ApplicationController
     redirect_to(root_url) && return unless current_user.usa_admin?
 
     counts = CSV.generate(headers: true) do |csv|
-      csv << %w[name users_all users_unlocked monitorees_all monitorees_active cases_all cases_active purged]
+      csv << %w[name users_all users_unlocked monitorees_all monitorees_active purged]
       Jurisdiction.all.each do |j|
         csv << [
           j[:path],
           j.all_users.count,
           j.all_users.where(locked_at: nil).count,
-          j.all_patients_excluding_purged.where(isolation: false).count,
-          j.all_patients_excluding_purged.where(isolation: false, monitoring: true).count,
-          j.all_patients_excluding_purged.where(isolation: true).count,
-          j.all_patients_excluding_purged.where(isolation: true, monitoring: true).count,
+          j.all_patients_excluding_purged.count,
+          j.all_patients_excluding_purged.where(monitoring: true).count,
           j.all_patients_including_purged.where(purged: true).count
         ]
       end
