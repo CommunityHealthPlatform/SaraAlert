@@ -27,7 +27,7 @@ class Header extends React.Component {
       <React.Fragment>
         <Navbar bg={this.props.show_demo_warning ? 'danger' : 'primary'} variant="dark" expand="lg" className={this.props.show_demo_warning ? '' : 'mb-3'}>
           <Navbar.Brand className="header-brand-text" href={`${window.BASE_PATH}/`}>
-            Sara Alert<small className="nav-version ml-1">{this.props.version}</small>
+            GLYPH<small className="nav-version ml-1">{this.props.version}</small>
           </Navbar.Brand>
           {this.props.current_user && (
             <React.Fragment>
@@ -51,13 +51,6 @@ class Header extends React.Component {
                     className={`${this.state.activeKey === '/admin' ? 'nav-link-active' : 'nav-link-inactive'} py-0 ml-3`}
                     href={`${window.BASE_PATH}/admin`}>
                     <i className="fas fa-user-cog fa-fw mr-2"></i>Admin Panel
-                  </Nav.Link>
-                )}
-                {this.props.current_user?.can_see_analytics_tab && (
-                  <Nav.Link
-                    className={`${this.state.activeKey === '/analytics' ? 'nav-link-active' : 'nav-link-inactive'} py-0 ml-3`}
-                    href={`${window.BASE_PATH}/analytics`}>
-                    <i className="fas fa-chart-pie fa-fw mr-2"></i>Analytics
                   </Nav.Link>
                 )}
               </Nav>
