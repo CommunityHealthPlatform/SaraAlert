@@ -32,65 +32,7 @@ class MonitoringActions extends React.Component {
                 continuous_exposure_enabled={this.props.continuous_exposure_enabled}
               />
             </Form.Group>
-            <Form.Group as={Col} md="12" lg="8" className="pt-2">
-              <ExposureRiskAssessment
-                patient={this.props.patient}
-                authenticity_token={this.props.authenticity_token}
-                household_members={this.props.household_members}
-                current_user={this.props.current_user}
-                jurisdiction_paths={this.props.jurisdiction_paths}
-                workflow={this.props.workflow}
-                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
-              />
-            </Form.Group>
-            <Form.Group as={Col} md="12" lg="8" className="pt-2">
-              <MonitoringPlan
-                patient={this.props.patient}
-                authenticity_token={this.props.authenticity_token}
-                household_members={this.props.household_members}
-                current_user={this.props.current_user}
-                jurisdiction_paths={this.props.jurisdiction_paths}
-                workflow={this.props.workflow}
-                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
-              />
-            </Form.Group>
-            <Form.Group as={Col} md="12" lg="8" className="pt-2">
-              <CaseStatus
-                patient={this.props.patient}
-                authenticity_token={this.props.authenticity_token}
-                household_members={this.props.household_members}
-                monitoring_reasons={this.props.monitoring_reasons}
-                current_user={this.props.current_user}
-                jurisdiction_paths={this.props.jurisdiction_paths}
-                workflow={this.props.workflow}
-                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
-                available_workflows={this.props.available_workflows}
-              />
-            </Form.Group>
-            <Form.Group as={Col} md="12" lg="8" className="pt-2">
-              <PublicHealthAction
-                patient={this.props.patient}
-                authenticity_token={this.props.authenticity_token}
-                household_members={this.props.household_members}
-                current_user={this.props.current_user}
-                jurisdiction_paths={this.props.jurisdiction_paths}
-                workflow={this.props.workflow}
-                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
-              />
-            </Form.Group>
-            <Form.Group as={Col} md="12" lg="8" className="pt-2">
-              <AssignedUser
-                patient={this.props.patient}
-                authenticity_token={this.props.authenticity_token}
-                household_members={this.props.household_members}
-                assigned_users={this.props.assigned_users}
-                current_user={this.props.current_user}
-                jurisdiction_paths={this.props.jurisdiction_paths}
-                workflow={this.props.workflow}
-                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
-              />
-            </Form.Group>
-            <Form.Group as={Col} lg="24" className="pt-2">
+            <Form.Group as={Col} lg="16" className="pt-2">
               <Jurisdiction
                 patient={this.props.patient}
                 authenticity_token={this.props.authenticity_token}

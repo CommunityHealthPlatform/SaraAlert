@@ -26,38 +26,6 @@ class PatientPage extends React.Component {
             authenticity_token={this.props.authenticity_token}
             workflow={this.props.workflow}
           />
-          <div className="household-info">
-            {!this.props.patient.head_of_household && this.props?.other_household_members?.length > 0 && (
-              <Dependent
-                patient={this.props.patient}
-                other_household_members={this.props.other_household_members}
-                current_user={this.props.current_user}
-                jurisdiction_paths={this.props.jurisdiction_paths}
-                authenticity_token={this.props.authenticity_token}
-                workflow={this.props.workflow}
-              />
-            )}
-            {this.props.patient.head_of_household && (
-              <HeadOfHousehold
-                patient={this.props.patient}
-                other_household_members={this.props.other_household_members}
-                can_add_group={this.props.can_add_group}
-                current_user={this.props.current_user}
-                jurisdiction_paths={this.props.jurisdiction_paths}
-                authenticity_token={this.props.authenticity_token}
-                workflow={this.props.workflow}
-                continuous_exposure_enabled={this.props.continuous_exposure_enabled}
-              />
-            )}
-            {!this.props.patient.head_of_household && this.props?.other_household_members?.length === 0 && (
-              <Individual
-                patient={this.props.patient}
-                can_add_group={this.props.can_add_group}
-                authenticity_token={this.props.authenticity_token}
-                workflow={this.props.workflow}
-              />
-            )}
-          </div>
         </Card.Body>
       </Card>
     );

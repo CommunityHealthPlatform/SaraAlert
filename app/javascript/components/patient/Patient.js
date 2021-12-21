@@ -91,51 +91,6 @@ class Patient extends React.Component {
       this.props.details.address_state ||
       this.props.details.address_zip ||
       this.props.details.address_county;
-    const showMonitoredAddress =
-      this.props.details.monitored_address_line_1 ||
-      this.props.details.monitored_address_line_2 ||
-      this.props.details.monitored_address_city ||
-      this.props.details.monitored_address_state ||
-      this.props.details.monitored_address_zip ||
-      this.props.details.monitored_address_county;
-    const showForeignAddress =
-      this.props.details.foreign_address_line_1 ||
-      this.props.details.foreign_address_line_2 ||
-      this.props.details.foreign_address_line_3 ||
-      this.props.details.foreign_address_city ||
-      this.props.details.foreign_address_zip ||
-      this.props.details.foreign_address_country;
-    const showForeignMonitoringAddress =
-      this.props.details.foreign_monitored_address_line_1 ||
-      this.props.details.foreign_monitored_address_line_2 ||
-      this.props.details.foreign_monitored_address_city ||
-      this.props.details.foreign_monitored_address_state ||
-      this.props.details.foreign_monitored_address_zip ||
-      this.props.details.foreign_monitored_address_county;
-    const showArrivalSection =
-      this.props.details.port_of_origin ||
-      this.props.details.date_of_departure ||
-      this.props.details.flight_or_vessel_carrier ||
-      this.props.details.flight_or_vessel_number ||
-      this.props.details.port_of_entry_into_usa ||
-      this.props.details.date_of_arrival;
-    const showPlannedTravel =
-      this.props.details.additional_planned_travel_type ||
-      this.props.details.additional_planned_travel_destination_country ||
-      this.props.details.additional_planned_travel_destination_state ||
-      this.props.details.additional_planned_travel_port_of_departure ||
-      this.props.details.additional_planned_travel_start_date ||
-      this.props.details.additional_planned_travel_end_date;
-    const showPotentialExposureInfo =
-      this.props.details.last_date_of_exposure || this.props.details.potential_exposure_location || this.props.details.potential_exposure_country;
-    const showRiskFactors =
-      this.props.details.contact_of_known_case ||
-      this.props.details.member_of_a_common_exposure_cohort ||
-      this.props.details.travel_to_affected_country_or_area ||
-      this.props.details.was_in_health_care_facility_with_known_cases ||
-      this.props.details.laboratory_personnel ||
-      this.props.details.healthcare_personnel ||
-      this.props.details.crew_on_passenger_or_cargo_flight;
 
     return (
       <React.Fragment>
@@ -155,16 +110,7 @@ class Patient extends React.Component {
               <span aria-label={formatName(this.props.details)} className="pr-2">
                 {formatName(this.props.details)}
               </span>
-              {this.props.details.head_of_household && <BadgeHoH patientId={String(this.props.details.id)} location={'right'} />}
             </h3>
-            {this.props.can_modify_subject_status && !this.props.edit_mode && !this.props.details.follow_up_reason && (
-              <Button id="set-follow-up-flag-link" size="sm" aria-label="Set Flag for Follow-up" onClick={() => this.setState({ showSetFlagModal: true })}>
-                <span>
-                  {' '}
-                  <i className="fas fa-flag pr-1"></i> Flag for Follow-up
-                </span>
-              </Button>
-            )}
           </Col>
           <Col sm={12}>
             <div className="jurisdiction-user-box float-right">
@@ -200,15 +146,6 @@ class Patient extends React.Component {
                 </div>
                 <div>
                   <b>Sara Alert ID:</b> <span>{this.props.details.id || '--'}</span>
-                </div>
-                <div>
-                  <b>State/Local ID:</b> <span>{this.props.details.user_defined_id_statelocal || '--'}</span>
-                </div>
-                <div>
-                  <b>CDC ID:</b> <span>{this.props.details.user_defined_id_cdc || '--'}</span>
-                </div>
-                <div>
-                  <b>NNDSS ID:</b> <span>{this.props.details.user_defined_id_nndss || '--'}</span>
                 </div>
               </Col>
               <Col sm={14} className="item-group">
@@ -291,10 +228,10 @@ class Patient extends React.Component {
               id="details-expander-link"
               variant="link"
               className="p-0"
-              aria-label="Show address, travel, exposure, and case information"
+              aria-label="Show address"
               onClick={() => this.setState({ expanded: !this.state.expanded })}>
               <FontAwesomeIcon className={this.state.expanded ? 'chevron-opened' : 'chevron-closed'} icon={faChevronRight} />
-              <span className="pl-2">{this.state.expanded ? 'Hide' : 'Show'} address, travel, exposure, and case information</span>
+              <span className="pl-2">{this.state.expanded ? 'Hide' : 'Show'} address</span>
             </Button>
             <span className="dashed-line"></span>
           </div>
@@ -307,11 +244,11 @@ class Patient extends React.Component {
                   <h4 className="section-title">Address</h4>
                   {this.renderEditLink('Address', 1)}
                 </div>
-                {!(showDomesticAddress || showMonitoredAddress || showForeignAddress || showForeignMonitoringAddress) && <div className="none-text">None</div>}
-                {(showDomesticAddress || showMonitoredAddress) && (
+                {!showDomesticAddress && <div className="none-text">None</div>}
+                {showDomesticAddress && (
                   <Row>
                     {showDomesticAddress && (
-                      <Col sm={showDomesticAddress && showMonitoredAddress ? 12 : 24} className="item-group">
+                      <Col sm={24} className="item-group">
                         <p className="subsection-title">Home Address (USA)</p>
                         <div>
                           <b>Address 1:</b> <span>{this.props.details.address_line_1 || '--'}</span>
@@ -333,368 +270,9 @@ class Patient extends React.Component {
                         </div>
                       </Col>
                     )}
-                    {showMonitoredAddress && (
-                      <Col sm={showDomesticAddress && showMonitoredAddress ? 12 : 24} className="item-group">
-                        <p className="subsection-title">Monitoring Address</p>
-                        <div>
-                          <b>Address 1:</b> <span>{this.props.details.monitored_address_line_1 || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Address 2:</b> <span>{this.props.details.monitored_address_line_2 || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Town/City:</b> <span>{this.props.details.monitored_address_city || '--'}</span>
-                        </div>
-                        <div>
-                          <b>State:</b> <span>{this.props.details.monitored_address_state || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Zip:</b> <span>{this.props.details.monitored_address_zip || '--'}</span>
-                        </div>
-                        <div>
-                          <b>County:</b> <span>{this.props.details.monitored_address_county || '--'}</span>
-                        </div>
-                      </Col>
-                    )}
-                  </Row>
-                )}
-                {(showForeignAddress || showForeignMonitoringAddress) && (
-                  <Row>
-                    {showForeignAddress && (
-                      <Col sm={showForeignAddress && showForeignMonitoringAddress ? 12 : 24} className="item-group">
-                        <p className="subsection-title">Home Address (Foreign)</p>
-                        <div>
-                          <b>Address 1:</b> <span>{this.props.details.foreign_address_line_1 || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Address 2:</b> <span>{this.props.details.foreign_address_line_2 || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Address 3:</b> <span>{this.props.details.foreign_address_line_3 || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Town/City:</b> <span>{this.props.details.foreign_address_city || '--'}</span>
-                        </div>
-                        <div>
-                          <b>State:</b> <span>{this.props.details.foreign_address_state || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Zip:</b> <span>{this.props.details.foreign_address_zip || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Country:</b> <span>{this.props.details.foreign_address_country || '--'}</span>
-                        </div>
-                      </Col>
-                    )}
-                    {showForeignMonitoringAddress && (
-                      <Col sm={showForeignAddress && showForeignMonitoringAddress ? 12 : 24} className="item-group">
-                        <p className="subsection-title">Monitoring Address</p>
-                        <div>
-                          <b>Address 1:</b> <span>{this.props.details.foreign_monitored_address_line_1 || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Address 2:</b> <span>{this.props.details.foreign_monitored_address_line_2 || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Town/City:</b> <span>{this.props.details.foreign_monitored_address_city || '--'}</span>
-                        </div>
-                        <div>
-                          <b>State:</b> <span>{this.props.details.foreign_monitored_address_state || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Zip:</b> <span>{this.props.details.foreign_monitored_address_zip || '--'}</span>
-                        </div>
-                        <div>
-                          <b>County:</b> <span>{this.props.details.foreign_monitored_address_county || '--'}</span>
-                        </div>
-                      </Col>
-                    )}
                   </Row>
                 )}
               </Col>
-              <Col lg={10} xl={12} className="col-xxxl-14">
-                <Row>
-                  <Col id="arrival-information" xl={24} className="col-xxxl-12">
-                    <div className="section-header">
-                      <h4 className="section-title">Arrival Information</h4>
-                      {this.renderEditLink('Arrival Information', 3)}
-                    </div>
-                    {!(showArrivalSection || this.props.details.travel_related_notes) && <div className="none-text">None</div>}
-                    {showArrivalSection && (
-                      <Row>
-                        <Col md={12} lg={24} xl={12} className="item-group">
-                          <p className="subsection-title">Departed</p>
-                          <div>
-                            <b>Port of Origin:</b> <span>{this.props.details.port_of_origin || '--'}</span>
-                          </div>
-                          <div>
-                            <b>Date of Departure:</b>{' '}
-                            <span>
-                              {this.props.details.date_of_departure ? moment(this.props.details.date_of_departure, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}
-                            </span>
-                          </div>
-                        </Col>
-                        <Col md={12} lg={24} xl={12} className="item-group">
-                          <p className="subsection-title">Arrival</p>
-                          <div>
-                            <b>Port of Entry:</b> <span>{this.props.details.port_of_entry_into_usa || '--'}</span>
-                          </div>
-                          <div>
-                            <b>Date of Arrival:</b>{' '}
-                            <span>
-                              {this.props.details.date_of_arrival ? moment(this.props.details.date_of_arrival, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}
-                            </span>
-                          </div>
-                        </Col>
-                        <Col className="item-group">
-                          <div>
-                            <b>Carrier:</b> <span>{this.props.details.flight_or_vessel_carrier || '--'}</span>
-                          </div>
-                          <div>
-                            <b>Flight or Vessel #:</b> <span>{this.props.details.flight_or_vessel_number || '--'}</span>
-                          </div>
-                        </Col>
-                      </Row>
-                    )}
-                    {this.props.details.travel_related_notes && (
-                      <div className="notes-section">
-                        <p className="subsection-title">Notes</p>
-                        {this.props.details.travel_related_notes.length < 400 && <div className="notes-text">{this.props.details.travel_related_notes}</div>}
-                        {this.props.details.travel_related_notes.length >= 400 && (
-                          <React.Fragment>
-                            <div className="notes-text">
-                              {this.state.expandArrivalNotes
-                                ? this.props.details.travel_related_notes
-                                : this.props.details.travel_related_notes.slice(0, 400) + ' ...'}
-                            </div>
-                            <Button
-                              variant="link"
-                              className="notes-button p-0"
-                              onClick={() => this.setState({ expandArrivalNotes: !this.state.expandArrivalNotes })}>
-                              {this.state.expandArrivalNotes ? '(Collapse)' : '(View all)'}
-                            </Button>
-                          </React.Fragment>
-                        )}
-                      </div>
-                    )}
-                  </Col>
-                  <Col id="planned-travel" xl={24} className="col-xxxl-12">
-                    <div className="section-header">
-                      <h4 className="section-title">
-                        <span className="d-none d-lg-inline d-xl-none d-xxl-inline">Additional</span> Planned Travel
-                      </h4>
-                      {this.renderEditLink('Planned Travel', 4)}
-                    </div>
-                    {!(showPlannedTravel || this.props.details.additional_planned_travel_related_notes) && <div className="none-text">None</div>}
-                    {showPlannedTravel && (
-                      <div className="item-group">
-                        <div>
-                          <b>Type:</b> <span>{this.props.details.additional_planned_travel_type || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Place:</b>{' '}
-                          <span>
-                            {this.props.details.additional_planned_travel_destination_country}
-                            {this.props.details.additional_planned_travel_destination_state}
-                            {!this.props.details.additional_planned_travel_destination_country &&
-                              !this.props.details.additional_planned_travel_destination_state &&
-                              '--'}
-                          </span>
-                        </div>
-                        <div>
-                          <b>Port of Departure:</b> <span>{this.props.details.additional_planned_travel_port_of_departure || '--'}</span>
-                        </div>
-                        <div>
-                          <b>Start Date:</b>{' '}
-                          <span>
-                            {this.props.details.additional_planned_travel_start_date
-                              ? moment(this.props.details.additional_planned_travel_start_date, 'YYYY-MM-DD').format('MM/DD/YYYY')
-                              : '--'}
-                          </span>
-                        </div>
-                        <div>
-                          <b>End Date:</b>{' '}
-                          <span>
-                            {this.props.details.additional_planned_travel_end_date
-                              ? moment(this.props.details.additional_planned_travel_end_date, 'YYYY-MM-DD').format('MM/DD/YYYY')
-                              : '--'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {this.props.details.additional_planned_travel_related_notes && (
-                      <div className="notes-section">
-                        <p className="subsection-title">Notes</p>
-                        {this.props.details.additional_planned_travel_related_notes.length < 400 && (
-                          <div className="notes-text">{this.props.details.additional_planned_travel_related_notes}</div>
-                        )}
-                        {this.props.details.additional_planned_travel_related_notes.length >= 400 && (
-                          <React.Fragment>
-                            <div className="notes-text">
-                              {this.state.expandPlannedTravelNotes
-                                ? this.props.details.additional_planned_travel_related_notes
-                                : this.props.details.additional_planned_travel_related_notes.slice(0, 400) + ' ...'}
-                            </div>
-                            <Button
-                              variant="link"
-                              className="notes-button p-0"
-                              onClick={() => this.setState({ expandPlannedTravelNotes: !this.state.expandPlannedTravelNotes })}>
-                              {this.state.expandPlannedTravelNotes ? '(Collapse)' : '(View all)'}
-                            </Button>
-                          </React.Fragment>
-                        )}
-                      </div>
-                    )}
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-            <Row>
-              <Col id="potential-exposure-information" md={14} xl={12} className={this.props.details.isolation ? 'col-xxxl-8' : 'col-xxxl-10'}>
-                <div className="section-header">
-                  <h4 className="section-title">
-                    Potential Exposure <span className="d-none d-lg-inline">Information</span>
-                  </h4>
-                  {!this.props.details.isolation && this.renderEditLink('Potential Exposure Information', 5)}
-                </div>
-                {!(showPotentialExposureInfo || showRiskFactors || this.props.details.exposure_notes) && <div className="none-text">None</div>}
-                {(showPotentialExposureInfo || showRiskFactors) && (
-                  <React.Fragment>
-                    <div className="item-group">
-                      <div>
-                        <b>Last Date of Exposure:</b>{' '}
-                        <span>
-                          {this.props.details.last_date_of_exposure
-                            ? moment(this.props.details.last_date_of_exposure, 'YYYY-MM-DD').format('MM/DD/YYYY')
-                            : '--'}
-                        </span>
-                      </div>
-                      <div>
-                        <b>Exposure Location:</b> <span>{this.props.details.potential_exposure_location || '--'}</span>
-                      </div>
-                      <div>
-                        <b>Exposure Country:</b> <span>{this.props.details.potential_exposure_country || '--'}</span>
-                      </div>
-                    </div>
-                    <p className="subsection-title">Risk Factors</p>
-                    {!showRiskFactors && <div className="none-text">None specified</div>}
-                    {showRiskFactors && (
-                      <ul className="risk-factors">
-                        {this.props.details.contact_of_known_case && (
-                          <li>
-                            <span className="risk-factor">Close Contact with a Known Case</span>
-                            {this.props.details.contact_of_known_case_id && <span className="risk-val">{this.props.details.contact_of_known_case_id}</span>}
-                          </li>
-                        )}
-                        {this.props.details.member_of_a_common_exposure_cohort && (
-                          <li>
-                            <span className="risk-factor">Member of a Common Exposure Cohort</span>
-                            {this.props.details.member_of_a_common_exposure_cohort_type && (
-                              <span className="risk-val">{this.props.details.member_of_a_common_exposure_cohort_type}</span>
-                            )}
-                          </li>
-                        )}
-                        {this.props.details.travel_to_affected_country_or_area && (
-                          <li>
-                            <span className="risk-factor">Travel from Affected Country or Area</span>
-                          </li>
-                        )}
-                        {this.props.details.was_in_health_care_facility_with_known_cases && (
-                          <li>
-                            <span className="risk-factor">Was in Healthcare Facility with Known Cases</span>
-                            {this.props.details.was_in_health_care_facility_with_known_cases_facility_name && (
-                              <span className="risk-val">{this.props.details.was_in_health_care_facility_with_known_cases_facility_name}</span>
-                            )}
-                          </li>
-                        )}
-                        {this.props.details.laboratory_personnel && (
-                          <li>
-                            <span className="risk-factor">Laboratory Personnel</span>
-                            {this.props.details.laboratory_personnel_facility_name && (
-                              <span className="risk-val">{this.props.details.laboratory_personnel_facility_name}</span>
-                            )}
-                          </li>
-                        )}
-                        {this.props.details.healthcare_personnel && (
-                          <li>
-                            <span className="risk-factor">Healthcare Personnel</span>
-                            {this.props.details.healthcare_personnel_facility_name && (
-                              <span className="risk-val">{this.props.details.healthcare_personnel_facility_name}</span>
-                            )}
-                          </li>
-                        )}
-                        {this.props.details.crew_on_passenger_or_cargo_flight && (
-                          <li>
-                            <span className="risk-factor">Crew on Passenger or Cargo Flight</span>
-                          </li>
-                        )}
-                      </ul>
-                    )}
-                  </React.Fragment>
-                )}
-                {this.props.details.exposure_notes && !showPotentialExposureInfo && !showRiskFactors && (
-                  <div className="notes-section">
-                    <p className="subsection-title">Notes</p>
-                    {this.props.details.exposure_notes.length < 400 && <div className="notes-text">{this.props.details.exposure_notes}</div>}
-                    {this.props.details.exposure_notes.length >= 400 && (
-                      <React.Fragment>
-                        <div className="notes-text">
-                          {this.state.expandNotes ? this.props.details.exposure_notes : this.props.details.exposure_notes.slice(0, 400) + ' ...'}
-                        </div>
-                        <Button variant="link" className="notes-button p-0" onClick={() => this.setState({ expandNotes: !this.state.expandNotes })}>
-                          {this.state.expandNotes ? '(Collapse)' : '(View all)'}
-                        </Button>
-                      </React.Fragment>
-                    )}
-                  </div>
-                )}
-              </Col>
-              {this.props.details.isolation && (
-                <Col id="case-information" md={10} xl={12} className="col-xxxl-8">
-                  <div className="section-header">
-                    <h4 className="section-title">Case Information</h4>
-                    {this.renderEditLink('Case Information', 5)}
-                  </div>
-                  <div className="item-group">
-                    <div>
-                      <b>Case Status: </b>
-                      <span>{this.props.details.case_status || '--'}</span>
-                    </div>
-                    {this.props.details.first_positive_lab_at && (
-                      <div>
-                        <b>First Positive Lab Collected: </b>
-                        <span>{moment(this.props.details.first_positive_lab_at, 'YYYY-MM-DD').format('MM/DD/YYYY')}</span>
-                      </div>
-                    )}
-                    <div>
-                      <b>Symptom Onset: </b>
-                      <span>{this.props.details.symptom_onset ? moment(this.props.details.symptom_onset, 'YYYY-MM-DD').format('MM/DD/YYYY') : '--'}</span>
-                    </div>
-                  </div>
-                </Col>
-              )}
-              {(showPotentialExposureInfo || showRiskFactors) && (
-                <Col id="exposure-notes" md={10} xl={12} className="notes-section col-xxxl-8">
-                  <div className="section-header">
-                    <h4 className="section-title">Notes</h4>
-                    {this.renderEditLink('Edit Notes', 5)}
-                  </div>
-                  {!this.props.details.exposure_notes && <div className="none-text">None</div>}
-                  {this.props.details.exposure_notes && this.props.details.exposure_notes.length < 400 && (
-                    <div className="notes-text">{this.props.details.exposure_notes}</div>
-                  )}
-                  {this.props.details.exposure_notes && this.props.details.exposure_notes.length >= 400 && (
-                    <React.Fragment>
-                      <div className="notes-text">
-                        {this.state.expandNotes ? this.props.details.exposure_notes : this.props.details.exposure_notes.slice(0, 400) + ' ...'}
-                      </div>
-                      <Button variant="link" className="notes-button p-0" onClick={() => this.setState({ expandNotes: !this.state.expandNotes })}>
-                        {this.state.expandNotes ? '(Collapse)' : '(View all)'}
-                      </Button>
-                    </React.Fragment>
-                  )}
-                </Col>
-              )}
             </Row>
           </div>
         </Collapse>
